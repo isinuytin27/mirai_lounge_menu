@@ -1,0 +1,205 @@
+@font-face {
+  font-family: "Akony";
+  src: url("../fonts/AKONY.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Helvetica";
+  src: url("../fonts/helvetica_regular.otf");
+}
+
+.slider{position:relative;overflow:hidden;max-width:600px;margin-left:auto;margin-right:auto}.slider__wrapper{position:relative;overflow:hidden;background-color: rgba(0,0,0,.0)}.slider__items{display:flex;transition:transform .5s ease}.transition-none{transition:none}.slider__item{flex:0 0 100%;max-width:100%;position:relative}.slider__control{position:absolute;top:50%;width:40px;height:50px;transform:translateY(-50%);display:none;align-items:center;justify-content:center;color:#fff;background:rgba(0,0,0,.3);opacity:.5;user-select:none}.slider__control_show{display:flex}.slider__control:focus,.slider__control:hover{color:#fff;text-decoration:none;opacity:.7}.slider__control_prev{left:0}.slider__control_next{right:0}.slider__control::before{content:'';display:inline-block;width:20px;height:20px;background:transparent no-repeat center center;background-size:100% 100%}.slider__control_prev::before{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E")}.slider__control_next::before{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E")}.slider__indicators{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;padding-left:0;margin:0 15%;list-style:none;user-select:none}.slider__indicator{flex:0 1 auto;width:30px;height:4px;margin-right:3px;margin-left:3px;background-color:rgba(255,255,255,.5);background-clip:padding-box;border-top:10px solid transparent;border-bottom:10px solid transparent;cursor:pointer}.slider__indicator_active{background-color:#fff}
+
+body {
+  background: var(--bg-color);
+  color: var(--text-color);
+  height: 100dvh;
+  width: 100dvw;
+  overflow: hidden;
+  font-family: Akony, sans-serif;
+}
+
+#viewport {
+  position: relative;
+
+  height: 100dvh;
+  width: 100dvw;
+
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  will-change: transform;
+
+  touch-action: none;
+}
+
+.screen {
+  position: absolute;
+
+  width: 100dvw;
+  height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+}
+
+.home {
+  left: 100dvw;
+  top: 100dvh;
+
+  touch-action: pan-x pan-y;
+  user-select: none;
+}
+
+.about {
+  left: 100dvw;
+  top: 0;
+}
+
+.menu {
+  left: 200dvw;
+  top: 100dvh;
+}
+
+.booking {
+  left: 0;
+  top: 100dvh;
+}
+
+.gallery {
+  left: 100dvw;
+  top: 200dvh;
+}
+
+.home-content {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-hints {
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+}
+
+.hint {
+  position: absolute;
+
+  color: white;
+
+  font-size: 1.45em;
+
+  user-select: none;
+
+  pointer-events: none;
+}
+
+.hint-left {
+  left: 6vw;
+  top: 50%;
+
+  transform: translateY(-50%) rotate(180deg);
+
+  writing-mode: vertical-rl;
+}
+
+.hint-right {
+  right: 6vw;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  writing-mode: vertical-rl;
+}
+
+.hint-top {
+  top: 6dvh;
+  left: 50%;
+
+  transform: translateX(-50%);
+}
+
+.hint-bottom {
+  bottom: 6dvh;
+  left: 50%;
+
+  transform: translateX(-50%);
+}
+
+/* LOGO */
+
+.logo {
+  max-width: 50vw;
+}
+
+.logo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+.logo {
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+
+  width: 100dvw;
+  height: 100dvh;
+
+  overflow: hidden;
+}
+
+.slider {
+      top: 8dvh;
+      max-width: 100dvw;
+    }
+
+    /* дополнительные стили для этого примера */
+    .slider__items {
+      counter-reset: slide;
+    }
+
+    .slider__item {
+      position: relative;
+      counter-increment: slide;
+    }
+
+    .slider__item::after {
+      content: counter(slide);
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      color: #000;
+      font-size: 32px;
+    }
+
+    .img-fluid {
+      display: inline-block;
+      height: auto;
+      max-width: 100%;
+    }

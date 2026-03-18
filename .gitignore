@@ -1,0 +1,13 @@
+.DS_Store
+
+# Runtime data (do not commit)
+/data/menu.json
+
+# Uploaded images (do not commit)
+/public/assets/img/menu/uploads/
+
+# Node / build leftovers (future-proof)
+node_modules/
+dist/
+build/
+

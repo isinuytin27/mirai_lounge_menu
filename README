@@ -1,0 +1,76 @@
+mirai-lounge
+
+Проект мобильного меню Mirai Lounge.
+
+## Структура
+
+config/
+  - config.php              настройки админки/путей хранения
+
+data/
+  - menu.json               источник правды для меню (категории + товары)
+
+public/                     сайт (mirailounge.ru)
+  - index.php               точка входа, подключает экраны
+  assets/
+    css/
+      - reset.css
+      - variables.css
+      - main.css
+      - slider.css
+      - menu.css            стили экрана меню (вынесены из menu.php)
+      - booking.css         стили экрана брони
+    js/
+      - app.js
+      - navigation.js       координатная сетка экранов (5 экранов)
+      - gestures.js         управление свайпами
+      - slider.js
+      - gallery.js
+    img/
+      - logo/
+      - interior/
+      - menu/uploads/       загружаемые фото позиций из админки
+  screens/
+    - home.php
+    - about.php
+    - booking.php
+    - menu.php              читает данные из data/menu.json
+    - gallery.php
+
+admin/                      админ-панель (mirailounge.ru/admin)
+  - index.php               редирект на login/dashboard
+  - login.php               вход в админку (сессии)
+  - dashboard.php           CRUD товаров, стоп-лист (visible), загрузка фото
+  lib/
+    - auth.php
+    - menu_storage.php      чтение/запись data/menu.json, загрузка изображений
+  assets/css/
+    - admin.css
+
+## Данные меню
+
+Файл data/menu.json:
+- categories: [{ id, title }]
+- products: [{ id, category_id, name, price, description, image, visible }]
+
+Важно:
+- image может быть null/"" — тогда в гостевом меню показывается плейсхолдер
+- visible=false — позиция скрыта для гостей (стоп-лист)
+
+## Админка
+
+Пользователи задаются в config/config.php:
+- admin.users: { login: password, ... }
+
+## Деплой (Ubuntu, nginx + php-fpm)
+
+Рекомендуемый путь на сервере:
+- /home/deploy/mirai_lounge
+
+Права на запись (для загрузки фото и сохранения menu.json):
+- /home/deploy/mirai_lounge/data
+- /home/deploy/mirai_lounge/public/assets/img/menu/uploads
+
+nginx:
+- root -> /home/deploy/mirai_lounge/public
+- /admin -> alias /home/deploy/mirai_lounge/admin

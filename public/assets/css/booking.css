@@ -1,0 +1,15 @@
+/* Booking screen styles */
+
+.screen.booking {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+}
+
+.booking-frame {
+  width: 90%;
+  height: 100%;
+  border: 0;
+}
+
