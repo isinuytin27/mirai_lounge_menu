@@ -1,0 +1,18 @@
+# Список для rsync --exclude-from (пути от корня репозитория).
+# На сервере эти файлы и каталоги не перезаписываются при деплое «только кода».
+
+# Данные с продакшена
+/data/menu.json
+/data/gallery.json
+/data/orders.json
+/data/push_subscriptions.json
+/data/vip_events.json
+/data/vip_guests.json
+
+# Загрузки из админок
+/public/assets/img/menu/uploads/
+/public/assets/img/gallery/uploads/
+/public/assets/img/vip/partner_uploads/
+
+# Фото интерьера (столы) и прочие медиа зала — на сервере хранятся отдельно от git
+/public/assets/img/interior/

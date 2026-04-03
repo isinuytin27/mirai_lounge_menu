@@ -1,18 +1,31 @@
+<?php
+require_once dirname(__DIR__) . "/inc/mirai_asset.php";
+?>
 <section class="screen home">
 
     <div class="home-content">
 
-        <img src="assets/img/logo/logo-vert.svg" class="logo">
+        <div class="home-center">
+            <img src="<?= htmlspecialchars(mirai_asset("assets/img/logo/logo-vert.svg"), ENT_QUOTES, "UTF-8") ?>" class="logo" alt="Mirai Lounge">
 
-        <div class="nav-hints">
+            <div class="home-swipe-hint">
+                <p class="home-swipe-hint-text">Свайп в сторону раздела или нажмите на название</p>
+                <span class="home-swipe-hint-motion" aria-hidden="true">
+                    <span class="home-swipe-hint-track"></span>
+                    <span class="home-swipe-hint-marker"></span>
+                </span>
+            </div>
+        </div>
 
-            <div class="hint hint-top">О НАС</div>
+        <div class="nav-hints" role="navigation" aria-label="Разделы сайта">
 
-            <div class="hint hint-left">БРОНЬ</div>
+            <button type="button" class="hint hint-top" data-nav-x="1" data-nav-y="0">О НАС</button>
 
-            <div class="hint hint-right">МЕНЮ</div>
+            <button type="button" class="hint hint-left" data-nav-x="0" data-nav-y="1">БРОНЬ</button>
 
-            <div class="hint hint-bottom">ГАЛЕРЕЯ</div>
+            <button type="button" class="hint hint-right" data-nav-x="2" data-nav-y="1">МЕНЮ</button>
+
+            <button type="button" class="hint hint-bottom" data-nav-x="1" data-nav-y="2">ГАЛЕРЕЯ</button>
 
         </div>
 

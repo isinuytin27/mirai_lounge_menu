@@ -1,0 +1,40 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: mirai-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ../public:/var/www/mirailounge/public:ro
+      - ../admin:/var/www/mirailounge/admin:ro
+      - ../config:/var/www/mirailounge/config:ro
+      - ../data:/var/www/mirailounge/data
+      - ../public/assets/img/menu/uploads:/var/www/mirailounge/public/assets/img/menu/uploads
+      - ../public/assets/img/gallery/uploads:/var/www/mirailounge/public/assets/img/gallery/uploads
+      - ../public/assets/img/vip/partner_uploads:/var/www/mirailounge/public/assets/img/vip/partner_uploads
+    depends_on:
+      - php
+    restart: unless-stopped
+
+  php:
+    build:
+      context: ..
+      dockerfile: docker/php/Dockerfile
+    container_name: mirai-php
+    env_file:
+      - path: ../.env
+        required: false
+    volumes:
+      - ../public:/var/www/mirailounge/public:ro
+      - ../admin:/var/www/mirailounge/admin:ro
+      - ../config:/var/www/mirailounge/config:ro
+      - ../scripts:/var/www/mirailounge/scripts:ro
+      - ../data:/var/www/mirailounge/data
+      - ../public/assets/img/menu/uploads:/var/www/mirailounge/public/assets/img/menu/uploads
+      - ../public/assets/img/gallery/uploads:/var/www/mirailounge/public/assets/img/gallery/uploads
+      - ../public/assets/img/vip/partner_uploads:/var/www/mirailounge/public/assets/img/vip/partner_uploads
+    restart: unless-stopped

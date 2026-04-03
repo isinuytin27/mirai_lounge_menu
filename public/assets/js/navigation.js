@@ -68,8 +68,20 @@ function move(dx, dy) {
   render(true);
 }
 
+function goTo(x, y) {
+  if (state.animating) return;
+  if (state.x === x && state.y === y) return;
+  if (!isValid(x, y)) return;
+
+  state.x = x;
+  state.y = y;
+
+  render(true);
+}
+
 window.navigation = {
   move,
+  goTo,
   render,
   state,
 };

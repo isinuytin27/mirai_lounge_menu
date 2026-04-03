@@ -1,0 +1,12 @@
+# Ускоряет сборку образа PHP (контекст — корень репозитория)
+.git
+.gitignore
+**/.DS_Store
+node_modules
+dist
+build
+composer.phar
+.env
+# Данные и загрузки не нужны в слое образа (есть только composer)
+/data/*.json
+docker/ssl/**/*.pem

@@ -317,6 +317,122 @@ function menu_storage_find_product_index(array $products, string $id): int
     return -1;
 }
 
+function menu_storage_find_category_index(array $categories, string $id): int
+{
+    foreach ($categories as $i => $c) {
+        if (is_array($c) && (string)($c["id"] ?? "") === $id) return (int)$i;
+    }
+    return -1;
+}
+
+function menu_storage_category_product_count(array $products, string $categoryId): int
+{
+    $n = 0;
+    foreach ($products as $p) {
+        if (is_array($p) && (string)($p["category_id"] ?? "") === $categoryId) $n++;
+    }
+    return $n;
+}
+
+function menu_storage_create_category(array &$categories, string $title): ?string
+{
+    $id = menu_storage_slugify($title);
+    if ($id === "") $id = "cat_" . bin2hex(random_bytes(4));
+    foreach ($categories as $c) {
+        if (is_array($c) && (string)($c["id"] ?? "") === $id) {
+            $id = $id . "_" . bin2hex(random_bytes(4));
+            break;
+        }
+    }
+    $categories[] = ["id" => $id, "title" => trim($title)];
+    return $id;
+}
+
+function menu_storage_update_category(array &$categories, string $id, string $title): bool
+{
+    $idx = menu_storage_find_category_index($categories, $id);
+    if ($idx < 0) return false;
+    $categories[$idx]["title"] = trim($title);
+    return true;
+}
+
+function menu_storage_delete_category(array &$categories, array $products, string $id): string
+{
+    $count = menu_storage_category_product_count($products, $id);
+    if ($count > 0) {
+        return "В категории есть товары ({$count} шт.). Сначала переназначьте или удалите их.";
+    }
+    $idx = menu_storage_find_category_index($categories, $id);
+    if ($idx < 0) return "Категория не найдена.";
+    array_splice($categories, $idx, 1);
+    return "";
+}
+
+function menu_storage_reorder_categories(array &$categories, array $newOrder): void
+{
+    $byId = [];
+    foreach ($categories as $c) {
+        if (!is_array($c)) continue;
+        $cid = (string)($c["id"] ?? "");
+        if ($cid !== "") $byId[$cid] = $c;
+    }
+    $ordered = [];
+    foreach ($newOrder as $cid) {
+        $cid = (string)$cid;
+        if (isset($byId[$cid])) {
+            $ordered[] = $byId[$cid];
+            unset($byId[$cid]);
+        }
+    }
+    foreach ($byId as $c) {
+        $ordered[] = $c;
+    }
+    $categories = array_values($ordered);
+}
+
+function menu_storage_category_move(array &$categories, string $id, int $direction): bool
+{
+    $idx = menu_storage_find_category_index($categories, $id);
+    if ($idx < 0) return false;
+    $newIdx = $idx + $direction;
+    if ($newIdx < 0 || $newIdx >= count($categories)) return false;
+    $tmp = $categories[$idx];
+    $categories[$idx] = $categories[$newIdx];
+    $categories[$newIdx] = $tmp;
+    return true;
+}
+
+function menu_storage_product_move(array &$products, string $productId, int $direction): bool
+{
+    $byCat = [];
+    foreach ($products as $i => $p) {
+        if (!is_array($p)) continue;
+        $cid = (string)($p["category_id"] ?? "");
+        if ($cid === "") continue;
+        if (!isset($byCat[$cid])) $byCat[$cid] = [];
+        $byCat[$cid][] = $i;
+    }
+
+    $idx = menu_storage_find_product_index($products, $productId);
+    if ($idx < 0) return false;
+
+    $cid = (string)($products[$idx]["category_id"] ?? "");
+    if ($cid === "") return false;
+
+    $indices = $byCat[$cid] ?? [];
+    $pos = array_search($idx, $indices, true);
+    if ($pos === false) return false;
+
+    $newPos = $pos + $direction;
+    if ($newPos < 0 || $newPos >= count($indices)) return false;
+
+    $otherIdx = $indices[$newPos];
+    $tmp = $products[$idx];
+    $products[$idx] = $products[$otherIdx];
+    $products[$otherIdx] = $tmp;
+    return true;
+}
+
 function menu_storage_handle_upload(?array $file, string $productId): ?string
 {
     if (!$file || !isset($file["tmp_name"])) return null;

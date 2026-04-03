@@ -1,13 +1,33 @@
 .DS_Store
 
+# Локальные секреты для Docker / Telegram / VAPID
+.env
+
 # Runtime data (do not commit)
 /data/menu.json
+/data/gallery.json
+/data/orders.json
+/data/push_subscriptions.json
+/data/vip_events.json
+/data/vip_guests.json
+
+/vendor/
+composer.phar
 
 # Uploaded images (do not commit)
-/public/assets/img/menu/uploads/
+/public/assets/img/menu/uploads/*
+!/public/assets/img/menu/uploads/.gitkeep
+/public/assets/img/gallery/uploads/*
+!/public/assets/img/gallery/uploads/.gitkeep
+/public/assets/img/vip/partner_uploads/*
+!/public/assets/img/vip/partner_uploads/.gitkeep
 
 # Node / build leftovers (future-proof)
 node_modules/
 dist/
 build/
+
+
+# SSL сертификаты (секреты)
+docker/ssl/mirailounge.ru/
 

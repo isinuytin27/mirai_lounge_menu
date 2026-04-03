@@ -1,20 +1,8 @@
 <section class="screen menu">
     <?php
-    $placeholderSvg = "data:image/svg+xml;charset=UTF-8," . rawurlencode(
-        "<svg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'>
-          <defs>
-            <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>
-              <stop offset='0' stop-color='#151515'/>
-              <stop offset='1' stop-color='#060606'/>
-            </linearGradient>
-          </defs>
-          <rect width='800' height='600' fill='url(#g)'/>
-          <circle cx='580' cy='180' r='120' fill='rgba(255,255,255,0.06)'/>
-          <circle cx='260' cy='420' r='170' fill='rgba(255,255,255,0.04)'/>
-          <path d='M190 360c120-140 320-140 420 0' fill='none' stroke='rgba(255,255,255,0.08)' stroke-width='14' stroke-linecap='round'/>
-          <text x='40' y='80' fill='rgba(255,255,255,0.35)' font-family='Helvetica, Arial, sans-serif' font-size='34'>Фото скоро будет</text>
-        </svg>"
-    );
+    require_once dirname(__DIR__) . "/inc/mirai_asset.php";
+    require_once dirname(__DIR__) . "/inc/mirai_table_session.php";
+    $miraiMenuTable = mirai_table_read_session();
 
     $cfg = require dirname(__DIR__, 2) . "/config/config.php";
     $jsonPath = (string)($cfg["storage"]["menu_json_path"] ?? "");
@@ -60,7 +48,17 @@
 
     <div class="menu-wrap" data-menu>
         <header class="menu-topbar">
-            <h2 class="menu-title">Меню</h2>
+            <div class="menu-topbar-row">
+                <h2 class="menu-title">Меню</h2>
+                <?php if ($miraiMenuTable !== null): ?>
+                    <div class="menu-table-pill-wrap">
+                        <div class="menu-table-pill" title="Стол из QR"><?= htmlspecialchars($miraiMenuTable["caption"], ENT_QUOTES, "UTF-8") ?></div>
+                    </div>
+                <?php endif; ?>
+                <button type="button" class="menu-nav-home" data-menu-go-home aria-label="На главную">
+                    <svg class="menu-nav-home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+            </div>
             <nav class="menu-cats" aria-label="Категории меню">
                 <?php foreach ($menu as $idx => $cat): ?>
                     <button
@@ -86,21 +84,38 @@
                             <?php
                             $name = (string)($item["name"] ?? "");
                             $desc = (string)($item["description"] ?? "");
+                            $descShort = (string)($item["description_short"] ?? "");
+                            $descMini = $descShort !== "" ? $descShort : $desc;
                             $price = (int)($item["price"] ?? 0);
+                            $weight = (string)($item["weight"] ?? "");
                             $img = (string)($item["image"] ?? "");
-                            $imgSrc = $img !== "" ? $img : $placeholderSvg;
                             $key = (string)($item["id"] ?? ($cat["id"] . "::" . $name));
+                            $imgUrl = $img !== "" ? mirai_asset($img) : "";
                             ?>
-                            <article class="menu-card" data-item data-key="<?= htmlspecialchars($key) ?>" data-name="<?= htmlspecialchars($name) ?>" data-price="<?= $price ?>">
-                                <img class="menu-photo" src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($name) ?>" loading="lazy">
+                            <article class="menu-card menu-mini" data-item data-key="<?= htmlspecialchars($key) ?>" data-name="<?= htmlspecialchars($name) ?>" data-price="<?= $price ?>" data-description="<?= htmlspecialchars($desc) ?>" data-image="<?= htmlspecialchars($imgUrl, ENT_QUOTES, "UTF-8") ?>" tabindex="0" role="button">
+                                <?php if ($img !== ""): ?>
+                                <img class="menu-photo" src="<?= htmlspecialchars($imgUrl, ENT_QUOTES, "UTF-8") ?>" alt="<?= htmlspecialchars($name) ?>" loading="lazy">
+                                <?php endif; ?>
                                 <div class="menu-info">
                                     <div class="menu-card-head">
                                         <h4 class="menu-item-name"><?= htmlspecialchars($name) ?></h4>
-                                        <div class="menu-price"><?= $price ?> ₽</div>
                                     </div>
-                                    <p class="menu-item-desc"><?= htmlspecialchars($desc) ?></p>
+                                    <?php if ($descMini !== ""): ?>
+                                    <p class="menu-item-desc"><?= htmlspecialchars($descMini) ?></p>
+                                    <?php endif; ?>
                                     <div class="menu-actions">
+                                        <div class="menu-price-row">
+                                            <span class="menu-price"><?= $price ?> ₽</span>
+                                            <?php if ($weight !== ""): ?>
+                                            <span class="menu-weight"><?= htmlspecialchars($weight) ?></span>
+                                            <?php endif; ?>
+                                        </div>
                                         <button class="menu-add" type="button" data-add>Добавить</button>
+                                        <div class="menu-qty" data-qty hidden>
+                                            <button class="menu-qty-btn" type="button" data-minus aria-label="Уменьшить"><svg class="menu-qty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                                            <div class="menu-qty-count"><svg viewBox="0 0 48 24" class="menu-qty-num-svg"><text x="24" y="12" text-anchor="middle" dominant-baseline="central" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="rgba(255,255,255,0.92)" data-qty-count>1</text></svg></div>
+                                            <button class="menu-qty-btn" type="button" data-plus aria-label="Увеличить"><svg class="menu-qty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                                        </div>
                                     </div>
                                 </div>
                             </article>
@@ -110,125 +125,66 @@
             <?php endforeach; ?>
         </div>
 
-        <button class="menu-cart-fab" type="button" data-cart>
-            Корзина <span class="menu-cart-badge" data-cart-count>0</span>
+        <button class="menu-cart-clear" type="button" data-clear-cart hidden>
+            Очистить
         </button>
+
+        <button class="menu-cart-tab" type="button" data-cart-toggle aria-label="Корзина">
+            <div class="menu-cart-handle"></div>
+            <div class="menu-cart-tab-label">Корзина
+                <svg class="menu-cart-badge menu-cart-badge--empty" viewBox="0 0 56 32" width="56" height="32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="В корзине нет позиций">
+                    <rect class="menu-cart-badge-bg" x="0.5" y="0.5" width="55" height="31" rx="15.5"/>
+                    <text class="menu-cart-badge-text" x="28" y="13" text-anchor="middle" dominant-baseline="central" data-cart-count>0</text>
+                </svg>
+            </div>
+        </button>
+
+        <div class="menu-item-viewer-backdrop" data-item-viewer-backdrop hidden></div>
+        <div class="menu-item-viewer" data-item-viewer hidden aria-hidden="true">
+            <div class="menu-item-viewer-inner">
+                <button class="menu-item-viewer-close" type="button" data-item-viewer-close aria-label="Закрыть">✕</button>
+                <div class="menu-item-viewer-photo" data-item-viewer-photo></div>
+                <div class="menu-item-viewer-body">
+                    <h3 class="menu-item-viewer-name" data-item-viewer-name></h3>
+                    <p class="menu-item-viewer-desc" data-item-viewer-desc></p>
+                    <div class="menu-item-viewer-foot">
+                        <div class="menu-item-viewer-price" data-item-viewer-price></div>
+                        <button class="menu-add" type="button" data-item-viewer-add>Добавить</button>
+                        <div class="menu-qty" data-item-viewer-qty hidden>
+                            <button class="menu-qty-btn" type="button" data-item-viewer-minus aria-label="Уменьшить"><svg class="menu-qty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <div class="menu-qty-count"><svg viewBox="0 0 48 24" class="menu-qty-num-svg"><text x="24" y="12" text-anchor="middle" dominant-baseline="central" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="rgba(255,255,255,0.92)" data-item-viewer-count>1</text></svg></div>
+                            <button class="menu-qty-btn" type="button" data-item-viewer-plus aria-label="Увеличить"><svg class="menu-qty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-cart-backdrop" data-cart-backdrop hidden></div>
+        <aside class="menu-cart-sheet" data-cart-sheet aria-hidden="true">
+            <div class="menu-cart-sheet-top" data-cart-close aria-label="Закрыть корзину">
+                <div class="menu-cart-handle"></div>
+                <div class="menu-cart-head">
+                    <div class="menu-cart-title">Корзина</div>
+                </div>
+            </div>
+
+            <div class="menu-cart-body" data-cart-body>
+                <!-- items rendered by JS -->
+            </div>
+
+            <div class="menu-cart-foot">
+                <div class="menu-cart-order-hint" data-order-hint hidden>Сканируйте QR на столе, чтобы отправлять заказ.</div>
+                <div class="menu-cart-total">
+                    <span class="menu-cart-total-label">Итого</span>
+                    <span class="menu-cart-total-value" data-cart-total>0 ₽</span>
+                </div>
+                <div class="menu-cart-actions">
+                    <button class="menu-cart-action menu-cart-action--submit" type="button" data-submit-order hidden>Отправить заказ</button>
+                    <button class="menu-cart-action" type="button" data-clear-cart>Очистить</button>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <script>
-        (function () {
-            const root = document.querySelector("[data-menu]");
-            if (!root) return;
-
-            const content = root.querySelector("[data-menu-content]");
-            const catButtons = Array.from(root.querySelectorAll("[data-cat-btn]"));
-            const sections = Array.from(root.querySelectorAll("[data-cat-section]"));
-
-            const CART_KEY = "mirai_cart_v1";
-
-            function loadCart() {
-                try {
-                    const raw = localStorage.getItem(CART_KEY);
-                    const data = raw ? JSON.parse(raw) : { items: {} };
-                    if (!data || typeof data !== "object" || !data.items || typeof data.items !== "object") return { items: {} };
-                    return data;
-                } catch (_) {
-                    return { items: {} };
-                }
-            }
-
-            function saveCart(cart) {
-                localStorage.setItem(CART_KEY, JSON.stringify(cart));
-            }
-
-            function cartCount(cart) {
-                return Object.values(cart.items).reduce((sum, it) => sum + (it.qty || 0), 0);
-            }
-
-            function updateCartBadge() {
-                const badge = root.querySelector("[data-cart-count]");
-                if (!badge) return;
-                const cart = loadCart();
-                badge.textContent = String(cartCount(cart));
-            }
-
-            function setActiveCatById(sectionId) {
-                catButtons.forEach((btn) => {
-                    const target = btn.getAttribute("data-target") || "";
-                    btn.setAttribute("aria-current", target === "#" + sectionId ? "true" : "false");
-                });
-            }
-
-            catButtons.forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    const target = btn.getAttribute("data-target");
-                    if (!target) return;
-                    const el = root.querySelector(target);
-                    if (!el) return;
-                    // scrollIntoView может дергать общий скролл страницы.
-                    // Скроллим только внутренний контейнер списка.
-                    const topbar = root.querySelector(".menu-topbar");
-                    const topbarH = topbar ? topbar.getBoundingClientRect().height : 0;
-                    const contentRect = content.getBoundingClientRect();
-                    const elRect = el.getBoundingClientRect();
-                    const delta = (elRect.top - contentRect.top) + content.scrollTop;
-                    const y = Math.max(0, delta - topbarH - 10);
-                    content.scrollTo({ top: y, behavior: "smooth" });
-                    setActiveCatById(el.id);
-                });
-            });
-
-            root.addEventListener("click", (e) => {
-                const addBtn = e.target.closest("[data-add]");
-                if (!addBtn) return;
-                const card = addBtn.closest("[data-item]");
-                if (!card) return;
-
-                const key = card.getAttribute("data-key");
-                const name = card.getAttribute("data-name");
-                const price = Number(card.getAttribute("data-price") || 0);
-                if (!key || !name) return;
-
-                const cart = loadCart();
-                const existing = cart.items[key] || { key, name, price, qty: 0 };
-                existing.qty = (existing.qty || 0) + 1;
-                cart.items[key] = existing;
-                saveCart(cart);
-                updateCartBadge();
-
-                addBtn.textContent = "Добавлено";
-                clearTimeout(addBtn._t);
-                addBtn._t = setTimeout(() => (addBtn.textContent = "Добавить в корзину"), 900);
-            });
-
-            const observer = new IntersectionObserver(
-                (entries) => {
-                    const visible = entries
-                        .filter((e) => e.isIntersecting)
-                        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-                    if (!visible || !visible.target || !visible.target.id) return;
-                    setActiveCatById(visible.target.id);
-                },
-                { root: content, threshold: [0.2, 0.35, 0.5, 0.65, 0.8] }
-            );
-
-            sections.forEach((s) => observer.observe(s));
-
-            root.querySelector("[data-cart]")?.addEventListener("click", () => {
-                const cart = loadCart();
-                const items = Object.values(cart.items);
-                if (!items.length) {
-                    alert("Корзина пустая");
-                    return;
-                }
-                const lines = items
-                    .map((it) => `${it.name} × ${it.qty} — ${it.price * it.qty} ₽`)
-                    .join("\n");
-                const total = items.reduce((sum, it) => sum + it.price * it.qty, 0);
-                alert(`${lines}\n\nИтого: ${total} ₽`);
-            });
-
-            updateCartBadge();
-        })();
-    </script>
 </section>

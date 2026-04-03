@@ -8,8 +8,6 @@
   src: url("../fonts/helvetica_regular.otf");
 }
 
-.slider{position:relative;overflow:hidden;max-width:600px;margin-left:auto;margin-right:auto}.slider__wrapper{position:relative;overflow:hidden;background-color: rgba(0,0,0,.0)}.slider__items{display:flex;transition:transform .5s ease}.transition-none{transition:none}.slider__item{flex:0 0 100%;max-width:100%;position:relative}.slider__control{position:absolute;top:50%;width:40px;height:50px;transform:translateY(-50%);display:none;align-items:center;justify-content:center;color:#fff;background:rgba(0,0,0,.3);opacity:.5;user-select:none}.slider__control_show{display:flex}.slider__control:focus,.slider__control:hover{color:#fff;text-decoration:none;opacity:.7}.slider__control_prev{left:0}.slider__control_next{right:0}.slider__control::before{content:'';display:inline-block;width:20px;height:20px;background:transparent no-repeat center center;background-size:100% 100%}.slider__control_prev::before{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E")}.slider__control_next::before{background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E")}.slider__indicators{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;padding-left:0;margin:0 15%;list-style:none;user-select:none}.slider__indicator{flex:0 1 auto;width:30px;height:4px;margin-right:3px;margin-left:3px;background-color:rgba(255,255,255,.5);background-clip:padding-box;border-top:10px solid transparent;border-bottom:10px solid transparent;cursor:pointer}.slider__indicator_active{background-color:#fff}
-
 body {
   background: var(--bg-color);
   color: var(--text-color);
@@ -84,6 +82,225 @@ body {
   justify-content: center;
 }
 
+.home-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 88vw;
+  text-align: center;
+  /* Колонка «лого + подсказка» визуально выше геометрического центра — опускаем, чтобы лого было по центру экрана */
+  transform: translateY(clamp(18px, 5.5dvh, 52px));
+}
+
+.home-swipe-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+
+  max-width: 20em;
+  padding: 0 0.75rem;
+}
+
+.home-swipe-hint-text {
+  margin: 0;
+
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: clamp(0.68rem, 2.6vw, 0.82rem);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.7);
+
+  display: inline-block;
+  animation: homeSwipeHintTextMove 4.8s ease-in-out infinite;
+}
+
+@keyframes homeSwipeHintTextMove {
+  0% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  22% {
+    transform: translate3d(3px, 0, 0);
+  }
+  24% {
+    transform: translate3d(3px, 0, 0);
+  }
+  25% {
+    transform: translate3d(3px, 0, 0);
+  }
+  47% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  49% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 3px, 0);
+  }
+  72% {
+    transform: translate3d(0, -3px, 0);
+  }
+  74% {
+    transform: translate3d(0, -3px, 0);
+  }
+  75% {
+    transform: translate3d(0, -3px, 0);
+  }
+  97% {
+    transform: translate3d(0, 3px, 0);
+  }
+  100% {
+    transform: translate3d(0, 3px, 0);
+  }
+}
+
+/* Жест свайпа: слева→направо, справа→налево, снизу→вверх, сверху→вниз */
+
+.home-swipe-hint-motion {
+  position: relative;
+
+  width: clamp(2.75rem, 12vw, 3.25rem);
+  height: clamp(2.75rem, 12vw, 3.25rem);
+
+  flex-shrink: 0;
+}
+
+.home-swipe-hint-track {
+  position: absolute;
+  inset: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.home-swipe-hint-marker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
+
+  animation: homeSwipeHintDirections 4.8s ease-in-out infinite;
+}
+
+@keyframes homeSwipeHintDirections {
+  /* слева направо */
+  0% {
+    transform: translate3d(-10px, 0, 0);
+    opacity: 0.55;
+  }
+  5% {
+    opacity: 1;
+  }
+  22% {
+    transform: translate3d(10px, 0, 0);
+    opacity: 1;
+  }
+  24% {
+    transform: translate3d(10px, 0, 0);
+    opacity: 0.55;
+  }
+
+  /* справа налево */
+  25% {
+    transform: translate3d(10px, 0, 0);
+    opacity: 0.55;
+  }
+  30% {
+    opacity: 1;
+  }
+  47% {
+    transform: translate3d(-10px, 0, 0);
+    opacity: 1;
+  }
+  49% {
+    transform: translate3d(-10px, 0, 0);
+    opacity: 0.55;
+  }
+
+  /* снизу вверх */
+  50% {
+    transform: translate3d(0, 10px, 0);
+    opacity: 0.55;
+  }
+  55% {
+    opacity: 1;
+  }
+  72% {
+    transform: translate3d(0, -10px, 0);
+    opacity: 1;
+  }
+  74% {
+    transform: translate3d(0, -10px, 0);
+    opacity: 0.55;
+  }
+
+  /* сверху вниз */
+  75% {
+    transform: translate3d(0, -10px, 0);
+    opacity: 0.55;
+  }
+  80% {
+    opacity: 1;
+  }
+  97% {
+    transform: translate3d(0, 10px, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 10px, 0);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-swipe-hint-text {
+    animation: none;
+    transform: none;
+  }
+
+  .home-swipe-hint-marker {
+    animation: none;
+    transform: translate3d(0, 0, 0);
+    opacity: 0.85;
+  }
+
+  .booking-home-btn .booking-home-icon,
+  .about-home-btn .about-home-icon,
+  .menu-nav-home .menu-nav-home-icon,
+  .gallery-nav-up .gallery-nav-up-icon {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .nav-hints .hint {
+    animation: none;
+    opacity: 1;
+    text-shadow: none;
+  }
+
+  .menu-add,
+  .menu-cat,
+  .gallery-thumb {
+    animation: none !important;
+  }
+
+  .gallery-thumb:active {
+    transform: none;
+  }
+}
+
 .nav-hints {
   position: absolute;
   inset: 0;
@@ -100,7 +317,21 @@ body {
 
   user-select: none;
 
-  pointer-events: none;
+  margin: 0;
+  padding: 0.35em 0.5em;
+
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  font-family: inherit;
+  text-transform: inherit;
+}
+
+.hint:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 3px;
 }
 
 .hint-left {
@@ -135,20 +366,96 @@ body {
   transform: translateX(-50%);
 }
 
+/* Подсказка «можно нажать»: иконки навигации (бронь, о нас, меню, галерея) */
+@keyframes mirai-invite-tap-icon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.88;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.booking-home-btn .booking-home-icon,
+.about-home-btn .about-home-icon,
+.menu-nav-home .menu-nav-home-icon,
+.gallery-nav-up .gallery-nav-up-icon {
+  transform-origin: center;
+  animation: mirai-invite-tap-icon 2.35s ease-in-out infinite;
+}
+
+.booking-home-btn:hover .booking-home-icon,
+.booking-home-btn:focus-visible .booking-home-icon,
+.about-home-btn:hover .about-home-icon,
+.about-home-btn:focus-visible .about-home-icon,
+.menu-nav-home:hover .menu-nav-home-icon,
+.menu-nav-home:focus-visible .menu-nav-home-icon,
+.gallery-nav-up:hover .gallery-nav-up-icon,
+.gallery-nav-up:focus-visible .gallery-nav-up-icon {
+  animation-play-state: paused;
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.booking-home-btn:active .booking-home-icon,
+.about-home-btn:active .about-home-icon,
+.menu-nav-home:active .menu-nav-home-icon,
+.gallery-nav-up:active .gallery-nav-up-icon {
+  animation: none;
+  opacity: 1;
+  transform: scale(0.88);
+}
+
+/* Главная: подписи разделов по краям */
+@keyframes mirai-invite-hint-label {
+  0%, 100% {
+    opacity: 0.72;
+    text-shadow: 0 0 0 transparent;
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 18px rgba(255, 255, 255, 0.22);
+  }
+}
+
+.nav-hints .hint {
+  pointer-events: auto;
+  animation: mirai-invite-hint-label 2.85s ease-in-out infinite;
+}
+
+.nav-hints .hint:hover,
+.nav-hints .hint:focus-visible {
+  animation-play-state: paused;
+  opacity: 1;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.28);
+}
+
+.nav-hints .hint:active {
+  animation: none;
+  opacity: 1;
+}
+
+/* Общее мягкое свечение для кнопок-CTA (см. menu.css) */
+@keyframes mirai-invite-cta {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
+  }
+}
+
 /* LOGO */
 
 .logo {
   max-width: 50vw;
-}
-
-.logo img {
   width: 100%;
   height: auto;
   display: block;
   pointer-events: none;
-}
 
-.logo {
   animation: logoFloat 3s ease-in-out infinite;
 }
 
@@ -174,32 +481,117 @@ body {
   overflow: hidden;
 }
 
-.slider {
-      top: 8dvh;
-      max-width: 100dvw;
-    }
+/* VPN / прокси: мягкое модальное предупреждение (см. assets/js/vpn-hint.js) */
+.vpn-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  pointer-events: auto;
+}
 
-    /* дополнительные стили для этого примера */
-    .slider__items {
-      counter-reset: slide;
-    }
+.vpn-hint-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
 
-    .slider__item {
-      position: relative;
-      counter-increment: slide;
-    }
+.vpn-hint-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 360px;
+  padding: 24px 22px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(18, 18, 20, 0.94);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
 
-    .slider__item::after {
-      content: counter(slide);
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      color: #000;
-      font-size: 32px;
-    }
+.vpn-hint-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: rgba(255, 180, 100, 0.95);
+  background: rgba(255, 160, 80, 0.12);
+  border: 1px solid rgba(255, 180, 100, 0.28);
+}
 
-    .img-fluid {
-      display: inline-block;
-      height: auto;
-      max-width: 100%;
-    }
+.vpn-hint-title {
+  margin: 0 0 12px;
+  font-family: Akony, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.96);
+  line-height: 1.25;
+}
+
+.vpn-hint-text {
+  margin: 0 0 20px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+.vpn-hint-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vpn-hint-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.vpn-hint-btn:active {
+  transform: scale(0.985);
+}
+
+.vpn-hint-btn-primary {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.vpn-hint-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.vpn-hint-btn-quiet {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.vpn-hint-btn-quiet:hover {
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.16);
+}

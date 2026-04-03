@@ -7,17 +7,26 @@ admin_start_session();
 
 $error = "";
 
+$next = trim((string)($_GET["next"] ?? ""));
+if ($next !== "" && (!str_starts_with($next, "/") || str_starts_with($next, "//"))) {
+    $next = "";
+}
+
 if (admin_is_logged_in()) {
-    header("Location: /admin/dashboard.php");
+    header("Location: " . ($next !== "" ? $next : "/admin/dashboard.php"));
     exit;
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = trim((string)($_POST["username"] ?? ""));
     $password = (string)($_POST["password"] ?? "");
+    $postNext = trim((string)($_POST["next"] ?? ""));
+    if ($postNext !== "" && str_starts_with($postNext, "/") && !str_starts_with($postNext, "//")) {
+        $next = $postNext;
+    }
 
     if (admin_try_login($username, $password)) {
-        header("Location: /admin/dashboard.php");
+        header("Location: " . ($next !== "" ? $next : "/admin/dashboard.php"));
         exit;
     }
 
@@ -47,16 +56,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <?php endif; ?>
 
             <form method="post" autocomplete="off">
+                <?php if ($next !== ""): ?>
+                    <input type="hidden" name="next" value="<?= htmlspecialchars($next, ENT_QUOTES, "UTF-8") ?>">
+                <?php endif; ?>
                 <label for="username">Логин</label>
                 <input id="username" name="username" type="text" placeholder="admin" required>
 
                 <label for="password">Пароль</label>
                 <input id="password" name="password" type="password" placeholder="••••••••" required>
 
-                <div style="height: 12px"></div>
+                <div class="spacer-h-12"></div>
                 <button class="btn" type="submit">Войти</button>
 
-                <div style="height: 12px"></div>
+                <div class="spacer-h-12"></div>
                 <div class="hint">
                     Пароль сейчас хранится в <code>config/config.php</code> (временно). После первого входа — поменяйте его.
                 </div>

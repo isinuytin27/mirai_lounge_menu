@@ -1,0 +1,47 @@
+# Деплой кода на сервер по SSH (rsync). Данные и медиа из scripts/deploy-excludes.txt не трогаем.
+# Настройте Secrets в репозитории: Settings → Secrets and variables → Actions.
+
+name: Deploy to server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Rsync code (excludes data & media)
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PATH_REMOTE: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HOST:-}" ] || [ -z "${USER:-}" ] || [ -z "${PATH_REMOTE:-}" ]; then
+            echo "Задайте Secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH, DEPLOY_SSH_KEY" >&2
+            exit 1
+          fi
+          # Без --delete: на сервере сохраняются файлы, которых нет в git (меню, картинки, .env).
+          rsync -avz \
+            --exclude-from=scripts/deploy-excludes.txt \
+            -e "ssh -i $HOME/.ssh/deploy_key -o IdentitiesOnly=yes" \
+            ./ "${USER}@${HOST}:${PATH_REMOTE}/"
+
+      # После rsync на сервере выполните перезапуск стека (см. DEPLOY.md).

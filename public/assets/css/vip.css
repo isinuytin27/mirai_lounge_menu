@@ -1,0 +1,468 @@
+/* VIP / корпоратив: страница гостя и списание */
+
+.vip-page {
+  margin: 0;
+  min-height: 100dvh;
+  background: #0a0a0a;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* Гостевая карточка (без сессии сотрудника) */
+.vip-page--guest-welcome {
+  background: #060608;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(180, 140, 70, 0.22), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(90, 60, 120, 0.12), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 0% 80%, rgba(60, 100, 90, 0.1), transparent 45%);
+}
+
+/* Текстовая шапка скрыта — вместо неё строка логотипов */
+.vip-page--guest-welcome .vip-head {
+  display: none;
+}
+
+.vip-page--guest-welcome .vip-tag {
+  color: rgba(255, 215, 150, 0.75);
+}
+
+.vip-welcome {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.vip-welcome-logos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 4vw, 28px);
+  margin-bottom: 10px;
+}
+
+.vip-welcome-logo {
+  display: block;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
+}
+
+.vip-welcome-logo--mirai {
+  height: clamp(52px, 14vw, 72px);
+  width: auto;
+}
+
+.vip-welcome-logo--gazprom,
+.vip-welcome-logo--partner {
+  height: clamp(36px, 10vw, 48px);
+  max-width: min(280px, 88vw);
+}
+
+.vip-welcome-logos-divider {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  flex-shrink: 0;
+}
+
+.vip-welcome-tagline {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 215, 150, 0.72);
+}
+
+@media (max-width: 380px) {
+  .vip-welcome-logos {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .vip-welcome-logos-divider {
+    width: min(120px, 50vw);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  }
+}
+
+.vip-welcome-glow {
+  position: absolute;
+  inset: -40px -20px auto;
+  height: 200px;
+  background: radial-gradient(ellipse at center, rgba(255, 200, 120, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.vip-welcome-card {
+  position: relative;
+  padding: 32px 24px 28px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.vip-welcome-monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(40, 28, 12, 0.95);
+  background: linear-gradient(145deg, #f4e4c0 0%, #c9a05c 55%, #8b6914 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.vip-welcome-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 210, 150, 0.65);
+}
+
+.vip-welcome-name {
+  margin: 0 0 10px;
+  font-size: clamp(26px, 7vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.vip-welcome-org {
+  margin: 0 0 24px;
+  font-size: 16px;
+  color: rgba(255, 200, 150, 0.88);
+}
+
+.vip-welcome-facts {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+  text-align: left;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.vip-welcome-facts li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vip-welcome-facts li:last-child {
+  border-bottom: 0;
+}
+
+.vip-welcome-fact-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.vip-welcome-fact-val {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.vip-welcome-privilege {
+  margin-bottom: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(100, 160, 130, 0.12), rgba(60, 90, 80, 0.08));
+  border: 1px solid rgba(120, 200, 160, 0.22);
+  text-align: left;
+}
+
+.vip-welcome-privilege-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(180, 235, 210, 0.75);
+  margin-bottom: 8px;
+}
+
+.vip-welcome-privilege-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.vip-welcome-privilege-text strong {
+  color: rgba(210, 255, 230, 0.95);
+  font-weight: 700;
+}
+
+.vip-welcome-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+.vip-welcome-foot {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.vip-welcome-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 220, 170, 0.95);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 200, 120, 0.35);
+  padding-bottom: 2px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.vip-welcome-link:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.vip-welcome-link--subtle {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.38);
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+.vip-welcome-link--subtle:hover {
+  color: rgba(255, 255, 255, 0.65);
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Режим сотрудника: чуть акцентируем карточку */
+.vip-page--staff .vip-card--guest {
+  border-color: rgba(120, 200, 160, 0.22);
+  box-shadow: 0 0 0 1px rgba(120, 200, 160, 0.08);
+}
+
+.vip-shell {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+.vip-head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.vip-brand {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 13px;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.vip-tag {
+  font-size: 11px;
+  color: rgba(255, 210, 120, 0.85);
+  margin-top: 6px;
+}
+
+.vip-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 22px 18px;
+}
+
+.vip-card--warn {
+  border-color: rgba(255, 120, 80, 0.35);
+  background: rgba(255, 80, 40, 0.08);
+}
+
+.vip-card h1 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.vip-muted {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.vip-muted a {
+  color: rgba(255, 220, 160, 0.95);
+}
+
+.vip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.vip-guest-name {
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+.vip-org {
+  margin: 0 0 18px;
+  font-size: 16px;
+  color: rgba(255, 200, 140, 0.9);
+}
+
+.vip-meta {
+  margin: 0 0 20px;
+  display: grid;
+  gap: 0;
+}
+
+.vip-meta dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 10px 0 2px;
+}
+
+.vip-meta dd {
+  margin: 0;
+  font-size: 15px;
+}
+
+.vip-actions h2,
+.vip-log h2 {
+  font-size: 15px;
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.vip-bar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vip-bar-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vip-bar-item > span:first-of-type {
+  flex: 1 1 140px;
+  font-weight: 600;
+}
+
+.vip-price {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+}
+
+.vip-bar-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.btn-vip {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 200, 160, 0.45);
+  background: rgba(120, 200, 160, 0.15);
+  color: rgba(220, 255, 236, 0.95);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-vip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-vip--paid {
+  border-color: rgba(255, 200, 120, 0.4);
+  background: rgba(255, 200, 120, 0.1);
+  color: rgba(255, 235, 200, 0.95);
+}
+
+.vip-log-list {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.vip-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vip-pill--free {
+  background: rgba(120, 200, 160, 0.2);
+  color: rgba(200, 245, 220, 0.95);
+}
+
+.vip-footer {
+  margin-top: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.vip-footer a {
+  color: rgba(255, 220, 160, 0.9);
+}
+
+code {
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+}

@@ -1,76 +1,104 @@
 mirai-lounge
 
-Проект мобильного меню Mirai Lounge.
+Мобильное меню, галерея столов, бронирование и заказы для Mirai Lounge (PHP, JSON-хранилище, опционально Docker).
 
-## Структура
+---
 
+## Для нового разработчика
+
+**Стек:** PHP 8.1+, без фреймворка. Статика и шаблоны в `public/` и `admin/`. Данные меню и галереи — JSON в `data/`. Для Web Push используется Composer-пакет `minishlink/web-push` (папка `vendor/` после `composer install`).
+
+**Как устроен фронт (продакшн-подход):**
+
+- В PHP-шаблонах — разметка и подключение ресурсов. **Инлайн-стили и большие `<script>` в страницах не используем:** стили в `public/assets/css/` и `admin/assets/css/`, скрипты в `public/assets/js/` и `admin/assets/js/`.
+- Небольшие данные с сервера на клиент передаём через **`<script type="application/json" id="…">`** и читаем в отдельном bootstrap-файле (например `mirai-bootstrap.js` для гостевого сайта, `dashboard.js` для админки), чтобы не смешивать PHP и логику UI.
+
+**Точки входа:**
+
+| Что | Где |
+|-----|-----|
+| Гостевой сайт | `public/index.php` → экраны в `public/screens/` |
+| Админка | `admin/login.php`, `admin/dashboard.php` (вкладки меню, категории, галерея) |
+| Заказы зала | `public/orders/` |
+| API заказа / push | `public/api/order-submit.php`, `public/api/push-subscribe.php` |
+
+**Локальный запуск без Docker:** из **корня репозитория** выполните `composer install`, затем `dev-server.bat` (Windows) или `./dev-server.sh` (macOS/Linux). Внутри используется `php -S 127.0.0.1:8080 -t public router.php` — документ root = **`public/`**, иначе пути `/assets/...` дадут 404.
+
+**База путей в подпапке на сервере:** при необходимости задайте **`MIRAI_PUBLIC_BASE`** (см. `public/inc/mirai_asset.php` и `config/config.php`).
+
+---
+
+## Запуск (Docker)
+
+Дважды кликните **docker/run.bat** или из корня проекта:
+
+```powershell
+docker compose -f docker/docker-compose.yml up -d
+```
+
+Полный гайд по установке Docker на Windows: **docker/WINDOWS-SETUP.md**. **Деплой через GitHub Actions** (rsync, без перезаписи `menu.json` и медиа): **DEPLOY.md**. Кратко про контейнеры: **docker/README.md**.
+
+---
+
+## Структура репозитория
+
+```
 config/
-  - config.php              настройки админки/путей хранения
+  config.php                 настройки админки, заказов, Telegram, VAPID
 
 data/
-  - menu.json               источник правды для меню (категории + товары)
+  menu.json                  меню (категории + товары)
+  gallery.json               галерея столов
+  orders.json                заказы (и при необходимости push_subscriptions.json)
 
-public/                     сайт (mirailounge.ru)
-  - index.php               точка входа, подключает экраны
-  assets/
-    css/
-      - reset.css
-      - variables.css
-      - main.css
-      - slider.css
-      - menu.css            стили экрана меню (вынесены из menu.php)
-      - booking.css         стили экрана брони
-    js/
-      - app.js
-      - navigation.js       координатная сетка экранов (5 экранов)
-      - gestures.js         управление свайпами
-      - slider.js
-      - gallery.js
-    img/
-      - logo/
-      - interior/
-      - menu/uploads/       загружаемые фото позиций из админки
-  screens/
-    - home.php
-    - about.php
-    - booking.php
-    - menu.php              читает данные из data/menu.json
-    - gallery.php
+router.php                   роутер только для встроенного PHP-сервера (лежит в корне рядом с dev-server)
 
-admin/                      админ-панель (mirailounge.ru/admin)
-  - index.php               редирект на login/dashboard
-  - login.php               вход в админку (сессии)
-  - dashboard.php           CRUD товаров, стоп-лист (visible), загрузка фото
-  lib/
-    - auth.php
-    - menu_storage.php      чтение/запись data/menu.json, загрузка изображений
-  assets/css/
-    - admin.css
+public/                      document root для гостевого сайта
+  index.php
+  screens/                   фрагменты страниц (home, menu, gallery, …)
+  assets/css/                стили экранов
+  assets/js/                 логика UI (menu.js, gallery.js, mirai-bootstrap.js, …)
+  assets/img/                статика и uploads для меню/галереи
+  api/                       order-submit, push-subscribe
+  orders/                    панель заказов для зала
 
-## Данные меню
+admin/
+  login.php, dashboard.php
+  assets/css/admin.css
+  assets/js/dashboard.js     модалки категорий/галереи, восстановление скролла
+  lib/                       auth, menu_storage, gallery_storage
 
-Файл data/menu.json:
-- categories: [{ id, title }]
-- products: [{ id, category_id, name, price, description, image, visible }]
+scripts/                     deploy-excludes.txt (rsync), VAPID и т.д.
+.github/workflows/         CI: деплой на сервер по push в main
+```
 
-Важно:
-- image может быть null/"" — тогда в гостевом меню показывается плейсхолдер
-- visible=false — позиция скрыта для гостей (стоп-лист)
+---
 
-## Админка
+## Данные меню и галереи
 
-Пользователи задаются в config/config.php:
-- admin.users: { login: password, ... }
+**menu.json**
 
-## Деплой (Ubuntu, nginx + php-fpm)
+- `categories`: `[{ id, title }, …]`
+- `products`: `[{ id, category_id, name, price, description, description_short?, weight?, image, visible, updated_at? }, …]`
 
-Рекомендуемый путь на сервере:
-- /home/deploy/mirai_lounge
+**gallery.json** — позиции галереи (подпись, путь к изображению, порядок); правка через админку.
 
-Права на запись (для загрузки фото и сохранения menu.json):
-- /home/deploy/mirai_lounge/data
-- /home/deploy/mirai_lounge/public/assets/img/menu/uploads
+Пустой `image` или отсутствие файла — в гостевом UI показывается плейсхолдер. **`visible: false`** — стоп-лист (позиция скрыта с меню для гостей).
 
-nginx:
-- root -> /home/deploy/mirai_lounge/public
-- /admin -> alias /home/deploy/mirai_lounge/admin
+---
+
+## Админка и безопасность
+
+Учётные записи задаются в **`config/config.php`** (`admin.users`). Для заказов и подписок на push — **`orders_security.signing_key`** и секции **`telegram`**, VAPID (часто через **`.env`** на проде). После первого входа смените пароли и ключи.
+
+---
+
+## Заказы и уведомления
+
+Гости оформляют заказ с привязкой к столу (сессия/контекст в `public/inc/`). Официанты работают в **`/orders/`**. Telegram и Web Push настраиваются в конфиге; подробности по VAPID и Docker — в **DEPLOY.md** и **docker/README.md**.
+
+---
+
+## Деплой
+
+Пошагово: **DEPLOY.md** (данные на диске при обновлении кода не затирайте: `data/`, загрузки в `public/assets/img/**/uploads/`).

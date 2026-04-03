@@ -1,0 +1,9 @@
+# Mirai Lounge — гостевой сайт
+User-agent: *
+Allow: /
+
+# Админку не индексируем (если открыта с того же хоста под /admin/)
+Disallow: /admin/
+
+# После деплоя добавьте строку с абсолютным URL (пример):
+# Sitemap: https://mirailounge.ru/sitemap.php

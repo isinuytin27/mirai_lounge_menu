@@ -12,7 +12,17 @@ const THRESHOLD = 80;
 const START_THRESHOLD = 10;
 
 viewport.addEventListener("pointerdown", (e) => {
+  if (e.target.closest(".nav-hints .hint")) return;
+  if (e.target.closest("[data-gallery-go-home], [data-booking-home], [data-about-home], [data-menu-go-home]")) return;
   if (e.target.closest("iframe")) return;
+  if (e.target.closest(".gallery-viewer")) return;
+  if (e.target.closest(".menu-cats")) return;
+  if (e.target.closest("[data-item-viewer]")) return;
+  /* Корзина меню: свайпы вверх/вниз обрабатывает сам экран меню */
+  if (e.target.closest(".menu-cart-tab")) return;
+  if (e.target.closest(".menu-cart-sheet")) return;
+  if (e.target.closest(".menu-cart-backdrop")) return;
+  if (e.target.closest(".menu-cart-clear")) return;
 
   dragging = true;
   axis = null;
@@ -21,10 +31,10 @@ viewport.addEventListener("pointerdown", (e) => {
   startX = e.clientX;
   startY = e.clientY;
 
-  // Если жест начался внутри скроллируемой зоны (меню),
+  // Если жест начался внутри скроллируемой зоны (меню, о нас),
   // даем вертикальному движению работать как скролл.
   // Горизонтальный свайп при явном движении по X перехватим позже.
-  if (e.target.closest(".menu-content")) {
+  if (e.target.closest(".menu-content") || e.target.closest(".about-content")) {
     pendingFromScrollable = true;
     dragging = false;
     return;
