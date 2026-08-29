@@ -9,7 +9,7 @@ use Mirai\Infrastructure\Db\Repository;
 /**
  * Чтение меню. Заменяет menu_storage.php + mirai_menu_public.php (расчёт линии на лету).
  */
-final class MenuRepository extends Repository
+final class MenuRepository extends Repository implements ProductFinder
 {
     /**
      * Видимое меню, сгруппированное по категориям (только непустые), в порядке сортировки.

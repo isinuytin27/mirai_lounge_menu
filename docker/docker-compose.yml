@@ -65,6 +65,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-mirailounge}
       POSTGRES_USER: ${POSTGRES_USER:-mirailounge}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mirailounge_dev}
+    # Проброс на localhost для запуска миграций/импорта и dev-инструментов с хоста.
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - ../data/pg:/var/lib/postgresql/data
     healthcheck:

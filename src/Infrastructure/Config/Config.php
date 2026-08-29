@@ -29,20 +29,23 @@ final class Config
             Dotenv::createImmutable($projectRoot)->safeLoad();
         }
 
-        // Снимок из всех источников (getenv + $_ENV + $_SERVER), $_ENV имеет приоритет.
+        // Снимок из всех источников. Приоритет: реальное окружение ПРОЦЕССА (getenv)
+        // побеждает значения из .env ($_ENV/$_SERVER). Иначе docker/CI/shell-переменные
+        // (напр. POSTGRES_HOST в контейнере или при локальном запуске) не смогли бы
+        // переопределить закоммиченные dev-дефолты .env.
         $env = [];
-        foreach (getenv() as $k => $v) {
-            $env[$k] = $v;
+        foreach ($_ENV as $k => $v) {
+            if (is_string($v)) {
+                $env[$k] = $v;
+            }
         }
         foreach ($_SERVER as $k => $v) {
             if (is_string($v)) {
                 $env[$k] = $v;
             }
         }
-        foreach ($_ENV as $k => $v) {
-            if (is_string($v)) {
-                $env[$k] = $v;
-            }
+        foreach (getenv() as $k => $v) {
+            $env[$k] = $v;
         }
 
         return new self($env);
