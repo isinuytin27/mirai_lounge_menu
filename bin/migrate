@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Обёртка над Phinx. Примеры:
+#   bin/migrate              — применить все миграции (migrate)
+#   bin/migrate status       — показать статус
+#   bin/migrate rollback     — откатить последнюю
+#   bin/migrate create Name  — создать новую миграцию
+set -e
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ACTION="${1:-migrate}"
+if [ "$#" -gt 0 ]; then shift; fi
+exec php "$DIR/vendor/bin/phinx" "$ACTION" -c "$DIR/phinx.php" "$@"

@@ -9,4 +9,10 @@ composer.phar
 .env
 # Данные и загрузки не нужны в слое образа (есть только composer)
 /data/*.json
-docker/ssl/**/*.pem
+/data/pg
+# Сертификаты/ключи — не тащить в build-контекст (секреты)
+**/*.key
+**/*.crt
+**/*.pem
+**/*.p12
+**/*.pfx

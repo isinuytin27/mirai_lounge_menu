@@ -3,6 +3,9 @@
 # Локальные секреты для Docker / Telegram / VAPID
 .env
 
+# Локальное состояние Claude Code
+.claude/
+
 # Runtime data (do not commit)
 /data/menu.json
 /data/gallery.json
@@ -10,6 +13,9 @@
 /data/push_subscriptions.json
 /data/vip_events.json
 /data/vip_guests.json
+/data/admin_users.json
+/data/tickets.json
+/data/tournaments.json
 
 /vendor/
 composer.phar
@@ -27,7 +33,35 @@ node_modules/
 dist/
 build/
 
+# Рантайм нового стека
+/var/
+.phpunit.cache/
+.phpunit.result.cache
 
-# SSL сертификаты (секреты)
-docker/ssl/mirailounge.ru/
+# graphify — сгенерированный граф проекта (артефакт, не исходник)
+/graphify-out/
+
+
+# SSL сертификаты и приватные ключи (СЕКРЕТЫ — никогда не коммитить)
+# Любые ключи/сертификаты по расширению, где бы ни лежали:
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+# Производные каталоги сертов по доменам:
+docker/ssl/*/
+# Разрешаем служебные файлы каталога ssl:
+!docker/ssl/.gitkeep
+!docker/ssl/README.md
+!docker/ssl/setup-certs.sh
+!docker/ssl/setup-certs.bat
+
+# Postgres data volume (runtime)
+/data/pg/
+
+# Mirai Pro — отдельный проект (../mirai_pro). install-into-stack.bat кладёт сюда
+# код сайта, vhost и cert — в git lounge их не держим.
+/miraipro_site/
+docker/nginx/conf.d/miraipro.conf
 

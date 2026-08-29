@@ -1,0 +1,34 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Переносит data/*.json в Postgres (идемпотентно). Запускать после миграций:
+ *   bin/migrate && bin/import-json
+ */
+
+use Mirai\Infrastructure\Db\Database;
+use Mirai\Infrastructure\Db\JsonImporter;
+
+/** @var \Psr\Container\ContainerInterface $container */
+$container = require dirname(__DIR__) . '/src/bootstrap.php';
+
+$root = (string) $container->get('projectRoot');
+$db = $container->get(Database::class);
+
+$importer = new JsonImporter($db, $root . '/data');
+
+fwrite(STDOUT, "Импорт data/*.json -> Postgres…\n");
+
+try {
+    $counts = $importer->run();
+} catch (Throwable $e) {
+    fwrite(STDERR, "ОШИБКА импорта: " . $e->getMessage() . "\n");
+    exit(1);
+}
+
+foreach ($counts as $table => $n) {
+    fwrite(STDOUT, sprintf("  %-24s %d\n", $table, $n));
+}
+fwrite(STDOUT, "Готово.\n");

@@ -3,10 +3,14 @@ FROM php:8.2-fpm-alpine
 RUN apk add --no-cache \
     libzip-dev \
     curl-dev \
+    sqlite-dev \
+    postgresql-dev \
     && docker-php-ext-install -j$(nproc) \
     zip \
     curl \
-    opcache
+    opcache \
+    pdo_sqlite \
+    pdo_pgsql
 
 RUN { \
     echo 'opcache.enable=1'; \

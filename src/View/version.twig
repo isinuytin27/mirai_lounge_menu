@@ -1,0 +1,10 @@
+{% extends 'layout.twig' %}
+
+{% block title %}Версия · {{ site.name }}{% endblock %}
+
+{% block content %}
+    <p class="brand">◆ MIRAI LOUNGE</p>
+    <h1>v{{ version }}</h1>
+    <p class="muted">окружение: <code>{{ env }}</code></p>
+    <p class="muted">новый стек: Slim · Twig · Postgres</p>
+{% endblock %}

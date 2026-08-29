@@ -16,6 +16,9 @@ services:
       - ../public/assets/img/menu/uploads:/var/www/mirailounge/public/assets/img/menu/uploads
       - ../public/assets/img/gallery/uploads:/var/www/mirailounge/public/assets/img/gallery/uploads
       - ../public/assets/img/vip/partner_uploads:/var/www/mirailounge/public/assets/img/vip/partner_uploads
+      # Mirai Pro (miraipro.ru) — код сюда кладёт mirai_pro\deploy\install-into-stack.bat. Код ro, data rw.
+      - ../miraipro_site:/var/www/miraipro:ro
+      - ../miraipro_site/data:/var/www/miraipro/data
     depends_on:
       - php
     restart: unless-stopped
@@ -33,8 +36,40 @@ services:
       - ../admin:/var/www/mirailounge/admin:ro
       - ../config:/var/www/mirailounge/config:ro
       - ../scripts:/var/www/mirailounge/scripts:ro
+      # Новый каркас (Slim): код, консольные утилиты, миграции
+      - ../src:/var/www/mirailounge/src:ro
+      - ../bin:/var/www/mirailounge/bin:ro
+      - ../migrations:/var/www/mirailounge/migrations:ro
+      - ../phinx.php:/var/www/mirailounge/phinx.php:ro
       - ../data:/var/www/mirailounge/data
       - ../public/assets/img/menu/uploads:/var/www/mirailounge/public/assets/img/menu/uploads
       - ../public/assets/img/gallery/uploads:/var/www/mirailounge/public/assets/img/gallery/uploads
       - ../public/assets/img/vip/partner_uploads:/var/www/mirailounge/public/assets/img/vip/partner_uploads
+      # Mirai Pro (miraipro.ru) — код сюда кладёт mirai_pro\deploy\install-into-stack.bat. Код ro, data rw.
+      - ../miraipro_site:/var/www/miraipro:ro
+      - ../miraipro_site/data:/var/www/miraipro/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Общий для платформы Postgres. Отдельная database под каждый сайт (пока — mirailounge).
+  postgres:
+    image: postgres:16-alpine
+    container_name: mirai-postgres
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      # Дефолты совпадают с дефолтами приложения (Config::db()), чтобы bare `up` работал без .env.
+      POSTGRES_DB: ${POSTGRES_DB:-mirailounge}
+      POSTGRES_USER: ${POSTGRES_USER:-mirailounge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mirailounge_dev}
+    volumes:
+      - ../data/pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mirailounge} -d ${POSTGRES_DB:-mirailounge}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
