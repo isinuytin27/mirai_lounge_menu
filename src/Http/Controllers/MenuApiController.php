@@ -17,22 +17,47 @@ final class MenuApiController
 
     public function __invoke(Request $request, Response $response): Response
     {
+        $visible = $this->menu->visibleMenu();
+
+        // Гастропары (граф связок) для всех товаров.
+        $slugs = [];
+        foreach ($visible as $group) {
+            foreach ($group['products'] as $p) {
+                $slugs[] = $p->slug;
+            }
+        }
+        $pairings = $this->menu->pairingsForSlugs($slugs);
+
         $categories = [];
-        foreach ($this->menu->visibleMenu() as $group) {
+        foreach ($visible as $group) {
             $category = $group['category'];
             $categories[] = [
-                'id' => $category->id,
+                'slug' => $category->slug,
                 'title' => $category->title,
                 'line' => $category->line,
-                'products' => array_map(static fn ($p): array => [
-                    'id' => $p->id,
-                    'name' => $p->name,
-                    'price' => $p->price,
-                    'description' => $p->description,
-                    'description_short' => $p->descriptionShort,
-                    'image' => $p->image,
-                    'weight' => $p->weight,
-                ], $group['products']),
+                'group' => $category->groupSlug,
+                'products' => array_map(static function ($p) use ($pairings): array {
+                    return [
+                        'slug' => $p->slug,
+                        'name' => $p->name,
+                        'price' => $p->price,
+                        'description' => $p->description,
+                        'description_short' => $p->descriptionShort,
+                        'composition' => $p->composition,
+                        'portion' => $p->portionLabel(),
+                        'prep_time' => $p->prepTime,
+                        'image' => $p->image,
+                        'available' => $p->available,
+                        'pairings' => array_map(static fn ($pp): array => [
+                            'slug' => $pp->slug,
+                            'name' => $pp->name,
+                            'price' => $pp->price,
+                            'image' => $pp->image,
+                            'kind' => $pp->kind,
+                            'note' => $pp->note,
+                        ], $pairings[$p->slug] ?? []),
+                    ];
+                }, $group['products']),
             ];
         }
 

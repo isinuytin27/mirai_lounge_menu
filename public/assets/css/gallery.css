@@ -53,7 +53,7 @@
   color: rgba(255, 255, 255, 0.92);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  transition: background 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.12s var(--ease-out);
 }
 
 .gallery-nav-up-icon {
@@ -63,9 +63,11 @@
   opacity: 0.95;
 }
 
-.gallery-nav-up:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.24);
+@media (hover: hover) and (pointer: fine) {
+  .gallery-nav-up:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
 }
 
 .gallery-nav-up:active {
@@ -102,18 +104,22 @@
   -webkit-appearance: none;
   /* Горизонтальный прямоугольник: ниже по высоте, чем квадрат при той же ширине ячейки */
   aspect-ratio: 4 / 3;
-  transition: box-shadow 0.2s ease, transform 0.12s ease;
+  transition: box-shadow 0.2s var(--ease-out), transform 0.12s var(--ease-out);
   animation: mirai-invite-cta 3.2s ease-in-out infinite;
 }
 
-.gallery-thumb:hover,
 .gallery-thumb:focus-visible {
   animation-play-state: paused;
+}
+@media (hover: hover) and (pointer: fine) {
+  .gallery-thumb:hover {
+    animation-play-state: paused;
+  }
 }
 
 .gallery-thumb:active {
   animation: none;
-  transform: scale(0.985);
+  transform: scale(0.97);
 }
 
 .gallery-thumb img {
@@ -285,6 +291,13 @@
 
   .gallery-grid {
     gap: 6px;
+  }
+}
+
+/* Reduced motion: гасим пульс-приглашение на превью */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-thumb {
+    animation: none;
   }
 }
 

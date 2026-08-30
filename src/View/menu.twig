@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Меню · {{ site.name }}</title>
+    <meta name="theme-color" content="{{ site.theme_color }}">
+    <meta name="description" content="{{ site.description }}">
+    <link rel="stylesheet" href="/assets/css/reset.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/variables.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/main.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/menu.css?v={{ av }}">
+    <style>
+        /* Отдельная страница вместо SPA-секции: меню на весь вьюпорт, скролл внутри. */
+        html, body { height: 100%; overflow: hidden; }
+        .screen.menu { position: relative; inset: auto; transform: none; width: 100%; height: 100dvh; overflow: hidden; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+    {% include 'screens/menu.twig' %}
+
+    <script type="application/json" id="mirai-order-context">{"tableBound": {{ table_bound ? 'true' : 'false' }}, "tableCaption": {{ table_caption ? table_caption|json_encode|raw : 'null' }}}</script>
+    <script src="/assets/js/mirai-bootstrap.js?v={{ av }}"></script>
+    <script src="/assets/js/menu.js?v={{ av }}"></script>
+</body>
+</html>

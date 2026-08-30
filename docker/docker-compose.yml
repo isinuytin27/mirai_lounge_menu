@@ -48,31 +48,16 @@ services:
       # Mirai Pro (miraipro.ru) — код сюда кладёт mirai_pro\deploy\install-into-stack.bat. Код ro, data rw.
       - ../miraipro_site:/var/www/miraipro:ro
       - ../miraipro_site/data:/var/www/miraipro/data
-    depends_on:
-      postgres:
-        condition: service_healthy
+    # Postgres вынесен в общий платформенный стек (docker/platform). Сайт подключается
+    # к нему по сети mirai-platform (host=postgres). Поднять платформу нужно ДО сайта:
+    #   docker compose -f docker/platform/docker-compose.yml up -d
+    networks:
+      - default
+      - platform
     restart: unless-stopped
 
-  # Общий для платформы Postgres. Отдельная database под каждый сайт (пока — mirailounge).
-  postgres:
-    image: postgres:16-alpine
-    container_name: mirai-postgres
-    env_file:
-      - path: ../.env
-        required: false
-    environment:
-      # Дефолты совпадают с дефолтами приложения (Config::db()), чтобы bare `up` работал без .env.
-      POSTGRES_DB: ${POSTGRES_DB:-mirailounge}
-      POSTGRES_USER: ${POSTGRES_USER:-mirailounge}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mirailounge_dev}
-    # Проброс на localhost для запуска миграций/импорта и dev-инструментов с хоста.
-    ports:
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - ../data/pg:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mirailounge} -d ${POSTGRES_DB:-mirailounge}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
+# Внешняя сеть общей платформы (создаётся docker/platform/docker-compose.yml).
+networks:
+  platform:
+    external: true
+    name: mirai-platform

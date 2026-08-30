@@ -5,65 +5,37 @@ declare(strict_types=1);
 namespace Mirai\Http\Controllers;
 
 use Mirai\Domain\Orders\TableRegistry;
-use Mirai\Infrastructure\Config\Config;
-use Mirai\Infrastructure\Security\TableSession;
+use Mirai\Infrastructure\Security\TableCookie;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
- * QR-вход стола: ?table=<id> валидируется против реестра столов, ставит подписанную
- * cookie и редиректит на путь без query. Порт mirai_table_handle_query_param().
+ * QR-вход стола: /t?table=<id> валидируется против реестра столов, ставит подписанную
+ * cookie и редиректит на витрину. Порт mirai_table_handle_query_param().
  */
 final class TableEntryController
 {
     public function __construct(
-        private readonly TableSession $session,
         private readonly TableRegistry $tables,
-        private readonly Config $config,
+        private readonly TableCookie $cookie,
     ) {}
 
     public function __invoke(Request $request, Response $response): Response
     {
         $tableId = trim((string) ($request->getQueryParams()['table'] ?? ''));
-        $path = $request->getUri()->getPath();
-        if ($path === '') {
-            $path = '/';
-        }
+        // /t — выделенный роут входа; после обработки уводим гостя на витрину.
+        $target = '/';
 
         if ($tableId === '' || !$this->tables->activeExists($tableId)) {
-            // Нет/неизвестный стол — просто уходим на путь без query, без cookie.
-            return $response->withStatus(302)->withHeader('Location', $path);
+            return $response->withStatus(302)->withHeader('Location', $target);
         }
 
         $caption = $this->tables->captionOf($tableId) ?? $tableId;
-        $cfg = $this->config->tableSession();
-        $token = $this->session->issue($tableId, $caption);
-
-        $cookie = $this->buildCookie($cfg['cookie_name'], $token, $cfg['ttl_seconds'], $request);
+        $https = $request->getUri()->getScheme() === 'https';
 
         return $response
             ->withStatus(302)
-            ->withHeader('Set-Cookie', $cookie)
-            ->withHeader('Location', $path);
-    }
-
-    private function buildCookie(string $name, string $value, int $ttl, Request $request): string
-    {
-        $expires = gmdate('D, d-M-Y H:i:s T', time() + $ttl);
-        $https = $request->getUri()->getScheme() === 'https';
-
-        $parts = [
-            $name . '=' . $value,
-            'Expires=' . $expires,
-            'Max-Age=' . $ttl,
-            'Path=/',
-            'HttpOnly',
-            'SameSite=Lax',
-        ];
-        if ($https) {
-            $parts[] = 'Secure';
-        }
-
-        return implode('; ', $parts);
+            ->withHeader('Set-Cookie', $this->cookie->header($tableId, $caption, $https))
+            ->withHeader('Location', $target);
     }
 }

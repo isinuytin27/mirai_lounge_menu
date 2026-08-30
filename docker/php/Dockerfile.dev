@@ -1,0 +1,25 @@
+# DEV-образ: только PHP-расширения (pdo_pgsql и пр.), БЕЗ in-image composer.
+# vendor монтируется с хоста (см. docker-compose.override.yml). Меньше сетевой
+# поверхности при сборке — не тянем packagist, только alpine apk.
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache \
+    libzip-dev \
+    curl-dev \
+    sqlite-dev \
+    postgresql-dev \
+    && docker-php-ext-install -j$(nproc) \
+    zip \
+    curl \
+    opcache \
+    pdo_sqlite \
+    pdo_pgsql
+
+RUN { \
+    echo 'opcache.enable=1'; \
+    echo 'upload_max_filesize=16M'; \
+    echo 'post_max_size=16M'; \
+    echo 'allow_url_fopen=On'; \
+    } > /usr/local/etc/php/conf.d/custom.ini
+
+WORKDIR /var/www/mirailounge

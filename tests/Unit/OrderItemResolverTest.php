@@ -17,8 +17,8 @@ final class OrderItemResolverTest extends TestCase
             public function findVisibleProduct(string $productId): ?Product
             {
                 return match ($productId) {
-                    'p_hookah' => new Product('p_hookah', 'kalyan', 'Кальян', 2000, 'hookah'),
-                    'p_food' => new Product('p_food', 'zakuski', 'Брускета', 750, 'kitchen'),
+                    'p_hookah' => new Product(1, 'p_hookah', 'kalyan', 'Кальян', 2000, 'hookah'),
+                    'p_food' => new Product(2, 'p_food', 'zakuski', 'Брускета', 750, 'kitchen'),
                     default => null,
                 };
             }

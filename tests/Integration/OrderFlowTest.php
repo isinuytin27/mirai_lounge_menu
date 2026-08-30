@@ -59,12 +59,12 @@ final class OrderFlowTest extends TestCase
         $repo = $this->c->get(OrderRepository::class);
 
         // Новый заказ
-        $r1 = $svc->submit($this->tableId, 'Integration', [['id' => $first->id, 'qty' => 2]]);
+        $r1 = $svc->submit($this->tableId, 'Integration', [['id' => $first->slug, 'qty' => 2]]);
         self::assertTrue($r1->ok);
         self::assertFalse($r1->append);
 
         // Дозаказ к тому же столу -> тот же заказ
-        $r2 = $svc->submit($this->tableId, 'Integration', [['id' => $first->id, 'qty' => 1]]);
+        $r2 = $svc->submit($this->tableId, 'Integration', [['id' => $first->slug, 'qty' => 1]]);
         self::assertTrue($r2->ok);
         self::assertTrue($r2->append);
         self::assertSame($r1->orderId, $r2->orderId);

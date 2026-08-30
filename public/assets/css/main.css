@@ -51,28 +51,61 @@ body {
   user-select: none;
 }
 
-.about {
+/* Раскладка относительно home (1,1):
+   наверху — БРОНЬ, внизу — МЕНЮ, слева — ГАЛЕРЕЯ, справа — О НАС */
+
+.booking {
+  /* верх (1,0) */
   left: 100dvw;
   top: 0;
 }
 
 .menu {
-  left: 200dvw;
-  top: 100dvh;
-}
-
-.booking {
-  left: 0;
-  top: 100dvh;
-}
-
-.gallery {
+  /* низ (1,2) */
   left: 100dvw;
   top: 200dvh;
 }
 
+.gallery {
+  /* слева (0,1) */
+  left: 0;
+  top: 100dvh;
+}
+
+.about {
+  /* справа (2,1) */
+  left: 200dvw;
+  top: 100dvh;
+}
+
+.home-bg-video,
+.home-bg-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.home-bg-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Затемнение для читаемости лого и подписей поверх видео */
+.home-bg-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.3) 28%,
+    rgba(0, 0, 0, 0.3) 72%,
+    rgba(0, 0, 0, 0.62) 100%
+  );
+}
+
 .home-content {
   position: relative;
+  z-index: 1;
 
   width: 100%;
   height: 100%;
@@ -171,10 +204,23 @@ body {
   position: absolute;
   inset: 0;
 
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 
-  background: rgba(255, 255, 255, 0.03);
+  /* Liquid glass — единственное стеклянное место на главной (как .mo-glass) */
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(8, 8, 12, 0.1) 100%
+  );
+  backdrop-filter: blur(7px) saturate(1.4) brightness(1.06);
+  -webkit-backdrop-filter: blur(7px) saturate(1.4) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 1px 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.32);
+  overflow: hidden;
 }
 
 .home-swipe-hint-marker {
@@ -386,17 +432,24 @@ body {
   animation: mirai-invite-tap-icon 2.35s ease-in-out infinite;
 }
 
-.booking-home-btn:hover .booking-home-icon,
 .booking-home-btn:focus-visible .booking-home-icon,
-.about-home-btn:hover .about-home-icon,
 .about-home-btn:focus-visible .about-home-icon,
-.menu-nav-home:hover .menu-nav-home-icon,
 .menu-nav-home:focus-visible .menu-nav-home-icon,
-.gallery-nav-up:hover .gallery-nav-up-icon,
 .gallery-nav-up:focus-visible .gallery-nav-up-icon {
   animation-play-state: paused;
   opacity: 1;
   transform: scale(1.06);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .booking-home-btn:hover .booking-home-icon,
+  .about-home-btn:hover .about-home-icon,
+  .menu-nav-home:hover .menu-nav-home-icon,
+  .gallery-nav-up:hover .gallery-nav-up-icon {
+    animation-play-state: paused;
+    opacity: 1;
+    transform: scale(1.06);
+  }
 }
 
 .booking-home-btn:active .booking-home-icon,
@@ -425,11 +478,17 @@ body {
   animation: mirai-invite-hint-label 2.85s ease-in-out infinite;
 }
 
-.nav-hints .hint:hover,
 .nav-hints .hint:focus-visible {
   animation-play-state: paused;
   opacity: 1;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.28);
+}
+@media (hover: hover) and (pointer: fine) {
+  .nav-hints .hint:hover {
+    animation-play-state: paused;
+    opacity: 1;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.28);
+  }
 }
 
 .nav-hints .hint:active {
@@ -469,6 +528,40 @@ body {
   100% {
     transform: translateY(0);
   }
+}
+
+/* Слот-плейсхолдер логотипа на главной: задаёт «эталонный» размер героя.
+   Сам логотип рисует плавающий #brand-logo поверх (см. brand-logo.js). */
+.logo-slot {
+  pointer-events: none;
+}
+
+.logo-slot--home {
+  width: min(50vw, 240px);
+  aspect-ratio: 282 / 370;
+}
+
+/* Плавающий логотип — фиксированный бокс, «облетает» из центра главной в шапку
+   меню (размер/позиция + кроссфейд знака mirai → лого лаунжа). Анимация задаётся
+   в brand-logo.js через transition. На главной логотип статичен (без покачивания). */
+#brand-logo {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  opacity: 0;            /* до инициализации JS */
+  pointer-events: none;
+  will-change: transform, width, height, opacity;
+}
+
+.brand-logo-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transition: opacity 0.3s ease;
 }
 
 .gallery {
@@ -566,21 +659,17 @@ body {
   letter-spacing: 0.02em;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  transition: transform 0.12s var(--ease-out), background 0.12s var(--ease-out), border-color 0.12s var(--ease-out);
 }
 
 .vpn-hint-btn:active {
-  transform: scale(0.985);
+  transform: scale(0.97);
 }
 
 .vpn-hint-btn-primary {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.22);
   color: rgba(255, 255, 255, 0.95);
-}
-
-.vpn-hint-btn-primary:hover {
-  background: rgba(255, 255, 255, 0.18);
 }
 
 .vpn-hint-btn-quiet {
@@ -591,7 +680,12 @@ body {
   font-size: 12px;
 }
 
-.vpn-hint-btn-quiet:hover {
-  color: rgba(255, 255, 255, 0.75);
-  border-color: rgba(255, 255, 255, 0.16);
+@media (hover: hover) and (pointer: fine) {
+  .vpn-hint-btn-primary:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .vpn-hint-btn-quiet:hover {
+    color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
 }

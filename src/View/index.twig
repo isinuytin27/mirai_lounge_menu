@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="{{ site.description }}">
+    {% if site.keywords %}<meta name="keywords" content="{{ site.keywords }}">{% endif %}
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="{{ site.name }}">
+    <meta name="theme-color" content="{{ site.theme_color }}">
+    <title>{{ site.title }}</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+
+    <link rel="stylesheet" href="/assets/css/reset.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/variables.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/main.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/menu.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/booking.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/gallery.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/about.css?v={{ av }}">
+    <link rel="stylesheet" href="/assets/css/loader.css?v={{ av }}">
+
+    <script defer src="/assets/js/loader.js?v={{ av }}"></script>
+</head>
+<body>
+    <script type="application/json" id="mirai-order-context">{"tableBound": {{ table_bound ? 'true' : 'false' }}, "tableCaption": {{ table_caption ? table_caption|json_encode|raw : 'null' }}}</script>
+
+    <div id="app-loader" class="app-loader" aria-label="Загрузка">
+        <div class="loader-card">
+            <img class="loader-logo" src="/assets/img/logo/logo-vert.svg" alt="Mirai Lounge" loading="eager" />
+            <h1 class="loader-title">MIRAI LOUNGE</h1>
+            <div class="loader-sub" data-loader-text>Подготавливаем меню…</div>
+            <div class="loader-bar" role="progressbar" aria-valuetext="Загрузка"><i></i></div>
+        </div>
+    </div>
+
+    <div id="viewport">
+        {% include 'screens/about.twig' %}
+        {% include 'screens/booking.twig' %}
+        {% include 'screens/home.twig' %}
+        {% include 'screens/menu.twig' %}
+        {% include 'screens/gallery.twig' %}
+    </div>
+
+    {# Плавающий логотип: летит из центра главной в строку «Меню», меняя знак mirai на лого лаунжа #}
+    <div id="brand-logo" aria-hidden="true">
+        <img class="brand-logo-img brand-logo-mirai" src="/assets/img/logo/logo-vert.svg" alt="Mirai">
+        <img class="brand-logo-img brand-logo-lounge" src="/assets/img/logo/logo-clean.svg" alt="Mirai Lounge">
+    </div>
+
+    <script defer src="/assets/js/mirai-bootstrap.js?v={{ av }}"></script>
+    <script defer src="/assets/js/app.js?v={{ av }}"></script>
+    <script defer src="/assets/js/navigation.js?v={{ av }}"></script>
+    <script defer src="/assets/js/brand-logo.js?v={{ av }}"></script>
+    <script defer src="/assets/js/gestures.js?v={{ av }}"></script>
+    <script defer src="/assets/js/about.js?v={{ av }}"></script>
+    <script defer src="/assets/js/gallery.js?v={{ av }}"></script>
+    <script defer src="/assets/js/menu.js?v={{ av }}"></script>
+</body>
+</html>

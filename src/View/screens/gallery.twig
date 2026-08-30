@@ -1,0 +1,52 @@
+<section class="screen gallery">
+    <div class="gallery-wrap" data-gallery>
+        <header class="gallery-headline">
+            <h1 class="gallery-title">Галерея</h1>
+            <button type="button" class="gallery-nav-up" data-gallery-go-home aria-label="На главную">
+                <svg class="gallery-nav-up-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+            </button>
+        </header>
+
+        <div class="gallery-grid" data-gallery-grid>
+            {% for it in gallery %}
+                {% set src = it.image ? '/' ~ it.image|trim('/') : '' %}
+                {% set caption = it.caption ?: 'Позиция №' ~ (loop.index) %}
+                {% if src %}
+                <button class="gallery-thumb" type="button" data-gallery-thumb data-idx="{{ loop.index0 }}" data-caption="{{ caption }}" aria-label="{{ caption }}">
+                    <img src="{{ src }}" alt="{{ caption }}" loading="lazy">
+                    <div class="gallery-badge">№{{ loop.index }}</div>
+                </button>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="gallery-viewer-backdrop" data-gallery-backdrop hidden></div>
+        <div class="gallery-viewer" data-gallery-viewer hidden aria-hidden="true">
+            <div class="gallery-viewer-head">
+                <div>
+                    <div class="gallery-viewer-title" data-gallery-title>Позиция №1</div>
+                    <div class="gallery-viewer-sub" data-gallery-sub>1/{{ gallery|length }}</div>
+                </div>
+                <button class="gallery-viewer-close" type="button" data-gallery-close aria-label="Закрыть">✕</button>
+            </div>
+
+            <div class="gallery-viewer-stage" data-gallery-stage>
+                <div class="gallery-viewer-track" data-gallery-track>
+                    {% for it in gallery %}
+                        {% set src = it.image ? '/' ~ it.image|trim('/') : '' %}
+                        {% set caption = it.caption ?: 'Позиция №' ~ (loop.index) %}
+                        {% if src %}
+                        <div class="gallery-viewer-slide">
+                            <img src="{{ src }}" alt="{{ caption }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="gallery-viewer-nav">
+                    <button class="gallery-viewer-btn prev" type="button" data-gallery-prev aria-label="Предыдущая">‹</button>
+                    <button class="gallery-viewer-btn next" type="button" data-gallery-next aria-label="Следующая">›</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

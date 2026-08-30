@@ -21,7 +21,8 @@ const SCREENS = new Set(["1,0", "1,1", "0,1", "2,1", "1,2"]);
 function render(animated = true) {
   if (animated) {
     state.animating = true;
-    viewport.style.transition = "transform .35s cubic-bezier(.4,0,.2,1)";
+    /* iOS-like drawer-кривая (Emil) — смена экранов ощущается «дороже» */
+    viewport.style.transition = "transform .35s var(--ease-drawer)";
 
     setTimeout(() => {
       state.animating = false;
@@ -31,6 +32,14 @@ function render(animated = true) {
   }
 
   viewport.style.transform = `translate3d(-${state.x * 100}dvw,-${state.y * 100}dvh,0)`;
+
+  try {
+    window.dispatchEvent(
+      new CustomEvent("mirai:navigate", {
+        detail: { x: state.x, y: state.y, animated },
+      })
+    );
+  } catch (_) {}
 }
 
 /* проверка координат */

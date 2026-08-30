@@ -78,7 +78,7 @@ final class HttpApiTest extends TestCase
         $request = (new ServerRequestFactory())->createServerRequest('POST', '/api/order-submit')
             ->withCookieParams([$cfg['cookie_name'] => $token])
             ->withParsedBody(['items' => [
-                ['id' => $product->id, 'qty' => 2],
+                ['id' => $product->slug, 'qty' => 2],
                 ['id' => 'nonexistent', 'qty' => 1],
             ]]);
 

@@ -1,0 +1,62 @@
+/* Дизайн-токены Mirai Lounge. Единый источник цвета/типографики/отступов —
+   заменяет старый variables.css из двух переменных и per-page силосы. */
+:root {
+  color-scheme: dark;
+
+  /* палитра */
+  --c-bg: #0a0910;
+  --c-surface: #141018;
+  --c-surface-2: #1c1626;
+  --c-line: rgba(245, 0, 125, 0.16);
+  --c-ink: #f4eef7;
+  --c-dim: #9b8fae;
+  --c-accent: #f5007d;
+  --c-accent-2: #7b5cff;
+  --c-ok: #39d98a;
+  --c-warn: #ffc857;
+
+  /* линии выдачи */
+  --line-hookah: #7b5cff;
+  --line-bar: #f5007d;
+  --line-kitchen: #ffc857;
+
+  /* типографика */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 24px;
+  --fs-2xl: 32px;
+
+  /* отступы (шкала 4px) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-8: 48px;
+
+  /* радиусы / тени */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+  --shadow-1: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 48px rgba(0, 0, 0, 0.55);
+
+  /* прочее */
+  --dur: 0.18s;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}

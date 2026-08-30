@@ -44,38 +44,104 @@ final class JsonImporter
 
     // ---------- домены ----------
 
+    /** Группы меню (плашки) и какие категории в них входят. Сидируется в menu_groups. */
+    private const MENU_GROUPS = [
+        ['slug' => 'hookah', 'title' => 'Кальян', 'cats' => ['kalyan']],
+        ['slug' => 'bar', 'title' => 'Бар', 'cats' => [
+            'author_cocktails', 'classic', 'tinctures', 'sours', 'tropical',
+            'item_522b0eac', 'item', 'item_258c0a14', 'item_dcbc0045', 'item_b87d8ae4',
+            'item_e06230e4', 'item_2a99d782', 'item_eb623cf2', 'item_695f114b', 'item_4f0f7740',
+            'na_cocktails', 'tea_leaf', 'tea_signature', 'item_2f338739', 'item_5a485d13',
+        ]],
+        ['slug' => 'kitchen', 'title' => 'Кухня', 'cats' => ['zakuski', 'salaty', 'goryachee', 'pasta', 'pizza', 'desserts']],
+        ['slug' => 'night', 'title' => 'Ночное меню', 'cats' => []],
+    ];
+
     private function importMenu(): void
     {
         $data = $this->load('menu.json');
-        $categories = $this->rows($data['categories'] ?? []);
-        foreach ($categories as $i => $c) {
-            $categoryId = (string) $c['id'];
-            $this->upsert('menu_categories', [
-                'id' => $categoryId,
-                'title' => (string) ($c['title'] ?? ''),
-                // Историческое правило -> данные (один раз при импорте).
-                'line' => MenuLine::forCategory($categoryId),
+
+        // 1) Группы -> menu_groups, slug => id.
+        $catToGroupSlug = [];
+        $groupId = [];
+        foreach (self::MENU_GROUPS as $i => $g) {
+            $groupId[$g['slug']] = $this->upsertReturningId('menu_groups', 'slug', [
+                'slug' => $g['slug'],
+                'title' => $g['title'],
                 'sort_order' => $i,
-                'updated_at' => $data['updated_at'] ?? null,
+            ]);
+            foreach ($g['cats'] as $cat) {
+                $catToGroupSlug[$cat] = $g['slug'];
+            }
+        }
+
+        // 2) Категории -> menu_categories (group_id + line), slug => id.
+        $categoryId = [];
+        foreach ($this->rows($data['categories'] ?? []) as $i => $c) {
+            $slug = (string) $c['id'];
+            $gslug = $catToGroupSlug[$slug] ?? null;
+            $categoryId[$slug] = $this->upsertReturningId('menu_categories', 'slug', [
+                'slug' => $slug,
+                'group_id' => $gslug !== null ? $groupId[$gslug] : null,
+                'title' => (string) ($c['title'] ?? ''),
+                'line' => MenuLine::forCategory($slug),
+                'sort_order' => $i,
             ]);
         }
 
-        $products = $this->rows($data['products'] ?? []);
-        foreach ($products as $i => $p) {
-            $this->upsert('menu_products', [
-                'id' => (string) $p['id'],
-                'category_id' => $this->nullableStr($p['category_id'] ?? null),
+        // 3) Товары -> products (суррогат id + slug), порция/время раздельно.
+        foreach ($this->rows($data['products'] ?? []) as $i => $p) {
+            $slug = (string) $p['id'];
+            $catSlug = $this->nullableStr($p['category_id'] ?? null);
+            [$portionValue, $portionUnit, $prepTime] = $this->parsePortion($this->nullableStr($p['weight'] ?? null));
+
+            $this->upsertReturningId('products', 'slug', [
+                'slug' => $slug,
+                'category_id' => $catSlug !== null ? ($categoryId[$catSlug] ?? null) : null,
                 'name' => (string) ($p['name'] ?? ''),
                 'price' => (int) ($p['price'] ?? 0),
                 'description' => $this->nullableStr($p['description'] ?? null),
                 'description_short' => $this->nullableStr($p['description_short'] ?? null),
+                'composition' => null,
+                'portion_value' => $portionValue,
+                'portion_unit' => $portionUnit,
+                'prep_time' => $prepTime,
                 'image' => $this->nullableStr($p['image'] ?? null),
-                'weight' => $this->nullableStr($p['weight'] ?? null),
                 'visible' => $this->bool($p['visible'] ?? true),
+                'available' => true,
                 'sort_order' => $i,
-                'updated_at' => $this->nullableStr($p['updated_at'] ?? null),
             ]);
         }
+    }
+
+    /**
+     * Разбор старого поля weight на порцию и время приготовления.
+     * «270 г» -> [270,'г',null]; «500 мл» -> [500,'мл',null]; «250» -> [250,null,null];
+     * «~40-60 минут» -> [null,null,'40-60 минут'].
+     *
+     * @return array{0:?string,1:?string,2:?string} [portion_value, portion_unit, prep_time]
+     */
+    private function parsePortion(?string $weight): array
+    {
+        if ($weight === null) {
+            return [null, null, null];
+        }
+        $w = trim($weight);
+
+        // Время (кальян): содержит «мин».
+        if (mb_stripos($w, 'мин') !== false) {
+            return [null, null, trim(ltrim($w, '~ '))];
+        }
+
+        // Число + единица (г | мл | шт).
+        if (preg_match('/^(\d+(?:[.,]\d+)?)\s*(г|мл|шт|kg|кг|l|л)?\.?$/u', $w, $m) === 1) {
+            $value = str_replace(',', '.', $m[1]);
+            $unit = empty($m[2]) ? null : $m[2];
+            return [$value, $unit, null];
+        }
+
+        // Не распознали — кладём как есть в prep_time (запасной вариант, не теряем данные).
+        return [null, null, $w];
     }
 
     private function importGallery(): void
@@ -343,6 +409,35 @@ final class JsonImporter
         );
         $this->pdo()->prepare($sql)->execute($this->bind($row));
         $this->counts[$table] = ($this->counts[$table] ?? 0) + 1;
+    }
+
+    /**
+     * Upsert по уникальному ключу с возвратом id (для таблиц с суррогатным PK).
+     * @param array<string,mixed> $row
+     */
+    private function upsertReturningId(string $table, string $conflict, array $row): int
+    {
+        $cols = array_keys($row);
+        $placeholders = array_map(static fn (string $c): string => ':' . $c, $cols);
+        $updates = [];
+        foreach ($cols as $c) {
+            if ($c !== $conflict) {
+                $updates[] = "{$c} = EXCLUDED.{$c}";
+            }
+        }
+        $sql = sprintf(
+            'INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s RETURNING id',
+            $table,
+            implode(', ', $cols),
+            implode(', ', $placeholders),
+            $conflict,
+            $updates === [] ? "{$conflict} = EXCLUDED.{$conflict}" : implode(', ', $updates),
+        );
+        $stmt = $this->pdo()->prepare($sql);
+        $stmt->execute($this->bind($row));
+        $this->counts[$table] = ($this->counts[$table] ?? 0) + 1;
+
+        return (int) $stmt->fetchColumn();
     }
 
     /**

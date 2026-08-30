@@ -22,7 +22,7 @@ final class OrderSubmissionServiceTest extends TestCase
             public function findVisibleProduct(string $productId): ?Product
             {
                 return $productId === 'p1'
-                    ? new Product('p1', 'zakuski', 'Брускета', 750, 'kitchen')
+                    ? new Product(1, 'p1', 'zakuski', 'Брускета', 750, 'kitchen')
                     : null;
             }
         };

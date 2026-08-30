@@ -7,38 +7,79 @@ namespace Mirai\Domain\Menu;
 use Mirai\Infrastructure\Db\Repository;
 
 /**
- * Чтение меню. Заменяет menu_storage.php + mirai_menu_public.php (расчёт линии на лету).
+ * Чтение меню из нормализованной схемы: menu_groups -> menu_categories -> products,
+ * плюс граф гастропар product_pairings. Заменяет menu_storage.php + mirai_menu_public.php.
  */
 final class MenuRepository extends Repository implements ProductFinder
 {
     /**
-     * Видимое меню, сгруппированное по категориям (только непустые), в порядке сортировки.
+     * Группы меню (плашки первого экрана) в порядке сортировки.
+     *
+     * @return list<array{slug:string,title:string}>
+     */
+    public function groups(): array
+    {
+        $rows = $this->fetchAll(
+            'SELECT slug, title FROM menu_groups WHERE active = TRUE ORDER BY sort_order, title'
+        );
+
+        return array_map(static fn (array $r): array => [
+            'slug' => (string) $r['slug'],
+            'title' => (string) $r['title'],
+        ], $rows);
+    }
+
+    /**
+     * Видимое меню, сгруппированное по категориям (только непустые).
      *
      * @return list<array{category:Category,products:list<Product>}>
      */
     public function visibleMenu(): array
     {
-        $categories = $this->fetchAll(
-            'SELECT id, title, line, sort_order FROM menu_categories ORDER BY sort_order, title'
-        );
-        $products = $this->fetchAll(
-            'SELECT id, category_id, name, price, description, description_short, image, weight, visible, sort_order
-             FROM menu_products WHERE visible = TRUE ORDER BY sort_order, name'
+        $rows = $this->fetchAll(
+            "SELECT p.id, p.slug, p.name, p.price, p.description, p.description_short,
+                    p.composition, p.portion_value, p.portion_unit, p.prep_time, p.image,
+                    p.visible, p.available, p.sort_order,
+                    c.id AS c_id, c.slug AS category_slug, c.title AS c_title,
+                    c.line AS c_line, c.sort_order AS c_sort, g.slug AS group_slug
+             FROM products p
+             JOIN menu_categories c ON c.id = p.category_id
+             LEFT JOIN menu_groups g ON g.id = c.group_id
+             WHERE p.visible = TRUE
+             ORDER BY c.sort_order, c.title, p.sort_order, p.name"
         );
 
-        return self::buildMenu($categories, $products);
+        /** @var array<string,array{category:Category,products:list<Product>}> $byCat */
+        $byCat = [];
+        foreach ($rows as $r) {
+            $catSlug = (string) $r['category_slug'];
+            if (!isset($byCat[$catSlug])) {
+                $byCat[$catSlug] = [
+                    'category' => Category::fromRow([
+                        'id' => $r['c_id'], 'slug' => $catSlug, 'title' => $r['c_title'],
+                        'line' => $r['c_line'], 'group_slug' => $r['group_slug'], 'sort_order' => $r['c_sort'],
+                    ]),
+                    'products' => [],
+                ];
+            }
+            $byCat[$catSlug]['products'][] = Product::fromRow($r, (string) $r['c_line']);
+        }
+
+        return array_values($byCat);
     }
 
-    /** Найти один видимый продукт по id (для валидации заказа). Линия — из его категории. */
-    public function findVisibleProduct(string $productId): ?Product
+    /** Найти видимый товар по slug (для валидации заказа). */
+    public function findVisibleProduct(string $productSlug): ?Product
     {
         $row = $this->fetchOne(
-            'SELECT p.id, p.category_id, p.name, p.price, p.description, p.description_short,
-                    p.image, p.weight, p.visible, p.sort_order, COALESCE(c.line, :kitchen) AS line
-             FROM menu_products p
+            "SELECT p.id, p.slug, p.name, p.price, p.description, p.description_short,
+                    p.composition, p.portion_value, p.portion_unit, p.prep_time, p.image,
+                    p.visible, p.available, p.sort_order,
+                    c.slug AS category_slug, COALESCE(c.line, :kitchen) AS line
+             FROM products p
              LEFT JOIN menu_categories c ON c.id = p.category_id
-             WHERE p.id = :id AND p.visible = TRUE',
-            ['id' => $productId, 'kitchen' => MenuLine::KITCHEN]
+             WHERE p.slug = :slug AND p.visible = TRUE",
+            ['slug' => $productSlug, 'kitchen' => MenuLine::KITCHEN]
         );
 
         if ($row === null) {
@@ -48,38 +89,55 @@ final class MenuRepository extends Repository implements ProductFinder
         return Product::fromRow($row, (string) $row['line']);
     }
 
-    /**
-     * Чистая группировка (без БД) — тестируется изолированно.
-     *
-     * @param list<array<string,mixed>> $categoryRows
-     * @param list<array<string,mixed>> $productRows
-     * @return list<array{category:Category,products:list<Product>}>
-     */
-    public static function buildMenu(array $categoryRows, array $productRows): array
+    /** Все категории (включая пустые): slug => title. Для подписей wheel. */
+    public function allCategoryTitles(): array
     {
-        $categories = [];
-        $lineById = [];
-        foreach ($categoryRows as $row) {
-            $category = Category::fromRow($row);
-            $categories[$category->id] = $category;
-            $lineById[$category->id] = $category->line;
+        $rows = $this->fetchAll('SELECT slug, title FROM menu_categories');
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(string) $row['slug']] = (string) ($row['title'] ?? $row['slug']);
         }
 
-        /** @var array<string,list<Product>> $byCategory */
-        $byCategory = [];
-        foreach ($productRows as $row) {
-            $categoryId = (string) ($row['category_id'] ?? '');
-            $line = $lineById[$categoryId] ?? MenuLine::KITCHEN;
-            $byCategory[$categoryId][] = Product::fromRow($row, $line);
+        return $out;
+    }
+
+    /**
+     * Граф гастропар: сопутствующие товары для набора товаров (по их slug).
+     * Возвращает slug_товара => список PairedProduct (по весу ребра, затем sort_order).
+     *
+     * @param list<string> $productSlugs
+     * @return array<string,list<PairedProduct>>
+     */
+    public function pairingsForSlugs(array $productSlugs): array
+    {
+        if ($productSlugs === []) {
+            return [];
         }
 
-        $menu = [];
-        foreach ($categories as $id => $category) {
-            if (!empty($byCategory[$id])) {
-                $menu[] = ['category' => $category, 'products' => $byCategory[$id]];
-            }
+        $params = [];
+        $names = [];
+        foreach ($productSlugs as $i => $slug) {
+            $names[] = ':s' . $i;
+            $params['s' . $i] = $slug;
+        }
+        $in = implode(', ', $names);
+
+        $rows = $this->fetchAll(
+            "SELECT src.slug AS from_slug, tgt.slug AS slug, tgt.name, tgt.price, tgt.image,
+                    pp.kind, pp.weight, pp.note
+             FROM product_pairings pp
+             JOIN products src ON src.id = pp.product_id
+             JOIN products tgt ON tgt.id = pp.paired_product_id
+             WHERE src.slug IN ({$in}) AND tgt.visible = TRUE
+             ORDER BY pp.weight DESC, pp.sort_order",
+            $params
+        );
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(string) $r['from_slug']][] = PairedProduct::fromRow($r);
         }
 
-        return $menu;
+        return $out;
     }
 }

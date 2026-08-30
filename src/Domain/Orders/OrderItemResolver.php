@@ -45,13 +45,14 @@ final class OrderItemResolver
                 continue;
             }
 
+            // В заказ пишем slug товара (стабильный снимок), а не суррогатный id.
             $resolved[] = new OrderItem(
-                $product->id,
+                $product->slug,
                 $product->name,
                 $qty,
                 $product->price,
                 $product->line,
-                $product->categoryId,
+                $product->categorySlug,
             );
         }
 

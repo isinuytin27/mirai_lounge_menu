@@ -16,6 +16,36 @@
   flex-direction: column;
   overflow: hidden;
   font-family: Helvetica, Arial, sans-serif;
+  /* Фон меню — сдержанный «тёмный зал лаунжа». Без кричащих неоновых пятен
+     (AI-клише): почти нейтральный уголь + тонкий тёплый амбиент сверху (свет ламп)
+     и лёгкое сгущение книзу. Цветной акцент живёт в стекле плашек, не в фоне. */
+  background-color: #0c0b0d;
+  background-image:
+    radial-gradient(125% 65% at 50% -18%, rgba(150, 112, 92, 0.16) 0%, rgba(150, 112, 92, 0) 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0%, rgba(0, 0, 0, 0) 34%, rgba(0, 0, 0, 0.3) 100%);
+  background-attachment: local;
+}
+
+/* Тонкое зерно (SVG-шум) — плёночная текстура, убирает бандинг градиентов */
+.menu-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 170px 170px;
+  opacity: 0.05;
+}
+
+/* Виньетка — притемняем углы для глубины, не гасим цвет в центре */
+.menu-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(130% 100% at 50% 40%, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, 0.5) 100%);
 }
 
 .menu-topbar {
@@ -92,7 +122,7 @@
   color: rgba(255, 255, 255, 0.92);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  transition: background 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.12s var(--ease-out);
   position: relative;
   z-index: 2;
 }
@@ -148,7 +178,7 @@
   line-height: 1;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  transition: transform 0.14s var(--ease-out), background 0.14s var(--ease-out), border-color 0.14s var(--ease-out);
   font-family: inherit;
   animation: mirai-invite-cta 3s ease-in-out infinite;
 }
@@ -169,12 +199,328 @@
   animation-play-state: paused;
 }
 
+/* display:flex на этих элементах перебивает атрибут [hidden] — возвращаем скрытие */
+.menu-back[hidden],
+.menu-cats[hidden],
+.menu-tile[hidden],
+.menu-empty-group[hidden] {
+  display: none;
+}
+
+/* === Шапка: кнопка «назад», слот логотипа, распорка === */
+.menu-topbar-row .menu-title {
+  flex: 0 0 auto;          /* заголовок не растягивается — логотип стоит вплотную справа */
+  white-space: nowrap;
+}
+
+.menu-topbar-spacer {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.menu-back {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin: 0 4px 0 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s var(--ease-out), border-color 0.15s var(--ease-out), transform 0.12s var(--ease-out);
+  position: relative;
+  z-index: 2;
+}
+.menu-back:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.24); }
+.menu-back:active { transform: scale(0.96); }
+.menu-back-icon { width: 22px; height: 22px; display: block; }
+
+/* Слот логотипа в шапке — задаёт целевой размер для плавающего #brand-logo */
+.logo-slot--menu {
+  flex: 0 0 auto;
+  height: 18px;
+  aspect-ratio: 532.09 / 70;
+  margin-left: 12px;
+  pointer-events: none;
+}
+
+/* === Сцена «плашки → детали группы» === */
+.menu-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;              /* над фоновым зерном/виньеткой .menu-wrap */
+}
+
+.menu-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transform: translateX(0);
+  /* Слайд плашки↔детали — iOS-like drawer-кривая (Emil) */
+  transition: transform 0.34s var(--ease-drawer);
+}
+
+.menu-panel {
+  flex: 0 0 50%;
+  width: 50%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Уровень 2 активен — сдвигаем трек к панели деталей */
+.menu-wrap[data-menu-level="2"] .menu-track {
+  transform: translateX(-50%);
+}
+
+/* --- Плашки (уровень 1) --- */
+.menu-panel--tiles {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px 14px 100px;
+}
+
+.menu-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Плашки групп — настоящий Liquid Glass: матовое стекло (backdrop-filter),
+   диагональный блик, specular-кромка сверху и внешняя тень для глубины. */
+.menu-tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: clamp(72px, 17vh, 130px);
+  padding: 0 22px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(
+    158deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.055) 44%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  backdrop-filter: blur(18px) saturate(1.5) brightness(1.08);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5) brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.22),
+    0 10px 30px rgba(0, 0, 0, 0.42);
+  color: rgba(255, 255, 255, 0.98);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+  font-family: Akony, sans-serif;
+  transition: transform 0.16s var(--ease-out), box-shadow 0.2s var(--ease-out), border-color 0.16s var(--ease-out);
+}
+
+/* Диагональный блик-отражение на стекле (specular streak, верх-лево) */
+.menu-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0) 38%
+  );
+}
+
+.menu-tile:active { transform: scale(0.97); }
+.menu-tile[data-empty="1"] { opacity: 0.55; }
+
+@media (hover: hover) and (pointer: fine) {
+  .menu-tile:hover {
+    border-color: rgba(255, 255, 255, 0.26);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 1px 1px 1px rgba(255, 255, 255, 0.14),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.22),
+      0 14px 38px rgba(0, 0, 0, 0.48);
+  }
+}
+
+.menu-tile-label {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(20px, 6vw, 30px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.menu-tile-arrow { position: relative; z-index: 1; flex-shrink: 0; opacity: 0.5; }
+.menu-tile-arrow svg { width: 24px; height: 24px; display: block; }
+
+/* --- Детали группы (уровень 2) --- */
+.menu-panel--detail {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.menu-empty-group {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 15px;
+  padding: 24px;
+  pointer-events: none;
+}
+
 .menu-content {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 14px 14px 100px;
   touch-action: pan-y;
+}
+
+/* === Колесо категорий «Бар» (как «Моя волна» Яндекс Музыки) === */
+/* Колесо слева во всю площадь; превью-фото справа НАЛОЖЕНО поверх (по оси Z):
+   пункты, выезжающие по дуге вправо, уходят под превью. */
+.menu-bar-wheel {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+.menu-bar-wheel[hidden] { display: none; }
+
+/* Крутящийся список — базовый слой, во всю площадь */
+.menu-wheel {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  touch-action: none;            /* жесты колеса обрабатываем сами */
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+  user-select: none;
+}
+.menu-wheel:active { cursor: grabbing; }
+
+/* Затухание у верх/низ края — «загиб за горизонт» */
+.menu-wheel-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 38%;
+  z-index: 3;
+  pointer-events: none;
+}
+.menu-wheel-fade--top {
+  top: 0;
+  background: linear-gradient(to bottom, #0c0b0d 0%, rgba(12,11,13,0.82) 34%, rgba(12,11,13,0) 100%);
+}
+.menu-wheel-fade--bottom {
+  bottom: 0;
+  background: linear-gradient(to top, #0c0b0d 0%, rgba(12,11,13,0.82) 34%, rgba(12,11,13,0) 100%);
+}
+
+.menu-wheel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 42%;                       /* точка выбора — чуть выше центра (меньше пустоты сверху) */
+  will-change: transform;
+}
+
+.menu-wheel-item {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 18px;
+  height: var(--wheel-row, 56px);
+  margin-top: calc(var(--wheel-row, 56px) / -2);
+  transform-origin: left center;
+  cursor: pointer;
+  /* X-сдвиг и прозрачность задаёт JS через CSS-переменные */
+  transform: translateX(var(--x, 0px));
+  opacity: var(--op, 1);
+}
+
+.menu-wheel-label {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: clamp(15px, 4.4vw, 20px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.12;
+  color: rgba(255, 255, 255, 0.62);
+  /* Перенос по словам: длинные названия («Безалкогольные напитки») в 2 строки.
+     Ширина ограничена, чтобы текст не заходил под превью справа. */
+  white-space: normal;
+  max-width: 52%;
+  transition: color 0.2s ease;
+}
+
+/* Активный (центральный) пункт — ярче и крупнее */
+.menu-wheel-item[data-active="true"] .menu-wheel-label {
+  color: #fff;
+}
+
+/* Пустой раздел (товаров пока нет) — приглушён */
+.menu-wheel-item[data-empty="1"] .menu-wheel-label {
+  color: rgba(255, 255, 255, 0.4);
+}
+.menu-wheel-item[data-empty="1"][data-active="true"] .menu-wheel-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Превью-фото категории — справа, наложено поверх колеса (по оси Z), без подписи.
+   Выровнено по вертикальному центру (на уровне активного пункта). */
+.menu-wheel-preview {
+  position: absolute;
+  z-index: 5;
+  top: 42%;                       /* на уровне активного пункта колеса */
+  right: 12px;
+  transform: translateY(-50%);
+  width: clamp(140px, 44%, 220px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.menu-wheel-preview-art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 22px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
 @media (max-width: 360px) {
@@ -369,6 +715,17 @@
   cursor: pointer;
   height: 100%;
   align-items: stretch;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s var(--ease-out), border-color 0.16s var(--ease-out);
+}
+/* Press-фидбек: карточка «слышит» нажатие (Emil) */
+.menu-card.menu-mini:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menu-card.menu-mini:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+  }
 }
 
 .menu-card.menu-mini > .menu-photo {
@@ -402,6 +759,65 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* === Карточки блюд «Бар»: один столбец во всю ширину, горизонтальная компоновка ===
+   Фото слева (если есть), название+описание по центру, цена+кнопка справа. */
+[data-bar-dishes="1"] .menu-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+[data-bar-dishes="1"] .menu-card.menu-mini {
+  flex-direction: row;
+  align-items: center;
+  height: auto;
+  gap: 12px;
+  padding: 12px 14px;
+}
+[data-bar-dishes="1"] .menu-card.menu-mini > .menu-photo {
+  width: 64px;
+  height: 64px;
+  aspect-ratio: 1 / 1;
+}
+[data-bar-dishes="1"] .menu-card.menu-mini > .menu-info {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "head actions"
+    "desc actions";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+}
+[data-bar-dishes="1"] .menu-card-head { grid-area: head; }
+[data-bar-dishes="1"] .menu-item-name {
+  min-height: 0;            /* убираем резерв под 3 строки из сетки */
+  -webkit-line-clamp: 2;
+  font-size: 15px;
+}
+[data-bar-dishes="1"] .menu-item-desc {
+  grid-area: desc;
+  margin: 0;
+  -webkit-line-clamp: 2;
+  font-size: 12px;
+}
+[data-bar-dishes="1"] .menu-actions {
+  grid-area: actions;
+  flex-direction: column;
+  align-items: flex-end;
+  width: auto;
+  margin: 0;
+  gap: 6px;
+}
+[data-bar-dishes="1"] .menu-price-row {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
+[data-bar-dishes="1"] .menu-card.menu-mini .menu-add,
+[data-bar-dishes="1"] .menu-card.menu-mini .menu-qty {
+  width: auto;
+  min-width: 120px;
 }
 
 /* Полноэкранный просмотр карточки товара */
@@ -860,5 +1276,57 @@
   fill: rgba(255, 255, 255, 0.92);
   font-size: 14px;
   font-weight: 700;
+}
+
+/* === Раздел «Кальян»: одна категория — без дублирующего заголовка,
+   карточки в один столбец во всю ширину (1 столбец × N ячеек). === */
+[data-menu-group="hookah"] .menu-section-title {
+  display: none;
+}
+[data-menu-group="hookah"] .menu-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+[data-menu-group="hookah"] .menu-card.menu-mini {
+  height: auto;
+}
+[data-menu-group="hookah"] .menu-item-name {
+  min-height: 0;            /* убираем резерв под 3 строки — карточка компактнее */
+  -webkit-line-clamp: 2;
+  font-size: 15px;
+}
+[data-menu-group="hookah"] .menu-item-desc {
+  -webkit-line-clamp: 3;
+  font-size: 12px;
+}
+
+/* ============================================================
+   КОРЗИНА ВРЕМЕННО СКРЫТА (будет переработана).
+   Прячем весь заказной UI. JS-логика не тронута — чтобы вернуть,
+   удалить этот блок. Меню работает как «витрина»: только просмотр.
+   ============================================================ */
+.menu-cart-tab,
+.menu-cart-sheet,
+.menu-cart-backdrop,
+.menu-cart-clear,
+.menu-add,
+.menu-qty,
+.menu-item-viewer-foot .menu-add,
+.menu-item-viewer-foot .menu-qty {
+  display: none !important;
+}
+
+/* === Reduced motion (a11y, Emil): убираем движение, оставляем opacity/цвет === */
+@media (prefers-reduced-motion: reduce) {
+  .menu-cat {
+    animation: none;               /* убрать пульс-CTA */
+  }
+  .menu-track {
+    transition-duration: 0.001ms;  /* мгновенный переход плашки↔детали, без болтанки */
+  }
+  .menu-wheel-preview-art,
+  .menu-wheel-label {
+    transition-duration: 0.001ms;
+  }
 }
 

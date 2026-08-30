@@ -60,6 +60,7 @@
                 sheet.classList.toggle("open", open);
                 sheet.setAttribute("aria-hidden", open ? "false" : "true");
                 backdrop.hidden = !open;
+                syncBrandOverlay();
             }
 
             function openCartSheet() {
@@ -74,6 +75,13 @@
             function isCartSheetOpen() {
                 const sh = root.querySelector("[data-cart-sheet]");
                 return !!(sh && sh.classList.contains("open"));
+            }
+
+            /* Плавающий логотип лежит над вьюпортом — прячем его, пока открыт любой оверлей меню. */
+            function syncBrandOverlay() {
+                const viewer = root.querySelector("[data-item-viewer]");
+                const viewerOpen = !!(viewer && !viewer.hidden);
+                window.miraiBrand?.setOverlay(isCartSheetOpen() || viewerOpen);
             }
 
             /** Свайп вверх с вкладки — открыть; вниз с шапки шторки или затемнения — закрыть (не трогаем скролл списка внутри шторки). */
@@ -321,12 +329,14 @@
                 itemViewerBackdrop.hidden = false;
                 itemViewer.hidden = false;
                 itemViewer.setAttribute("aria-hidden", "false");
+                syncBrandOverlay();
             }
 
             function closeItemViewer() {
                 itemViewerBackdrop.hidden = true;
                 itemViewer.hidden = true;
                 itemViewer.setAttribute("aria-hidden", "true");
+                syncBrandOverlay();
             }
 
             root.addEventListener("click", (e) => {
@@ -565,6 +575,332 @@
                     qtyWrap.hidden = true;
                 }
             });
+
+            /* === Плашки групп (уровень 1) → детали группы (уровень 2) === */
+            (function initMenuGroups() {
+                const track = root.querySelector("[data-menu-track]");
+                const tiles = Array.from(root.querySelectorAll("[data-group-tile]"));
+                const backBtn = root.querySelector("[data-menu-back]");
+                const titleEl = root.querySelector("[data-menu-title]");
+                const catsNav = root.querySelector("[data-menu-cats]");
+                const emptyEl = root.querySelector("[data-menu-empty]");
+                const barWheelEl = root.querySelector("[data-bar-wheel]");
+                if (!track || !tiles.length) return;
+
+                const DEFAULT_TITLE = titleEl ? titleEl.textContent.trim() : "Меню";
+
+                // null — на плашках; для bar: "wheel" | "dishes"
+                let subview = null;
+
+                function showContent(visible) {
+                    content.style.display = visible ? "" : "none";
+                }
+
+                // Обычная группа (Кальян/Кухня/Ночное): сразу список блюд + пилюли
+                function openPlainGroup(groupId, label) {
+                    let firstId = null;
+                    let count = 0;
+                    sections.forEach((s) => {
+                        const inGroup = s.getAttribute("data-group") === groupId;
+                        s.hidden = !inGroup;
+                        if (inGroup) {
+                            count++;
+                            if (!firstId) firstId = s.id;
+                        }
+                    });
+                    catButtons.forEach((b) => {
+                        b.hidden = b.getAttribute("data-group") !== groupId;
+                    });
+                    if (barWheelEl) barWheelEl.hidden = true;
+                    showContent(true);
+                    root.removeAttribute("data-bar-dishes");
+                    root.setAttribute("data-menu-group", groupId); // для CSS (напр. вид «Кальян»)
+                    if (titleEl) titleEl.textContent = label || DEFAULT_TITLE;
+                    // Одна категория в группе (Кальян) — пилюли не нужны
+                    if (catsNav) catsNav.hidden = count <= 1;
+                    if (emptyEl) emptyEl.hidden = count > 0;
+                    if (firstId) setActiveCatById(firstId);
+                    content.scrollTop = 0;
+                    subview = null;
+                    root.setAttribute("data-menu-level", "2");
+                }
+
+                // «Бар»: колесо категорий + превью
+                function openBarWheel(label) {
+                    showContent(false);
+                    if (catsNav) catsNav.hidden = true;
+                    if (emptyEl) emptyEl.hidden = true;
+                    if (barWheelEl) barWheelEl.hidden = false;
+                    if (titleEl) titleEl.textContent = label || "Бар";
+                    subview = "wheel";
+                    root.setAttribute("data-menu-level", "2");
+                    wheel && wheel.activate();
+                }
+
+                // «Бар» → выбран раздел: показываем его блюда (один столбец).
+                // catsCsv — набор категорий (родитель + подкатегории), показываем секциями.
+                // Если ни в одной нет товаров → заглушка «скоро».
+                function openBarCategory(catsCsv, catTitle) {
+                    if (barWheelEl) barWheelEl.hidden = true;
+                    if (catsNav) catsNav.hidden = true;
+                    if (titleEl) titleEl.textContent = catTitle || "Бар";
+
+                    const ids = String(catsCsv || "")
+                        .split(",")
+                        .filter(Boolean)
+                        .map((c) => "menu-" + c);
+                    let has = false;
+                    sections.forEach((s) => {
+                        const show = ids.includes(s.id);
+                        s.hidden = !show;
+                        if (show) has = true;
+                    });
+
+                    showContent(has);
+                    if (emptyEl) emptyEl.hidden = has;
+                    root.setAttribute("data-bar-dishes", "1"); // карточки в один столбец
+                    content.scrollTop = 0;
+                    subview = "dishes";
+                }
+
+                function openGroup(groupId, label) {
+                    if (groupId === "bar") openBarWheel(label);
+                    else openPlainGroup(groupId, label);
+                }
+
+                function backToTiles() {
+                    if (barWheelEl) barWheelEl.hidden = true;
+                    showContent(true);
+                    root.removeAttribute("data-bar-dishes");
+                    root.removeAttribute("data-menu-group");
+                    if (titleEl) titleEl.textContent = DEFAULT_TITLE;
+                    if (catsNav) catsNav.hidden = true;
+                    if (backBtn) backBtn.hidden = true;
+                    subview = null;
+                    root.setAttribute("data-menu-level", "1");
+                }
+
+                // Кнопка «назад»: блюда бара → колесо; иначе → плашки
+                function goBack() {
+                    if (subview === "dishes") {
+                        openBarWheel("Бар");
+                        return;
+                    }
+                    backToTiles();
+                }
+
+                /* === Физика колеса категорий «Бар» === */
+                function initWheel() {
+                    const wheelEl = root.querySelector("[data-wheel]");
+                    const listEl = root.querySelector("[data-wheel-list]");
+                    const items = Array.from(root.querySelectorAll("[data-wheel-item]"));
+                    const previewArt = root.querySelector("[data-wheel-preview-art]");
+                    const previewCap = root.querySelector("[data-wheel-preview-cap]");
+                    if (!wheelEl || !listEl || !items.length) return null;
+
+                    const N = items.length;
+                    const STEP = 0.39; // угловой шаг строки (рад) — даёт дугу как у Яндекса
+                    const AMP = 58; // амплитуда горизонтального выезда (px)
+                    let rowH = 56;
+                    let offset = 0; // позиция в «строках» (0..N-1), дробная
+                    let activeIdx = -1;
+                    let raf = null;
+
+                    function clampOffset(o) {
+                        return Math.max(0, Math.min(N - 1, o));
+                    }
+
+                    function measure() {
+                        const h = wheelEl.clientHeight || 480;
+                        rowH = Math.max(46, Math.min(64, h / 7.5));
+                        wheelEl.style.setProperty("--wheel-row", rowH + "px");
+                    }
+
+                    function setPreview(idx) {
+                        const it = items[idx];
+                        if (!it) return;
+                        const img = it.getAttribute("data-preview") || "";
+                        const title = it.getAttribute("data-title") || "";
+                        if (previewArt) {
+                            if (img) {
+                                previewArt.style.backgroundImage = `url("${img}")`;
+                            } else {
+                                // Градиент-заглушка: оттенок из индекса (стабильный, разный для категорий)
+                                const hue = Math.round((idx / N) * 320 + 200) % 360;
+                                previewArt.style.backgroundImage =
+                                    `linear-gradient(150deg, hsl(${hue} 70% 42%) 0%, hsl(${(hue + 40) % 360} 65% 22%) 100%)`;
+                            }
+                        }
+                        if (previewCap) previewCap.textContent = title;
+                    }
+
+                    function updateActive() {
+                        const idx = clampOffset(Math.round(offset));
+                        if (idx === activeIdx) return;
+                        activeIdx = idx;
+                        items.forEach((it, i) =>
+                            it.setAttribute("data-active", i === idx ? "true" : "false")
+                        );
+                        setPreview(idx);
+                    }
+
+                    function render() {
+                        for (let i = 0; i < N; i++) {
+                            const d = i - offset; // расстояние от центра в строках
+                            const ad = Math.abs(d);
+                            const y = d * rowH;
+                            const x = AMP * (1 - Math.cos(Math.min(ad, 6) * STEP)); // дуга
+                            const op = Math.max(0.12, 1.08 - 0.17 * ad); // затухание к краям
+                            const sc = 1 + 0.16 * Math.max(0, 1 - ad); // лёгкий акцент центра
+                            const st = items[i].style;
+                            st.transform = `translateY(${y}px) translateX(${x}px) scale(${sc})`;
+                            st.opacity = String(op);
+                        }
+                        updateActive();
+                    }
+
+                    /* Инерция + снап к ближайшему пункту, с ограничениями [0, N-1] */
+                    function animateTo(target, vel) {
+                        cancelAnimationFrame(raf);
+                        target = clampOffset(target);
+                        let v = vel || 0;
+                        let last = performance.now();
+                        function frame(now) {
+                            const dt = Math.min(40, now - last) / 1000;
+                            last = now;
+                            // пружина к цели + затухание скорости
+                            const k = 12; // жёсткость
+                            const damp = 0.82;
+                            const dist = target - offset;
+                            v += dist * k * dt;
+                            v *= damp;
+                            offset += v * dt;
+                            if (offset < 0) { offset = 0; v = 0; }
+                            if (offset > N - 1) { offset = N - 1; v = 0; }
+                            render();
+                            if (Math.abs(dist) < 0.002 && Math.abs(v) < 0.02) {
+                                offset = target;
+                                render();
+                                return;
+                            }
+                            raf = requestAnimationFrame(frame);
+                        }
+                        raf = requestAnimationFrame(frame);
+                    }
+
+                    function snap(vel) {
+                        // прогноз остановки по скорости → ближайший пункт
+                        const predicted = offset + (vel || 0) * 0.18;
+                        animateTo(Math.round(predicted), vel);
+                    }
+
+                    /* --- Жесты перетаскивания --- */
+                    let drag = null;
+                    wheelEl.addEventListener("pointerdown", (e) => {
+                        if (!e.isPrimary) return;
+                        cancelAnimationFrame(raf);
+                        drag = {
+                            id: e.pointerId,
+                            y0: e.clientY,
+                            offset0: offset,
+                            lastY: e.clientY,
+                            lastT: performance.now(),
+                            vel: 0,
+                            moved: false,
+                            target: e.target.closest("[data-wheel-item]"),
+                        };
+                        try { wheelEl.setPointerCapture(e.pointerId); } catch (_) {}
+                    });
+                    wheelEl.addEventListener("pointermove", (e) => {
+                        if (!drag || e.pointerId !== drag.id) return;
+                        const dy = e.clientY - drag.y0;
+                        if (Math.abs(dy) > 4) drag.moved = true;
+                        offset = clampOffset(drag.offset0 - dy / rowH);
+                        const now = performance.now();
+                        const dt = (now - drag.lastT) / 1000;
+                        if (dt > 0) drag.vel = -((e.clientY - drag.lastY) / rowH) / dt;
+                        drag.lastY = e.clientY;
+                        drag.lastT = now;
+                        render();
+                    });
+                    function endDrag(e) {
+                        if (!drag || e.pointerId !== drag.id) return;
+                        const d = drag;
+                        try { wheelEl.releasePointerCapture(e.pointerId); } catch (_) {}
+                        if (!d.moved) {
+                            // тап: по центральному пункту — открыть, по другому — подвести к центру
+                            const it = d.target;
+                            if (it) {
+                                const idx = Number(it.getAttribute("data-index"));
+                                if (idx === activeIdx) {
+                                    openBarCategory(it.getAttribute("data-cats"), it.getAttribute("data-title"));
+                                } else {
+                                    animateTo(idx, 0);
+                                }
+                            }
+                            drag = null;
+                            return;
+                        }
+                        const v = Math.max(-30, Math.min(30, d.vel));
+                        drag = null;
+                        snap(v);
+                    }
+                    wheelEl.addEventListener("pointerup", endDrag);
+                    wheelEl.addEventListener("pointercancel", endDrag);
+
+                    /* --- Колёсико мыши / тачпад --- */
+                    let wheelSnapT = null;
+                    wheelEl.addEventListener(
+                        "wheel",
+                        (e) => {
+                            e.preventDefault();
+                            cancelAnimationFrame(raf);
+                            offset = clampOffset(offset + e.deltaY / rowH);
+                            render();
+                            clearTimeout(wheelSnapT);
+                            wheelSnapT = setTimeout(() => animateTo(Math.round(offset), 0), 90);
+                        },
+                        { passive: false }
+                    );
+
+                    // Превью-картинка тоже открывает активную категорию
+                    root.querySelector("[data-wheel-preview]")?.addEventListener("click", () => {
+                        const it = items[activeIdx];
+                        if (it) openBarCategory(it.getAttribute("data-cats"), it.getAttribute("data-title"));
+                    });
+
+                    return {
+                        activate() {
+                            measure();
+                            offset = clampOffset(offset);
+                            activeIdx = -1;
+                            render();
+                        },
+                    };
+                }
+
+                const wheel = initWheel();
+
+                tiles.forEach((t) => {
+                    t.addEventListener("click", () => {
+                        if (backBtn) backBtn.hidden = false;
+                        openGroup(t.getAttribute("data-group"), t.getAttribute("data-label"));
+                    });
+                });
+                backBtn?.addEventListener("click", goBack);
+
+                /* При уходе с экрана меню возвращаемся на уровень плашек (после того, как экран уехал). */
+                window.addEventListener("mirai:navigate", (e) => {
+                    const d = (e && e.detail) || {};
+                    if (!(d.x === 1 && d.y === 2)) setTimeout(backToTiles, 380);
+                });
+
+                window.addEventListener("resize", () => {
+                    if (subview === "wheel" && wheel) wheel.activate();
+                });
+
+                backToTiles();
+            })();
 
             updateCartBadge();
             hydrateCardsFromCart();

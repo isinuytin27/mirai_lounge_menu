@@ -17,6 +17,8 @@ viewport.addEventListener("pointerdown", (e) => {
   if (e.target.closest("iframe")) return;
   if (e.target.closest(".gallery-viewer")) return;
   if (e.target.closest(".menu-cats")) return;
+  /* Колесо категорий «Бар» крутится само — не даём свайпу таскать экран */
+  if (e.target.closest(".menu-wheel")) return;
   if (e.target.closest("[data-item-viewer]")) return;
   /* Корзина меню: свайпы вверх/вниз обрабатывает сам экран меню */
   if (e.target.closest(".menu-cart-tab")) return;

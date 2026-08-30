@@ -41,6 +41,10 @@ build/
 # graphify — сгенерированный граф проекта (артефакт, не исходник)
 /graphify-out/
 
+# Локальный docker override (dev-запуск нового стека)
+docker/docker-compose.override.yml
+/miraipro_site/
+
 
 # SSL сертификаты и приватные ключи (СЕКРЕТЫ — никогда не коммитить)
 # Любые ключи/сертификаты по расширению, где бы ни лежали:
@@ -65,3 +69,6 @@ docker/ssl/*/
 /miraipro_site/
 docker/nginx/conf.d/miraipro.conf
 
+
+# Скриншоты отладки
+/*.png

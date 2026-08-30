@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Mirai\Tests\Unit;
 
 use Mirai\Domain\Menu\MenuLine;
-use Mirai\Domain\Menu\MenuRepository;
+use Mirai\Domain\Menu\Product;
 use PHPUnit\Framework\TestCase;
 
 final class MenuTest extends TestCase
@@ -26,45 +26,32 @@ final class MenuTest extends TestCase
         self::assertSame(['hookah', 'bar', 'kitchen'], MenuLine::all());
     }
 
-    public function testBuildMenuGroupsAndInheritsLine(): void
+    public function testProductInheritsLineAndReadsFields(): void
     {
-        $categories = [
-            ['id' => 'kalyan', 'title' => 'Кальян', 'line' => 'hookah', 'sort_order' => 0],
-            ['id' => 'zakuski', 'title' => 'Закуски', 'line' => 'kitchen', 'sort_order' => 1],
-            ['id' => 'empty', 'title' => 'Пусто', 'line' => 'bar', 'sort_order' => 2],
-        ];
-        $products = [
-            ['id' => 'p1', 'category_id' => 'kalyan', 'name' => 'Классика', 'price' => 2000, 'visible' => true, 'sort_order' => 0],
-            ['id' => 'p2', 'category_id' => 'zakuski', 'name' => 'Брускета', 'price' => 750, 'visible' => true, 'sort_order' => 0],
-        ];
+        $p = Product::fromRow([
+            'id' => 5,
+            'slug' => 'kalyan_classic',
+            'category_slug' => 'kalyan',
+            'name' => 'Кальян Классика',
+            'price' => 2000,
+            'portion_value' => null,
+            'prep_time' => '40-60 минут',
+            'visible' => true,
+            'available' => true,
+        ], 'hookah');
 
-        $menu = MenuRepository::buildMenu($categories, $products);
-
-        // Пустая категория выкинута.
-        self::assertCount(2, $menu);
-        self::assertSame('kalyan', $menu[0]['category']->id);
-        self::assertSame('hookah', $menu[0]['category']->line);
-
-        // Продукт наследует линию своей категории.
-        self::assertSame('hookah', $menu[0]['products'][0]->line);
-        self::assertSame('kitchen', $menu[1]['products'][0]->line);
-        self::assertSame(2000, $menu[0]['products'][0]->price);
+        self::assertSame('kalyan_classic', $p->slug);
+        self::assertSame('hookah', $p->line);
+        self::assertSame(2000, $p->price);
+        self::assertSame('40-60 минут', $p->prepTime);
     }
 
-    public function testBuildMenuPreservesCategoryOrder(): void
+    public function testPortionLabel(): void
     {
-        $categories = [
-            ['id' => 'b', 'title' => 'B', 'line' => 'bar', 'sort_order' => 0],
-            ['id' => 'a', 'title' => 'A', 'line' => 'kitchen', 'sort_order' => 1],
-        ];
-        $products = [
-            ['id' => 'x', 'category_id' => 'a', 'name' => 'X', 'price' => 1, 'visible' => true],
-            ['id' => 'y', 'category_id' => 'b', 'name' => 'Y', 'price' => 2, 'visible' => true],
-        ];
+        $food = Product::fromRow(['slug' => 'x', 'name' => 'X', 'price' => 1, 'portion_value' => '270.00', 'portion_unit' => 'г'], 'kitchen');
+        self::assertSame('270 г', $food->portionLabel());
 
-        $menu = MenuRepository::buildMenu($categories, $products);
-
-        // Порядок категорий сохраняется как во входе (b, затем a).
-        self::assertSame(['b', 'a'], [$menu[0]['category']->id, $menu[1]['category']->id]);
+        $noPortion = Product::fromRow(['slug' => 'y', 'name' => 'Y', 'price' => 1], 'bar');
+        self::assertNull($noPortion->portionLabel());
     }
 }

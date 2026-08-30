@@ -133,3 +133,13 @@
   }
 }
 
+/* Reduced motion: гасим плавающие орбы и покачивание лого,
+   оставляем только шкалу прогресса (несёт смысл загрузки) */
+@media (prefers-reduced-motion: reduce) {
+  .app-loader::before,
+  .app-loader::after,
+  .loader-logo {
+    animation: none;
+  }
+}
+

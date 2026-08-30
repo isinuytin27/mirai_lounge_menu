@@ -1,0 +1,40 @@
+# ОБЩАЯ ПЛАТФОРМА — единый Postgres для всех сайтов хоста.
+# Живёт отдельно от стеков сайтов: редеплой любого сайта НЕ трогает БД.
+# Каждый сайт использует свою database в этом инстансе (mirailounge, miraileague, шкл65…).
+#
+# Запуск:  docker compose -f docker/platform/docker-compose.yml up -d
+# Сеть mirai-platform — общая; стеки сайтов подключаются к ней как external.
+name: mirai-platform
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mirai-postgres
+    env_file:
+      - path: ../../.env
+        required: false
+    environment:
+      # Бутстрап-база/пользователь (mirailounge). Остальные сайты заводят свои
+      # database/роли отдельно (см. scripts ниже / README платформы).
+      POSTGRES_DB: ${POSTGRES_DB:-mirailounge}
+      POSTGRES_USER: ${POSTGRES_USER:-mirailounge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mirailounge_dev}
+    ports:
+      # Проброс на localhost для миграций/инструментов с хоста.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ../../data/pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mirailounge} -d ${POSTGRES_DB:-mirailounge}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      platform:
+        # Алиас, по которому сайты обращаются к БД: host=postgres.
+        aliases: [postgres]
+
+networks:
+  platform:
+    name: mirai-platform

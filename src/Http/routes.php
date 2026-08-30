@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use Mirai\Http\Controllers\HealthController;
+use Mirai\Http\Controllers\HomeController;
 use Mirai\Http\Controllers\MenuApiController;
+use Mirai\Http\Controllers\MenuPageController;
 use Mirai\Http\Controllers\OrderSubmitController;
 use Mirai\Http\Controllers\SeoController;
 use Mirai\Http\Controllers\TableEntryController;
@@ -24,6 +26,11 @@ return static function (App $app): void {
 
     // QR-вход стола: /t?table=<id> -> cookie + redirect.
     $app->get('/t', TableEntryController::class);
+
+    // Гостевая витрина (SPA: лоадер + свайпы). Стол — из cookie; /?table= обрабатывает QR.
+    $app->get('/', HomeController::class)->add(TableSessionMiddleware::class);
+    // Отдельная страница меню (без SPA-сетки).
+    $app->get('/menu', MenuPageController::class)->add(TableSessionMiddleware::class);
 
     // API меню (JSON) — для фронта и проверки данных.
     $app->get('/api/menu', MenuApiController::class);

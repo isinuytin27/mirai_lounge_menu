@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mirai Lounge — пересборка · прогресс</title>
+<style>
+  :root{
+    --bg:#0a0910; --panel:#141018; --line:rgba(245,0,125,.14);
+    --ink:#f4eef7; --dim:#9b8fae; --accent:#f5007d; --accent2:#7b5cff;
+    --done:#39d98a; --active:#ffc857; --todo:#4a4458;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:32px 20px 60px}
+  .wrap{max-width:920px;margin:0 auto}
+  header{margin-bottom:28px}
+  .brand{color:var(--accent);font-weight:800;letter-spacing:.12em;font-size:13px}
+  h1{margin:.2em 0 .1em;font-size:26px;font-weight:750}
+  .sub{color:var(--dim);font-size:14px}
+  /* прогресс-бар */
+  .bar{height:10px;border-radius:6px;background:#221b2c;overflow:hidden;margin:18px 0 6px;display:flex}
+  .bar i{display:block;height:100%}
+  .bar .done{background:linear-gradient(90deg,var(--done),#2bbf76)}
+  .bar .active{background:var(--active)}
+  .barlbl{display:flex;justify-content:space-between;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+  /* легенда */
+  .legend{display:flex;gap:18px;margin:20px 0 8px;flex-wrap:wrap;font-size:12.5px;color:var(--dim)}
+  .legend b{display:inline-flex;align-items:center;gap:6px;font-weight:500;color:var(--dim)}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot.done{background:var(--done)} .dot.active{background:var(--active)} .dot.todo{background:var(--todo)}
+  /* фазы */
+  .phase{border:1px solid var(--line);border-radius:14px;background:var(--panel);
+    margin:14px 0;overflow:hidden}
+  .phead{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .phead .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;flex:none}
+  .phead .ic.done{background:rgba(57,217,138,.15);color:var(--done)}
+  .phead .ic.active{background:rgba(255,200,87,.15);color:var(--active)}
+  .phead .ic.todo{background:rgba(120,110,140,.12);color:var(--dim)}
+  .phead h2{margin:0;font-size:16px;font-weight:700;flex:1}
+  .phead .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);padding:3px 9px;border-radius:20px}
+  ul.items{list-style:none;margin:0;padding:8px 18px 14px}
+  ul.items li{display:flex;gap:11px;align-items:baseline;padding:5px 0;font-size:14px}
+  ul.items li .mk{flex:none;width:18px;text-align:center;font-size:13px}
+  li.done .mk{color:var(--done)} li.active .mk{color:var(--active)} li.todo .mk{color:var(--todo)}
+  li.todo{color:var(--dim)}
+  li .note{color:var(--dim);font-size:12.5px}
+  code{background:#221b2c;padding:1px 6px;border-radius:5px;font-size:12.5px;color:#e7b9d4}
+  /* факты */
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:22px 0}
+  .fact{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px}
+  .fact .n{font-size:22px;font-weight:750;color:var(--accent)}
+  .fact .l{font-size:12px;color:var(--dim);margin-top:2px}
+  .foot{color:var(--dim);font-size:12px;margin-top:26px;text-align:center}
+  .live{display:inline-flex;align-items:center;gap:7px;background:rgba(57,217,138,.1);
+    border:1px solid rgba(57,217,138,.3);color:var(--done);padding:5px 12px;border-radius:20px;font-size:12.5px}
+  .live .pulse{width:8px;height:8px;border-radius:50%;background:var(--done);animation:p 1.6s infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+  .next{border:1px dashed var(--accent2);border-radius:12px;padding:14px 18px;margin-top:20px;background:rgba(123,92,255,.06)}
+  .next h3{margin:0 0 8px;font-size:14px;color:var(--accent2)}
+  .next ul{margin:0;padding-left:18px;font-size:13.5px} .next li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">◆ MIRAI LOUNGE</div>
+    <h1>Пересборка проекта — карта прогресса</h1>
+    <div class="sub">Slim 4 · Postgres · Vite · GitHub Actions &nbsp;·&nbsp; ветка <code>rebuild/foundation</code> &nbsp;·&nbsp; обновлено 30.08.2026</div>
+
+    <div class="bar">
+      <i class="done" style="width:52%"></i>
+      <i class="active" style="width:6%"></i>
+    </div>
+    <div class="barlbl"><span>Выполнено ~52%</span><span>Slice 1 ✓ · Slice 2 ✓ · дальше домены</span></div>
+
+    <div class="legend">
+      <b><span class="dot done"></span> готово</b>
+      <b><span class="dot active"></span> в работе / отложено осознанно</b>
+      <b><span class="dot todo"></span> впереди</b>
+    </div>
+
+    <div style="margin-top:14px"><span class="live"><span class="pulse"></span> стек поднят в Docker: nginx + php-fpm + postgres · http://localhost</span></div>
+  </header>
+
+  <!-- ФАКТЫ -->
+  <div class="facts">
+    <div class="fact"><div class="n">38</div><div class="l">тестов зелёных<br>(33 unit + 5 integration)</div></div>
+    <div class="fact"><div class="n">14</div><div class="l">таблиц в Postgres<br>(данные 1:1 с JSON)</div></div>
+    <div class="fact"><div class="n">0</div><div class="l">ошибок PHPStan<br>(level 5)</div></div>
+    <div class="fact"><div class="n">2</div><div class="l">домена перенесено<br>Menu · Orders</div></div>
+  </div>
+
+  <!-- TRACK 0 -->
+  <div class="phase">
+    <div class="phead">
+      <div class="ic active">⚠</div>
+      <h2>Track 0 — Безопасность</h2>
+      <span class="tag">почти готово</span>
+    </div>
+    <ul class="items">
+      <li class="done"><span class="mk">✓</span> TLS-сертификаты сняты с git, <code>.gitignore/.dockerignore</code> ужесточены</li>
+      <li class="done"><span class="mk">✓</span> Fail-closed ключ подписи столов (в проде падает без ключа, а не подделываемая кука)</li>
+      <li class="done"><span class="mk">✓</span> Единый Upload-сервис: проверка MIME, случайные имена, SVG запрещён</li>
+      <li class="active"><span class="mk">◐</span> Ротация Telegram-токена + чистка истории git <span class="note">— требует твоего действия (BotFather + force-push)</span></li>
+    </ul>
+  </div>
+
+  <!-- SLICE 1 -->
+  <div class="phase">
+    <div class="phead">
+      <div class="ic done">✓</div>
+      <h2>Slice 1 — Фундамент нового стека</h2>
+      <span class="tag">готово · проверено на живой БД</span>
+    </div>
+    <ul class="items">
+      <li class="done"><span class="mk">✓</span> Composer / автозагрузка PSR-4 / DI-контейнер</li>
+      <li class="done"><span class="mk">✓</span> <code>Config</code> — единая загрузка окружения, приоритет процесса над <code>.env</code></li>
+      <li class="done"><span class="mk">✓</span> БД-слой: PDO + транзакции, базовый Repository, миграции (Phinx)</li>
+      <li class="done"><span class="mk">✓</span> Схема из 14 таблиц; <code>стол</code> — первоклассная сущность</li>
+      <li class="done"><span class="mk">✓</span> Импортёр <code>data/*.json → Postgres</code> (идемпотентный)</li>
+      <li class="done"><span class="mk">✓</span> Front controller (Slim) + Twig; страницы <code>/_health</code>, <code>/version</code>, SEO</li>
+      <li class="done"><span class="mk">✓</span> Docker: добавлен Postgres, собран php-образ с <code>pdo_pgsql</code></li>
+    </ul>
+  </div>
+
+  <!-- SLICE 2 -->
+  <div class="phase">
+    <div class="phead">
+      <div class="ic done">✓</div>
+      <h2>Slice 2 — Домен «Меню + Заказы + Столы»</h2>
+      <span class="tag">готово · проверено в браузере</span>
+    </div>
+    <ul class="items">
+      <li class="done"><span class="mk">✓</span> <b>TableSession</b> — HMAC-подпись столовой куки (QR)</li>
+      <li class="done"><span class="mk">✓</span> <b>Меню</b>: правило «категория → линия выдачи» перенесено из кода в данные</li>
+      <li class="done"><span class="mk">✓</span> <b>Заказы</b>: приём в одной транзакции + блокировка открытого заказа <span class="note">→ гонки записи устранены</span></li>
+      <li class="done"><span class="mk">✓</span> Цена/название берутся из меню на сервере <span class="note">→ подделка цены невозможна</span></li>
+      <li class="done"><span class="mk">✓</span> HTTP: <code>/api/menu</code>, <code>/api/order-submit</code>, <code>/t?table=</code> (QR) + rate-limit</li>
+      <li class="done"><span class="mk">✓</span> Страница меню на новом стеке <span class="note">— вид старого меню точь-в-точь, данные из Postgres, роут /menu</span></li>
+      <li class="active"><span class="mk">◐</span> Снос старого кода <span class="note">— storage/screens после переключения прод-роутинга на новый стек</span></li>
+    </ul>
+  </div>
+
+  <!-- ВПЕРЕДИ -->
+  <div class="phase">
+    <div class="phead">
+      <div class="ic todo">→</div>
+      <h2>Впереди — остальные домены и фронт</h2>
+      <span class="tag">запланировано</span>
+    </div>
+    <ul class="items">
+      <li class="todo"><span class="mk">○</span> <b>VIP</b> — события, гости, лимит бара (отвязать от галереи)</li>
+      <li class="todo"><span class="mk">○</span> <b>Турниры</b> — заявки + настройки</li>
+      <li class="todo"><span class="mk">○</span> <b>Тикеты</b> и <b>Галерея</b> — простой CRUD</li>
+      <li class="todo"><span class="mk">○</span> <b>Пользователи + вход</b> — роли, CSRF на всех формах</li>
+      <li class="todo"><span class="mk">○</span> <b>Уведомления</b> — Telegram / Web-Push (сейчас заглушка)</li>
+      <li class="active"><span class="mk">◐</span> <b>Track F — фронтенд</b>: Vite-пайплайн готов; меню отдаётся через новый стек (пока на оригинальных CSS/JS)</li>
+      <li class="todo"><span class="mk">○</span> <b>CI/CD</b> — GitHub Actions: сборка + миграции + деплой</li>
+      <li class="todo"><span class="mk">○</span> <b>Мультисайт</b> — miraileague.ru, шкл65.рф, task.mirailounge.ru</li>
+    </ul>
+  </div>
+
+  <div class="next">
+    <h3>Где мы сейчас</h3>
+    <ul>
+      <li>Фундамент и первая (самая большая) вертикаль — <b>Меню/Заказы</b> — работают в Docker на новом стеке.</li>
+      <li>Старый сайт не тронут и работает параллельно — переключимся, когда новый фронт будет готов.</li>
+      <li>Следующий логичный шаг: домен <b>VIP</b> либо фронтенд на <b>Vite</b>.</li>
+    </ul>
+  </div>
+
+  <div class="foot">Mirai Lounge · rebuild/foundation · держим темп «домен за доменом», каждый — под тестами и с проверкой на живой БД</div>
+</div>
+</body>
+</html>
