@@ -1,0 +1,30 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Создать или сбросить пароль админ-пользователя (bcrypt) в Postgres.
+ *   bin/create-admin <login> <password> [role=owner]
+ * role: owner | admin | manager | staff
+ */
+
+use Mirai\Domain\Admin\AdminUserRepository;
+use Mirai\Domain\Admin\Role;
+
+/** @var \Psr\Container\ContainerInterface $container */
+$container = require dirname(__DIR__) . '/src/bootstrap.php';
+
+$login = $argv[1] ?? null;
+$password = $argv[2] ?? null;
+$role = Role::fromString($argv[3] ?? 'owner');
+
+if ($login === null || $password === null) {
+    fwrite(STDERR, "Использование: bin/create-admin <login> <password> [owner|admin|manager|staff]\n");
+    exit(1);
+}
+
+$repo = $container->get(AdminUserRepository::class);
+$repo->upsert($login, $role, $password);
+
+fwrite(STDOUT, "OK: пользователь '{$login}' сохранён (роль {$role->value}).\n");

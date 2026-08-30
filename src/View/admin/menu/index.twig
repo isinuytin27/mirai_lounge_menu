@@ -1,0 +1,64 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}Меню{% endblock %}
+
+{% block head %}
+<style>
+  .mcat{margin:22px 0 6px;display:flex;align-items:center;gap:10px}
+  .mcat h2{margin:0;font-size:16px}
+  .mcat .g{font-size:10px;color:var(--dim);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
+  .mcat .line{font-size:10px;color:var(--accent2)}
+  .prow{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);
+    border-radius:12px;background:var(--panel);margin-bottom:7px}
+  .prow .nm{font-weight:600;font-size:14px}
+  .prow .pr{color:var(--accent);font-weight:700;font-size:13px;margin-left:6px}
+  .prow .meta{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .pill.on{background:rgba(57,217,138,.14);color:var(--ok)} .pill.off{background:rgba(138,131,160,.16);color:var(--dim)}
+  .pill.pair{background:rgba(123,92,255,.14);color:var(--accent2)}
+  .tgl{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer}
+  .tgl:hover{border-color:var(--accent);color:var(--ink)}
+  .edit{color:var(--accent2);font-size:13px;font-weight:600;text-decoration:none}
+  .flash{background:rgba(57,217,138,.12);border:1px solid var(--line);color:var(--ok);
+    padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px}
+  form.inline{display:inline}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+    <a href="/admin" style="color:var(--dim)">← Обзор</a>
+    <h1 style="margin:0;font-size:22px">Меню</h1>
+    <span class="pill on" style="margin-left:auto">Postgres · запись в БД</span>
+</div>
+{% if flash %}<div class="flash">✓ {{ flash }}</div>{% endif %}
+
+{% for c in categories %}
+    <div class="mcat">
+        <h2>{{ c.title }}</h2>
+        {% if c.group_slug %}<span class="g">{{ c.group_slug }}</span>{% endif %}
+        <span class="line">выдача: {{ c.line }}</span>
+        <span style="margin-left:auto;color:var(--dim);font-size:12px">{{ c.products|length }} товаров</span>
+    </div>
+    {% for p in c.products %}
+        <div class="prow">
+            <div>
+                <span class="nm">{{ p.name }}</span><span class="pr">{{ p.price }} ₽</span>
+            </div>
+            <div class="meta">
+                {% if p.pairings > 0 %}<span class="pill pair">◆ {{ p.pairings }} пар</span>{% endif %}
+                <form class="inline" method="post" action="/admin/menu/toggle/{{ p.slug }}/visible">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <input type="hidden" name="value" value="{{ p.visible ? '' : '1' }}">
+                    <button class="tgl" title="Виден гостю">{{ p.visible ? '👁 виден' : '🚫 скрыт' }}</button>
+                </form>
+                <form class="inline" method="post" action="/admin/menu/toggle/{{ p.slug }}/available">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <input type="hidden" name="value" value="{{ p.available ? '' : '1' }}">
+                    <button class="tgl" title="В наличии (стоп-лист)">{{ p.available ? '✅ в наличии' : '⛔ стоп' }}</button>
+                </form>
+                <a class="edit" href="/admin/menu/product/{{ p.slug }}">Редактировать →</a>
+            </div>
+        </div>
+    {% endfor %}
+{% endfor %}
+{% endblock %}

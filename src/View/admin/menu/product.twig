@@ -1,0 +1,92 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}{{ p.name }}{% endblock %}
+
+{% block head %}
+<style>
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr}}
+  textarea.input{min-height:70px;resize:vertical;font-family:inherit}
+  .row{display:flex;gap:10px;align-items:center}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);cursor:pointer}
+  .check input{width:18px;height:18px;accent-color:var(--accent)}
+  .pair{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--panel);margin-bottom:6px}
+  .pair .w{font-size:11px;color:var(--accent2);font-variant-numeric:tabular-nums}
+  .pair .k{font-size:10px;color:var(--dim);border:1px solid var(--line);padding:1px 7px;border-radius:10px}
+  .del{margin-left:auto;background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:4px 9px;cursor:pointer;font-size:12px}
+  .del:hover{border-color:var(--accent);color:#ffb3d6}
+  h3{font-size:15px;margin:24px 0 10px;display:flex;align-items:center;gap:8px}
+  .muted{color:var(--dim);font-size:12px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <a href="/admin/menu" style="color:var(--dim)">← Меню</a>
+    <h1 style="margin:0;font-size:21px">{{ p.name }}</h1>
+    <code style="margin-left:auto;color:var(--dim);font-size:12px">{{ p.slug }}</code>
+</div>
+
+<form class="card" method="post" action="/admin/menu/product/{{ p.slug }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="field"><label>Название</label><input class="input" name="name" value="{{ p.name }}" required></div>
+    <div class="grid2">
+        <div class="field"><label>Цена, ₽</label><input class="input" name="price" type="number" value="{{ p.price }}" required></div>
+        <div class="field"><label>Порция</label>
+            <div class="row">
+                <input class="input" name="portion_value" value="{{ p.portion_value ?? '' }}" placeholder="270" style="flex:2">
+                <input class="input" name="portion_unit" value="{{ p.portion_unit ?? '' }}" placeholder="г/мл/шт" style="flex:1">
+            </div>
+        </div>
+    </div>
+    <div class="field"><label>Время приготовления (для кальяна)</label><input class="input" name="prep_time" value="{{ p.prep_time ?? '' }}" placeholder="40-60 минут"></div>
+    <div class="field"><label>Короткое описание (для карточки)</label><input class="input" name="description_short" value="{{ p.description_short ?? '' }}"></div>
+    <div class="field"><label>Полное описание</label><textarea class="input" name="description">{{ p.description ?? '' }}</textarea></div>
+    <div class="field"><label>Состав</label><textarea class="input" name="composition">{{ p.composition ?? '' }}</textarea></div>
+    <div class="row" style="gap:24px;margin:6px 0 16px">
+        <label class="check"><input type="checkbox" name="visible" {{ p.visible ? 'checked' }}> Виден гостю</label>
+        <label class="check"><input type="checkbox" name="available" {{ p.available ? 'checked' }}> В наличии</label>
+    </div>
+    <button class="btn" type="submit">Сохранить</button>
+</form>
+
+<h3>◆ Гастропары <span class="muted">— сопутствующие товары (граф)</span></h3>
+{% for pr in pairings %}
+    <div class="pair">
+        <span>{{ pr.name }} <span class="muted">· {{ pr.price }} ₽</span></span>
+        <span class="k">{{ pr.kind }}</span>
+        <span class="w">вес {{ pr.weight }}</span>
+        {% if pr.note %}<span class="muted">«{{ pr.note }}»</span>{% endif %}
+        <form method="post" action="/admin/menu/product/{{ p.slug }}/pairing/{{ pr.id }}/delete" style="margin-left:auto">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="del" title="Убрать">✕</button>
+        </form>
+    </div>
+{% else %}
+    <p class="muted">Пока нет связок. Добавьте — что хорошо к этому товару.</p>
+{% endfor %}
+
+<form class="card" method="post" action="/admin/menu/product/{{ p.slug }}/pairing" style="margin-top:12px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="grid2">
+        <div class="field"><label>Сопутствующий товар</label>
+            <select class="input" name="to" required>
+                <option value="">— выбрать —</option>
+                {% for x in catalog %}{% if x.slug != p.slug %}<option value="{{ x.slug }}">{{ x.name }}</option>{% endif %}{% endfor %}
+            </select>
+        </div>
+        <div class="field"><label>Тип</label>
+            <select class="input" name="kind">
+                <option value="gastro">Гастропара</option>
+                <option value="upsell">Допродажа</option>
+                <option value="alt">Альтернатива</option>
+            </select>
+        </div>
+    </div>
+    <div class="grid2">
+        <div class="field"><label>Вес связи (0–1)</label><input class="input" name="weight" value="1.0"></div>
+        <div class="field"><label>Подпись (необяз.)</label><input class="input" name="note" placeholder="Классика к кальяну"></div>
+    </div>
+    <button class="btn" type="submit">Добавить связку</button>
+</form>
+{% endblock %}

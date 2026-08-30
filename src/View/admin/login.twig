@@ -1,0 +1,28 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}Вход{% endblock %}
+{% block chrome %}{% endblock %}
+
+{% block content %}
+<div style="max-width:380px;margin:8vh auto 0">
+    <div style="text-align:center;margin-bottom:22px">
+        <div class="brand" style="color:var(--accent);font-weight:800;letter-spacing:.14em">◆ MIRAI LOUNGE</div>
+        <h1 style="margin:.3em 0 0;font-size:22px">Вход в админку</h1>
+    </div>
+    <form class="card" method="post" action="/admin/login">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        {% if error %}
+            <div style="background:rgba(245,0,125,.12);border:1px solid var(--line);color:#ffb3d6;
+                        padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px">{{ error }}</div>
+        {% endif %}
+        <div class="field">
+            <label for="login">Логин</label>
+            <input class="input" id="login" name="login" autocomplete="username" autofocus required>
+        </div>
+        <div class="field">
+            <label for="password">Пароль</label>
+            <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn" type="submit" style="width:100%">Войти</button>
+    </form>
+</div>
+{% endblock %}

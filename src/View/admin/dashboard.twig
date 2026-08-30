@@ -1,0 +1,35 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}Обзор{% endblock %}
+
+{% block content %}
+<h1 style="margin:0 0 4px;font-size:24px">Привет, {{ user.firstName ?: user.login }} 👋</h1>
+<p style="color:var(--dim);margin:0 0 22px">Админка на новом стеке. Домены переносятся на Postgres по одному.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
+    {% set tiles = [
+        {t:'Меню',        d:'Категории, товары, гастропары', href:'/admin/menu',  st:'pg',   cap:true},
+        {t:'Галерея',     d:'Фото интерьера',                href:'#',           st:'json', cap:true},
+        {t:'VIP',         d:'События, гости, лимит бара',    href:'#',           st:'json', cap:user.role.canAccessVip},
+        {t:'Турниры',     d:'Заявки и настройки',            href:'#',           st:'json', cap:true},
+        {t:'Тикеты',      d:'Заявки персонала',              href:'#',           st:'json', cap:user.role.canAccessTickets},
+        {t:'Пользователи',d:'Роли и доступы',                href:'#',           st:'json', cap:user.role.canManageUsers}
+    ] %}
+    {% for x in tiles %}
+        {% if x.cap %}
+        <a class="card" href="{{ x.href }}" style="display:block;transition:.15s">
+            <div style="display:flex;align-items:center;gap:8px">
+                <b style="font-size:16px;color:var(--ink)">{{ x.t }}</b>
+                {% if x.st == 'pg' %}
+                    <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--ok);
+                          background:rgba(57,217,138,.14);padding:2px 7px;border-radius:20px">Postgres</span>
+                {% else %}
+                    <span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--warn);
+                          background:rgba(255,171,61,.14);padding:2px 7px;border-radius:20px">JSON</span>
+                {% endif %}
+            </div>
+            <div style="color:var(--dim);font-size:12.5px;margin-top:4px">{{ x.d }}</div>
+        </a>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}

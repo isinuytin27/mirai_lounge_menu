@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mirai Lounge — архитектура (ТЗ)</title>
+<style>
+  :root{
+    --bg:#0b0910;--panel:#141018;--panel2:#1b1524;--line:rgba(245,0,125,.16);
+    --ink:#f4eef7;--dim:#9b8fae;--accent:#f5007d;--accent2:#7b5cff;
+    --pg:#39d98a;--json:#ffab3d;--ext:#4db5ff;--stub:#8a83a0;
+    --l-client:#7b5cff;--l-edge:#4db5ff;--l-http:#f5007d;--l-app:#39d98a;--l-infra:#ffab3d;--l-data:#e0568a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.5;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:26px 18px 80px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:16px}
+  .brand{color:var(--accent);font-weight:800;letter-spacing:.14em;font-size:12px}
+  h1{margin:.25em 0 .1em;font-size:27px;font-weight:800}
+  .sub{color:var(--dim);font-size:13.5px}
+  h2.sec{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);
+    margin:34px 0 14px;display:flex;align-items:center;gap:10px}
+  h2.sec::before{content:"";width:22px;height:2px;background:var(--accent);border-radius:2px}
+  h3.ctx{font-size:13px;margin:0 0 8px;color:var(--ink);letter-spacing:.02em}
+
+  /* ── послойная диаграмма ── */
+  .layers{display:flex;flex-direction:column;gap:0}
+  .layer{border:1px solid var(--line);border-left-width:4px;border-radius:12px;background:var(--panel);
+    padding:12px 16px;margin:0 0 8px;position:relative}
+  .layer .lh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .layer .lh b{font-size:13.5px;letter-spacing:.02em}
+  .layer .lh .badge{font-size:10.5px;color:var(--dim);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
+  .layer .lh .n{margin-left:auto;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:11.5px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    padding:4px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px}
+  .chip small{color:var(--dim);font-size:10.5px}
+  .chip .d{width:7px;height:7px;border-radius:2px;flex:none}
+  .d.pg{background:var(--pg)} .d.json{background:var(--json)} .d.stub{background:var(--stub)} .d.ext{background:var(--ext)}
+  .l-client{border-left-color:var(--l-client)} .l-edge{border-left-color:var(--l-edge)}
+  .l-http{border-left-color:var(--l-http)} .l-app{border-left-color:var(--l-app)}
+  .l-infra{border-left-color:var(--l-infra)} .l-data{border-left-color:var(--l-data)}
+  .arrow{text-align:center;color:var(--accent);opacity:.4;font-size:16px;margin:-2px 0 6px}
+  .grp{margin-bottom:10px}
+  .grp .gl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px}
+
+  /* ── контексты/сущности ── */
+  .ctxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .ctxcard{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 15px}
+  .ctxcard .cap{position:absolute}
+  .ctxcard .top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .ctxcard .top .em{font-size:16px}
+  .ctxcard .top .st{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+  .st.pg{background:rgba(57,217,138,.14);color:var(--pg)} .st.json{background:rgba(255,171,61,.14);color:var(--json)}
+  .st.stub{background:rgba(138,131,160,.16);color:var(--stub)}
+  .ent{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-top:1px dashed rgba(245,0,125,.1);font-size:12.5px}
+  .ent:first-of-type{border-top:none}
+  .ent .nm{font-weight:600}
+  .ent .kind{font-size:10px;color:var(--dim);border:1px solid var(--line);padding:0 6px;border-radius:10px}
+  .ent .tbl{margin-left:auto;color:var(--dim);font-size:11px;font-family:ui-monospace,Menlo,monospace}
+
+  /* ── ERD ── */
+  .erd-wrap{border:1px solid var(--line);border-radius:14px;background:#0c0a12;padding:10px;overflow:auto}
+  .mermaid{min-width:900px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:10px 0 0}
+  .legend b{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+
+  table.reg{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.reg th,table.reg td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.reg th{color:var(--dim);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  table.reg td code{background:var(--panel2);padding:1px 6px;border-radius:5px;font-size:11.5px}
+  .foot{color:var(--dim);font-size:11.5px;margin-top:30px;text-align:center;border-top:1px solid var(--line);padding-top:16px}
+</style>
+<script src="assets-doc/mermaid.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">◆ MIRAI LOUNGE · ТЕХНИЧЕСКОЕ ЗАДАНИЕ</div>
+    <h1>Архитектура системы — послойно</h1>
+    <div class="sub">Модульный монолит: Slim 4 · Postgres 16 · nginx · vanilla+Vite. Слои сверху вниз, сущности выделены, модель данных — ERD.</div>
+    <div class="legend" style="margin-top:12px">
+      <b><span class="d pg" style="width:9px;height:9px;border-radius:2px"></span> перенесено на Postgres</b>
+      <b><span class="d json" style="width:9px;height:9px;border-radius:2px"></span> ещё на JSON (legacy)</b>
+      <b><span class="d stub" style="width:9px;height:9px;border-radius:2px"></span> заглушка</b>
+      <b><span class="d ext" style="width:9px;height:9px;border-radius:2px"></span> внешний сервис</b>
+    </div>
+  </header>
+
+  <!-- ═══ 1. СЛОИ ═══ -->
+  <h2 class="sec">1 · Слоистая архитектура</h2>
+  <div class="layers">
+
+    <div class="layer l-client">
+      <div class="lh"><b>① Клиенты</b><span class="badge">presentation · браузер</span></div>
+      <div class="chips">
+        <span class="chip">📱 Гость <small>SPA-витрина, QR-стол</small></span>
+        <span class="chip">🧑‍🍳 Персонал <small>заказы, VIP-консоль</small></span>
+        <span class="chip">🛠 Администратор <small>админ-панель</small></span>
+      </div>
+    </div>
+    <div class="arrow">▼ HTTPS</div>
+
+    <div class="layer l-edge">
+      <div class="lh"><b>② Edge / Платформа</b><span class="badge">общий для всех сайтов</span></div>
+      <div class="chips">
+        <span class="chip">🌐 nginx <small>reverse-proxy</small></span>
+        <span class="chip">🔒 TLS 1.2/1.3 <small>готовые сертификаты</small></span>
+        <span class="chip">🧭 vhost per домен <small>Host-роутинг, IDN</small></span>
+        <span class="chip">🗂 отдача статики</span>
+      </div>
+    </div>
+    <div class="arrow">▼ FastCGI · php-fpm</div>
+
+    <div class="layer l-http">
+      <div class="lh"><b>③ HTTP-слой (Presentation)</b><span class="badge">Slim 4 · единый front controller</span></div>
+      <div class="grp"><div class="gl">Front Controller + Router + DI</div>
+        <div class="chips"><span class="chip">public/index.php</span><span class="chip">routes.php</span><span class="chip">PHP-DI контейнер</span><span class="chip">Twig · ViteAssets</span></div>
+      </div>
+      <div class="grp"><div class="gl">Middleware (конвейер)</div>
+        <div class="chips">
+          <span class="chip">TableSessionMiddleware</span><span class="chip">RateLimitMiddleware</span>
+          <span class="chip">AuthMiddleware</span><span class="chip">RoleMiddleware</span><span class="chip">CsrfMiddleware</span>
+        </div>
+      </div>
+      <div class="grp"><div class="gl">Контроллеры</div>
+        <div class="chips">
+          <span class="chip">Home</span><span class="chip">MenuPage</span><span class="chip">MenuApi</span>
+          <span class="chip">OrderSubmit</span><span class="chip">TableEntry</span><span class="chip">Seo</span><span class="chip">Health · Version</span>
+          <span class="chip">Admin/Auth</span><span class="chip">Admin/Dashboard</span>
+        </div>
+      </div>
+    </div>
+    <div class="arrow">▼ вызовы сервисов</div>
+
+    <div class="layer l-app">
+      <div class="lh"><b>④ Прикладной / Доменный слой</b><span class="badge">bounded contexts + сервисы</span></div>
+      <div class="grp"><div class="gl">Домены (контексты)</div>
+        <div class="chips">
+          <span class="chip"><span class="d pg"></span>Menu</span><span class="chip"><span class="d pg"></span>Orders</span>
+          <span class="chip"><span class="d pg"></span>Table</span><span class="chip"><span class="d pg"></span>Gallery</span>
+          <span class="chip"><span class="d pg"></span>Admin/Auth</span>
+          <span class="chip"><span class="d json"></span>VIP</span><span class="chip"><span class="d json"></span>Tournaments</span>
+          <span class="chip"><span class="d json"></span>Tickets</span><span class="chip"><span class="d stub"></span>Notifications</span>
+        </div>
+      </div>
+      <div class="grp"><div class="gl">Сервисы приложения</div>
+        <div class="chips"><span class="chip">OrderSubmissionService</span><span class="chip">AuthService</span><span class="chip">OrderItemResolver</span><span class="chip">GuestMenuView</span></div>
+      </div>
+    </div>
+    <div class="arrow">▼ PDO / порты</div>
+
+    <div class="layer l-infra">
+      <div class="lh"><b>⑤ Инфраструктура</b><span class="badge">адаптеры, репозитории</span></div>
+      <div class="grp"><div class="gl">Репозитории (PDO)</div>
+        <div class="chips"><span class="chip">MenuRepository</span><span class="chip">OrderRepository</span><span class="chip">TableRepository</span><span class="chip">GalleryRepository</span><span class="chip">AdminUserRepository</span><span class="chip">Repository (база) · Database</span></div>
+      </div>
+      <div class="grp"><div class="gl">Сервисы инфраструктуры</div>
+        <div class="chips"><span class="chip">Config</span><span class="chip">Security: TableSession · TableCookie · Csrf</span><span class="chip">Upload: FileUploader</span><span class="chip">Notify: OrderNotifier</span><span class="chip">Db: JsonImporter</span><span class="chip">Phinx-миграции</span></div>
+      </div>
+    </div>
+    <div class="arrow">▼ SQL</div>
+
+    <div class="layer l-data">
+      <div class="lh"><b>⑥ Данные</b><span class="badge">Postgres 16 · общий платформенный стек</span><span class="n">13 таблиц</span></div>
+      <div class="chips">
+        <span class="chip"><span class="d pg"></span>menu_groups</span><span class="chip"><span class="d pg"></span>menu_categories</span>
+        <span class="chip"><span class="d pg"></span>products</span><span class="chip"><span class="d pg"></span>product_pairings</span>
+        <span class="chip"><span class="d pg"></span>orders</span><span class="chip"><span class="d pg"></span>order_items</span>
+        <span class="chip"><span class="d pg"></span>tables</span><span class="chip"><span class="d pg"></span>gallery_items</span>
+        <span class="chip"><span class="d pg"></span>admin_users</span>
+        <span class="chip"><span class="d json"></span>vip_events</span><span class="chip"><span class="d json"></span>vip_guests</span>
+        <span class="chip"><span class="d json"></span>vip_consumptions</span><span class="chip"><span class="d json"></span>tournaments</span>
+        <span class="chip"><span class="d json"></span>tournament_applications</span><span class="chip"><span class="d json"></span>tickets</span>
+        <span class="chip"><span class="d stub"></span>push_subscriptions</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--dim);margin-top:8px">🟠 = данные в БД, но запись всё ещё из старой JSON-админки (источник правды раздвоен до переноса).</div>
+    </div>
+
+    <div class="layer l-edge" style="margin-top:8px">
+      <div class="lh"><b>⑦ Внешние сервисы</b><span class="badge">интеграции</span></div>
+      <div class="chips">
+        <span class="chip"><span class="d ext"></span>Telegram Bot API</span><span class="chip"><span class="d ext"></span>Web Push (VAPID)</span>
+        <span class="chip"><span class="d ext"></span>2ГИС</span><span class="chip"><span class="d ext"></span>Restoplace</span><span class="chip"><span class="d ext"></span>Видео-фон .webm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 2. ДОМЕННЫЕ СУЩНОСТИ ═══ -->
+  <h2 class="sec">2 · Доменные сущности по контекстам</h2>
+  <div class="ctxgrid">
+    <div class="ctxcard">
+      <div class="top"><span class="em">🍽</span><h3 class="ctx">Menu</h3><span class="st pg">Postgres</span></div>
+      <div class="ent"><span class="nm">MenuGroup</span><span class="kind">entity</span><span class="tbl">menu_groups</span></div>
+      <div class="ent"><span class="nm">Category</span><span class="kind">entity</span><span class="tbl">menu_categories</span></div>
+      <div class="ent"><span class="nm">Product</span><span class="kind">entity</span><span class="tbl">products</span></div>
+      <div class="ent"><span class="nm">ProductPairing</span><span class="kind">граф-ребро</span><span class="tbl">product_pairings</span></div>
+      <div class="ent"><span class="nm">MenuLine</span><span class="kind">VO</span><span class="tbl">— (hookah/bar/kitchen)</span></div>
+    </div>
+    <div class="ctxcard">
+      <div class="top"><span class="em">🧾</span><h3 class="ctx">Orders</h3><span class="st pg">Postgres</span></div>
+      <div class="ent"><span class="nm">Order</span><span class="kind">aggregate</span><span class="tbl">orders</span></div>
+      <div class="ent"><span class="nm">OrderItem</span><span class="kind">entity</span><span class="tbl">order_items</span></div>
+      <div class="ent"><span class="nm">Table</span><span class="kind">entity</span><span class="tbl">tables</span></div>
+      <div class="ent"><span class="nm">OrderSubmissionResult</span><span class="kind">VO</span><span class="tbl">—</span></div>
+    </div>
+    <div class="ctxcard">
+      <div class="top"><span class="em">👑</span><h3 class="ctx">VIP</h3><span class="st json">JSON</span></div>
+      <div class="ent"><span class="nm">VipEvent</span><span class="kind">entity</span><span class="tbl">vip_events</span></div>
+      <div class="ent"><span class="nm">VipGuest</span><span class="kind">entity</span><span class="tbl">vip_guests</span></div>
+      <div class="ent"><span class="nm">VipConsumption</span><span class="kind">entity</span><span class="tbl">vip_consumptions</span></div>
+    </div>
+    <div class="ctxcard">
+      <div class="top"><span class="em">🏆</span><h3 class="ctx">Tournaments</h3><span class="st json">JSON</span></div>
+      <div class="ent"><span class="nm">Tournament</span><span class="kind">entity</span><span class="tbl">tournaments</span></div>
+      <div class="ent"><span class="nm">TournamentApplication</span><span class="kind">entity</span><span class="tbl">tournament_applications</span></div>
+    </div>
+    <div class="ctxcard">
+      <div class="top"><span class="em">🎫</span><h3 class="ctx">Support</h3><span class="st json">JSON</span></div>
+      <div class="ent"><span class="nm">Ticket</span><span class="kind">entity</span><span class="tbl">tickets</span></div>
+    </div>
+    <div class="ctxcard">
+      <div class="top"><span class="em">🔐</span><h3 class="ctx">Admin / Auth</h3><span class="st pg">Postgres</span></div>
+      <div class="ent"><span class="nm">AdminUser</span><span class="kind">entity</span><span class="tbl">admin_users</span></div>
+      <div class="ent"><span class="nm">Role</span><span class="kind">enum/VO</span><span class="tbl">—</span></div>
+    </div>
+    <div class="ctxcard">
+      <div class="top"><span class="em">🖼</span><h3 class="ctx">Gallery</h3><span class="st pg">Postgres</span></div>
+      <div class="ent"><span class="nm">GalleryItem</span><span class="kind">entity</span><span class="tbl">gallery_items</span></div>
+    </div>
+    <div class="ctxcard">
+      <div class="top"><span class="em">🔔</span><h3 class="ctx">Notifications</h3><span class="st stub">stub</span></div>
+      <div class="ent"><span class="nm">PushSubscription</span><span class="kind">entity</span><span class="tbl">push_subscriptions</span></div>
+      <div class="ent"><span class="nm">OrderNotifier</span><span class="kind">port</span><span class="tbl">— (Null-реализация)</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ 3. ERD ═══ -->
+  <h2 class="sec">3 · Модель данных (ERD)</h2>
+  <div class="erd-wrap">
+    <pre class="mermaid">
+erDiagram
+  MENU_GROUPS ||--o{ MENU_CATEGORIES : "содержит"
+  MENU_CATEGORIES ||--o{ PRODUCTS : "содержит"
+  PRODUCTS ||--o{ PRODUCT_PAIRINGS : "источник"
+  PRODUCTS ||--o{ PRODUCT_PAIRINGS : "цель"
+  TABLES ||--o{ ORDERS : "за столом"
+  ORDERS ||--o{ ORDER_ITEMS : "позиции"
+  VIP_EVENTS ||--o{ VIP_GUESTS : "гости"
+  VIP_GUESTS ||--o{ VIP_CONSUMPTIONS : "списания"
+  TOURNAMENTS ||--o{ TOURNAMENT_APPLICATIONS : "заявки"
+
+  MENU_GROUPS {
+    int id PK
+    string slug UK
+    text title
+    int sort_order
+    bool active
+  }
+  MENU_CATEGORIES {
+    int id PK
+    string slug UK
+    int group_id FK
+    text title
+    string line "hookah|bar|kitchen"
+    int sort_order
+    bool active
+  }
+  PRODUCTS {
+    int id PK
+    string slug UK
+    int category_id FK
+    text name
+    int price
+    text description
+    text description_short
+    text composition
+    numeric portion_value
+    string portion_unit
+    string prep_time
+    text image
+    bool visible
+    bool available
+    int sort_order
+  }
+  PRODUCT_PAIRINGS {
+    int id PK
+    int product_id FK "источник"
+    int paired_product_id FK "цель"
+    string kind "gastro|upsell|alt"
+    numeric weight "вес ребра"
+    text note
+    int sort_order
+  }
+  TABLES {
+    string id PK
+    text caption
+    int capacity
+    bool active
+  }
+  ORDERS {
+    string id PK
+    string table_id FK
+    text table_caption
+    string status "open|closed"
+    timestamptz created_at
+    timestamptz closed_at
+  }
+  ORDER_ITEMS {
+    int id PK
+    string order_id FK
+    string product_id "slug-снимок"
+    text name
+    int qty
+    int price
+    string line
+    string category_id
+  }
+  VIP_EVENTS {
+    string id PK
+    string slug UK
+    text organization
+    date event_date
+    int bar_free_limit
+    string bar_line
+    bool active
+  }
+  VIP_GUESTS {
+    string id PK
+    string event_id FK
+    string token UK
+    text first_name
+    text last_name
+    int free_used
+  }
+  VIP_CONSUMPTIONS {
+    int id PK
+    string guest_id FK
+    string product_id
+    string line
+    bool paid_by_guest
+  }
+  TOURNAMENTS {
+    int id PK
+    text title
+    int max_slots
+    text format
+    text fee
+    bool registration_open
+  }
+  TOURNAMENT_APPLICATIONS {
+    string id PK
+    int tournament_id FK
+    string status
+    text team_name
+    text captain_name
+    jsonb players
+    jsonb sources
+  }
+  TICKETS {
+    string id PK
+    text title
+    text description
+    string category
+    string priority
+    string status
+    text created_by
+  }
+  ADMIN_USERS {
+    string id PK
+    string login UK
+    text password_hash
+    string role "owner|admin|manager|staff"
+    text first_name
+    text last_name
+  }
+  GALLERY_ITEMS {
+    string id PK
+    text image
+    text caption
+    int sort_order
+  }
+  PUSH_SUBSCRIPTIONS {
+    int id PK
+    text endpoint UK
+    text p256dh
+    text auth
+  }
+    </pre>
+  </div>
+  <div class="legend">
+    <b>PK — первичный ключ</b><b>FK — внешний ключ</b><b>UK — уникальный</b>
+    <b>◆ product_pairings — граф связок (2 FK на products: источник и цель)</b>
+  </div>
+
+  <!-- ═══ 4. РЕЕСТР ═══ -->
+  <h2 class="sec">4 · Реестр компонентов по слоям</h2>
+  <table class="reg">
+    <thead><tr><th>Слой</th><th>Компоненты</th><th>Назначение</th></tr></thead>
+    <tbody>
+      <tr><td>HTTP · Middleware</td><td><code>TableSession</code> <code>RateLimit</code> <code>Auth</code> <code>Role</code> <code>Csrf</code></td><td>Сессия стола (QR), антифлуд, вход, права, CSRF</td></tr>
+      <tr><td>HTTP · Controllers</td><td><code>Home</code> <code>MenuPage</code> <code>MenuApi</code> <code>OrderSubmit</code> <code>TableEntry</code> <code>Admin/*</code></td><td>Витрина, меню, приём заказа, QR-вход, админка</td></tr>
+      <tr><td>Domain · Menu</td><td><code>MenuRepository</code> <code>Category</code> <code>Product</code> <code>PairedProduct</code> <code>MenuLine</code></td><td>Меню, товары, граф гастропар, линии выдачи</td></tr>
+      <tr><td>Domain · Orders</td><td><code>OrderRepository</code> <code>OrderSubmissionService</code> <code>OrderItemResolver</code> <code>TableRepository</code></td><td>Приём заказа (транзакция), резолв позиций, столы</td></tr>
+      <tr><td>Domain · Admin</td><td><code>AuthService</code> <code>AdminUserRepository</code> <code>Role</code></td><td>Аутентификация, роли, права</td></tr>
+      <tr><td>Infrastructure</td><td><code>Config</code> <code>Database</code> <code>Repository</code> <code>TableSession</code> <code>TableCookie</code> <code>Csrf</code> <code>FileUploader</code> <code>JsonImporter</code></td><td>Конфиг, PDO+транзакции, крипто, загрузки, импорт</td></tr>
+      <tr><td>Data</td><td><code>Postgres 16</code> · Phinx-миграции</td><td>Общий платформенный стек, своя БД на сайт</td></tr>
+    </tbody>
+  </table>
+
+  <div class="foot">Mirai Lounge · документ для ТЗ · 13 сущностей / таблиц, 9 связей · сгенерировано из живой схемы БД · 31.08.2026</div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad:true, theme:'base',
+    themeVariables:{
+      background:'#0c0a12', primaryColor:'#1b1524', primaryBorderColor:'#f5007d',
+      primaryTextColor:'#f4eef7', lineColor:'#7b5cff', tertiaryColor:'#141018',
+      fontSize:'13px', fontFamily:'ui-monospace,Menlo,monospace'
+    }
+  });
+</script>
+</body>
+</html>

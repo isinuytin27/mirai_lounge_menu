@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mirai\Http;
 
 use Mirai\Infrastructure\Config\Config;
+use Mirai\Infrastructure\Security\Csrf;
 use Mirai\Infrastructure\View\ViteAssets;
 use Psr\Container\ContainerInterface;
 use Slim\App;
@@ -37,6 +38,14 @@ final class AppFactory
         // Версия ассетов для cache-busting (?v=): в dev — метка времени (всегда свежо),
         // в prod — версия приложения (обновляется при релизе).
         $twig->getEnvironment()->addGlobal('av', $config->isProd() ? $config->appVersion() : (string) time());
+
+        // CSRF-токен для форм админки: ленивая функция (сессию стартует только при вызове,
+        // т.е. на админ-страницах, а не на гостевых).
+        $csrf = $container->get(Csrf::class);
+        $twig->getEnvironment()->addFunction(new TwigFunction(
+            'csrf_token',
+            static fn (): string => $csrf->token(),
+        ));
 
         // vite('entries/menu.js') -> хешированные <link>/<script> из манифеста.
         $vite = new ViteAssets($projectRoot . '/public');

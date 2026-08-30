@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mirai Lounge — интерактивная архитектура</title>
+<style>
+  :root{
+    --ink:#2f2a3a;--dim:#7b7488;--bg:#fbfaff;
+    --purple:#7c3aed;--purple-bg:#efe9fe;
+    --green:#4fae2f;--green-bg:#e8f6e1;
+    --blue:#2f8fd6;--blue-bg:#e3f1fb;
+    --amber:#e2941b;--amber-bg:#fdf0d8;
+    --accent:#f5007d;--stroke:#d3ccdf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:26px 20px 40px}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{text-align:center;font-size:27px;font-weight:800;margin:0 0 3px}
+  h1 span{color:var(--accent)}
+  .lead{text-align:center;color:var(--dim);font-size:13.5px;margin:0 0 18px}
+
+  .controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--stroke);border-radius:11px;padding:3px}
+  .seg button{border:none;background:none;padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600;
+    color:var(--dim);cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--ink);color:#fff}
+  .seg button .d{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  .d.pg{background:var(--green)} .d.json{background:var(--amber)}
+  .act{border:none;border-radius:11px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),#7b5cff);color:#fff}
+  .act.ghost{background:#fff;color:var(--dim);border:1px solid var(--stroke)}
+
+  .stage{position:relative}
+  .row{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+  .rowlabel{text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin:0 0 8px}
+  .varr{width:2px;height:22px;background:var(--stroke);margin:6px auto}
+
+  .node{border-radius:14px;padding:13px 12px;text-align:center;cursor:pointer;position:relative;
+    border:2px solid transparent;transition:transform .15s, box-shadow .15s, opacity .2s;width:150px;background:#fff}
+  .node .em{font-size:26px;line-height:1;margin-bottom:7px;display:block}
+  .node .lbl{font-weight:700;font-size:13.5px}
+  .node .sub{color:var(--dim);font-size:11px;margin-top:2px;line-height:1.3}
+  .node:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(120,90,160,.18)}
+  .node.sel{border-color:var(--accent);box-shadow:0 8px 24px rgba(245,0,125,.18)}
+  .node.dim{opacity:.28;filter:grayscale(.4)}
+  .node.flow{border-color:var(--green);box-shadow:0 0 0 4px rgba(79,174,47,.22);transform:translateY(-2px)}
+  .node.wide{width:280px} .node.mid{width:210px}
+  .n-purple{background:var(--purple-bg)} .n-green{background:var(--green-bg)}
+  .n-blue{background:var(--blue-bg)} .n-amber{background:var(--amber-bg)}
+  .badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px}
+  .b-pg{background:#d3f0c6;color:#3f8f26} .b-json{background:#f8e3bb;color:#b7791f} .b-stub{background:#e7e3ee;color:#8b8397}
+
+  .plat{border:2px solid var(--green);border-radius:16px;background:var(--green-bg);padding:14px 18px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;max-width:900px;margin:0 auto}
+  .plat.sel{border-color:var(--accent);box-shadow:0 8px 24px rgba(245,0,125,.15)}
+  .plat.flow{box-shadow:0 0 0 4px rgba(79,174,47,.22)}
+  .plat .em{font-size:30px}
+  .plat b{font-size:16px} .plat .pd{color:var(--dim);font-size:12px;margin-top:2px}
+  .plat .tt{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;max-width:420px;justify-content:flex-end}
+  .tt span{font-size:10px;background:#fff;border:1px solid #cfe3c2;color:#3f8f26;padding:2px 6px;border-radius:6px}
+  .tt span.j{border-color:#e6d3a8;color:#b7791f}
+
+  .ext{display:flex;gap:9px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+  .ext .e{border:1px dashed #bcd8ef;background:#f2f9fe;border-radius:20px;padding:6px 13px;font-size:12px;
+    color:#2f6ea0;cursor:pointer;transition:.15s}
+  .ext .e:hover{background:#e3f1fb} .ext .e.flow{border-style:solid;border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,143,214,.18)}
+
+  /* details drawer */
+  .drawer{position:fixed;right:0;top:0;height:100vh;width:360px;max-width:90vw;background:#fff;
+    border-left:1px solid var(--stroke);box-shadow:-10px 0 40px rgba(60,40,80,.12);
+    transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:20;overflow:auto;padding:22px 22px 40px}
+  .drawer.open{transform:none}
+  .drawer .x{position:absolute;top:14px;right:16px;font-size:20px;color:var(--dim);cursor:pointer;border:none;background:none}
+  .drawer h2{margin:0 0 2px;font-size:20px;display:flex;align-items:center;gap:9px}
+  .drawer .st{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;margin:6px 0 14px}
+  .drawer p.d{color:var(--dim);font-size:13.5px;margin:0 0 16px;line-height:1.5}
+  .drawer h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin:16px 0 7px}
+  .drawer .list{display:flex;flex-direction:column;gap:5px}
+  .drawer .li{font-size:13px;background:#f6f3fb;border:1px solid #eee;border-radius:8px;padding:7px 10px}
+  .drawer .li code{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--accent)}
+  .hint{text-align:center;color:var(--dim);font-size:12px;margin-top:22px}
+  .foot{text-align:center;color:var(--dim);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Архитектура <span>Mirai Lounge</span> — интерактивная</h1>
+  <p class="lead">Кликни узел — детали (сущности, таблицы, статус). Наведи — подсветка. Ниже — фильтр и анимация потока заказа.</p>
+
+  <div class="controls">
+    <div class="seg" id="filter">
+      <button data-f="all" class="on">Все</button>
+      <button data-f="pg"><span class="d pg"></span>Postgres</button>
+      <button data-f="json"><span class="d json"></span>JSON</button>
+    </div>
+    <button class="act" id="flowBtn">▶ Поток заказа</button>
+    <button class="act ghost" id="resetBtn">Сброс</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="rowlabel">Клиенты</div>
+    <div class="row">
+      <div class="node n-purple" data-node="guest"><span class="em">📱</span><div class="lbl">Гость</div><div class="sub">SPA-витрина, QR</div></div>
+      <div class="node n-purple" data-node="staff"><span class="em">🧑‍🍳</span><div class="lbl">Персонал</div><div class="sub">заказы, VIP</div></div>
+    </div>
+    <div class="varr"></div>
+    <div class="rowlabel">Edge</div>
+    <div class="row"><div class="node n-blue wide" data-node="nginx"><span class="em">🌐</span><div class="lbl">nginx · reverse-proxy</div><div class="sub">TLS · vhost-на-домен</div></div></div>
+    <div class="varr"></div>
+    <div class="rowlabel">Приложение</div>
+    <div class="row"><div class="node n-green wide" data-node="fc"><span class="em">🧊</span><div class="lbl">Front Controller (Slim)</div><div class="sub">роутер · middleware · DI · Twig</div></div></div>
+    <div class="varr"></div>
+    <div class="rowlabel">Домены</div>
+    <div class="row" id="domains">
+      <div class="node n-green" data-node="menu"><span class="badge b-pg">PG</span><span class="em">🍽</span><div class="lbl">Menu</div><div class="sub">товары, гастропары</div></div>
+      <div class="node n-green" data-node="orders"><span class="badge b-pg">PG</span><span class="em">🧾</span><div class="lbl">Orders</div><div class="sub">заказ, дозаказ</div></div>
+      <div class="node n-green" data-node="table"><span class="badge b-pg">PG</span><span class="em">🪑</span><div class="lbl">Table · QR</div><div class="sub">столы, cookie</div></div>
+      <div class="node n-green" data-node="admin"><span class="badge b-pg">PG</span><span class="em">🔐</span><div class="lbl">Admin · Auth</div><div class="sub">роли, вход</div></div>
+      <div class="node n-amber" data-node="vip"><span class="badge b-json">JSON</span><span class="em">👑</span><div class="lbl">VIP</div><div class="sub">события, гости</div></div>
+      <div class="node n-amber" data-node="tourn"><span class="badge b-json">JSON</span><span class="em">🏆</span><div class="lbl">Турниры/Тикеты</div><div class="sub">заявки</div></div>
+    </div>
+    <div class="varr"></div>
+    <div class="rowlabel">Данные</div>
+    <div class="plat" data-node="pg">
+      <span class="em">🐘</span>
+      <div><b>Postgres 16</b><div class="pd">общий платформенный стек · своя БД на сайт · транзакции, миграции, бэкапы</div></div>
+      <div class="tt">
+        <span>menu_groups</span><span>menu_categories</span><span>products</span><span>product_pairings</span>
+        <span>orders</span><span>order_items</span><span>tables</span><span>gallery_items</span><span>admin_users</span>
+        <span class="j">vip_*</span><span class="j">tournaments*</span><span class="j">tickets</span>
+      </div>
+    </div>
+    <div class="ext">
+      <div class="e" data-node="telegram">✈️ Telegram</div>
+      <div class="e" data-node="push">🔔 Web Push</div>
+      <div class="e">📍 2ГИС</div>
+      <div class="e">🗓 Restoplace</div>
+    </div>
+  </div>
+
+  <div class="hint">🟢 на Postgres · 🟠 ещё на JSON (уходим) · один из сайтов общей платформы (miraileague · шкл65.рф · task.mirailounge)</div>
+  <div class="foot">Mirai Lounge · интерактивная архитектурная схема · 31.08.2026</div>
+</div>
+
+<div class="drawer" id="drawer">
+  <button class="x" id="drawerX">✕</button>
+  <h2 id="dTitle"></h2>
+  <span class="st" id="dStatus"></span>
+  <p class="d" id="dDesc"></p>
+  <div id="dSections"></div>
+</div>
+
+<script>
+const NODES = {
+  guest:{icon:'📱',title:'Гость',status:'client',desc:'Витрина на смартфоне: лоадер, свайпы между экранами, drill-down меню, корзина, оформление заказа по QR-столу.',ent:['SPA (Twig + vanilla + Vite)'],flow:['nginx']},
+  staff:{icon:'🧑‍🍳',title:'Персонал',status:'client',desc:'Панель заказов, VIP-консоль, вход по ролям.',ent:['/orders','/vipservice','/admin']},
+  nginx:{icon:'🌐',title:'nginx · reverse-proxy',status:'edge',desc:'Единая точка входа. TLS (готовые сертификаты), vhost-на-домен, Host-роутинг на нужный сайт, отдача статики.',comp:['TLS 1.2/1.3','vhost per домен','IDN → punycode']},
+  fc:{icon:'🧊',title:'Front Controller (Slim)',status:'pg',desc:'Единый вход public/index.php. Роутер, конвейер middleware, DI-контейнер, Twig-вью.',comp:['routes.php','PHP-DI','Middleware: TableSession · RateLimit · Auth · Role · CSRF','Twig · ViteAssets']},
+  menu:{icon:'🍽',title:'Menu',status:'pg',desc:'Меню: группы → категории → товары. Граф гастропар (сопутствующие товары). Линии выдачи.',ent:['MenuGroup','Category','Product','ProductPairing (граф)','MenuLine (VO)'],tables:['menu_groups','menu_categories','products','product_pairings'],comp:['MenuRepository','GuestMenuView']},
+  orders:{icon:'🧾',title:'Orders',status:'pg',desc:'Приём заказа в одной транзакции с блокировкой открытого заказа стола (устраняет гонки). Дозаказ, кухня по линиям.',ent:['Order (aggregate)','OrderItem'],tables:['orders','order_items'],comp:['OrderRepository','OrderSubmissionService','OrderItemResolver'],flow:['pg','telegram']},
+  table:{icon:'🪑',title:'Table · QR',status:'pg',desc:'Столы — первоклассная сущность. Подписанная HMAC-cookie сессии стола (QR-вход /t).',ent:['Table'],tables:['tables'],comp:['TableRepository','TableSession','TableCookie']},
+  admin:{icon:'🔐',title:'Admin · Auth',status:'pg',desc:'Аутентификация на Postgres: bcrypt, роли (owner/admin/manager/staff), CSRF, гейтинг прав.',ent:['AdminUser','Role (enum)'],tables:['admin_users'],comp:['AuthService','AdminUserRepository','AuthMiddleware · RoleMiddleware']},
+  vip:{icon:'👑',title:'VIP',status:'json',desc:'Корпоративы: события, гости, лимит бара, списания. Ещё на JSON — следующий кандидат на перенос.',ent:['VipEvent','VipGuest','VipConsumption'],tables:['vip_events','vip_guests','vip_consumptions'],comp:['vip_storage.php (legacy JSON)']},
+  tourn:{icon:'🏆',title:'Турниры · Тикеты',status:'json',desc:'Любительские турниры (заявки/настройки) и внутренние тикеты персонала. Ещё на JSON.',ent:['Tournament','TournamentApplication','Ticket'],tables:['tournaments','tournament_applications','tickets'],comp:['tournaments_storage.php','tickets_storage.php (legacy)']},
+  pg:{icon:'🐘',title:'Postgres 16',status:'pg',desc:'Общий платформенный стек в отдельном контейнере: редеплой сайта не трогает БД, своя database на каждый сайт. Транзакции, миграции (Phinx), бэкапы pg_dump.',tables:['13 таблиц: menu_*, products, product_pairings, orders, order_items, tables, gallery_items, admin_users, vip_*, tournaments*, tickets, push_subscriptions'],comp:['Database (PDO+транзакции)','Repository (база)','JsonImporter']},
+  telegram:{icon:'✈️',title:'Telegram Bot API',status:'ext',desc:'Уведомления о новых заказах и дозаказах персоналу.',comp:['Notify: OrderNotifier (пока NullOrderNotifier — заглушка)']},
+  push:{icon:'🔔',title:'Web Push (VAPID)',status:'ext',desc:'Пуш-уведомления персоналу.',tables:['push_subscriptions']},
+};
+const STATUS_STYLE = {
+  client:['#efe9fe','#7c3aed','Клиент'], edge:['#e3f1fb','#2f8fd6','Edge'],
+  pg:['#e8f6e1','#3f8f26','Postgres'], json:['#fdf0d8','#b7791f','JSON (legacy)'], ext:['#e3f1fb','#2f6ea0','Внешний'],
+};
+
+const drawer=document.getElementById('drawer');
+function openNode(id){
+  const n=NODES[id]; if(!n) return;
+  document.querySelectorAll('[data-node]').forEach(e=>e.classList.toggle('sel', e.dataset.node===id));
+  document.getElementById('dTitle').innerHTML = `<span>${n.icon}</span> ${n.title}`;
+  const s=STATUS_STYLE[n.status]||STATUS_STYLE.pg;
+  const st=document.getElementById('dStatus'); st.textContent=s[2]; st.style.background=s[0]; st.style.color=s[1];
+  document.getElementById('dDesc').textContent=n.desc;
+  let html='';
+  const sec=(title,items)=>{ if(!items||!items.length) return ''; return `<h4>${title}</h4><div class="list">${items.map(i=>`<div class="li">${i.replace(/`([^`]+)`/g,'<code>$1</code>')}</div>`).join('')}</div>`; };
+  html+=sec('Сущности', (n.ent||[]).map(x=>x));
+  html+=sec('Таблицы', (n.tables||[]).map(x=>'`'+x+'`'));
+  html+=sec('Компоненты', (n.comp||[]));
+  document.getElementById('dSections').innerHTML=html;
+  drawer.classList.add('open');
+}
+function closeDrawer(){ drawer.classList.remove('open'); document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel')); }
+document.getElementById('drawerX').onclick=closeDrawer;
+document.querySelectorAll('[data-node]').forEach(el=>el.addEventListener('click',()=>openNode(el.dataset.node)));
+
+// фильтр
+document.getElementById('filter').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#filter button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  const f=b.dataset.f;
+  document.querySelectorAll('#domains .node').forEach(n=>{
+    const st=NODES[n.dataset.node]?.status;
+    n.classList.toggle('dim', f!=='all' && st!==f);
+  });
+});
+
+// поток заказа
+let flowTimer=null;
+function clearFlow(){ document.querySelectorAll('.flow').forEach(e=>e.classList.remove('flow')); if(flowTimer){clearTimeout(flowTimer);flowTimer=null;} }
+document.getElementById('flowBtn').onclick=()=>{
+  clearFlow(); closeDrawer();
+  const path=['guest','nginx','fc','menu','orders','pg','telegram'];
+  let i=0;
+  const step=()=>{
+    if(i>0){ const prev=document.querySelector(`[data-node="${path[i-1]}"]`); }
+    const el=document.querySelector(`[data-node="${path[i]}"]`);
+    if(el) el.classList.add('flow');
+    i++;
+    if(i<path.length){ flowTimer=setTimeout(step,650); }
+    else { flowTimer=setTimeout(clearFlow,1400); }
+  };
+  step();
+};
+document.getElementById('resetBtn').onclick=()=>{ clearFlow(); closeDrawer();
+  document.querySelectorAll('.dim').forEach(e=>e.classList.remove('dim'));
+  document.querySelectorAll('#filter button').forEach(x=>x.classList.remove('on'));
+  document.querySelector('#filter [data-f="all"]').classList.add('on');
+};
+// esc
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+</script>
+</body>
+</html>
