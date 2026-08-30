@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use Mirai\Http\Controllers\Admin\AdminAuthController;
 use Mirai\Http\Controllers\Admin\AdminDashboardController;
+use Mirai\Http\Controllers\Admin\GalleryAdminController;
 use Mirai\Http\Controllers\Admin\MenuAdminController;
+use Mirai\Http\Controllers\Admin\TicketAdminController;
 use Mirai\Http\Controllers\HealthController;
 use Mirai\Http\Controllers\HomeController;
 use Mirai\Http\Controllers\MenuApiController;
@@ -69,6 +71,28 @@ return static function (App $app): void {
         $g->post('/toggle/{slug}/{field}', [MenuAdminController::class, 'toggle']);
         $g->post('/product/{slug}/pairing', [MenuAdminController::class, 'addPairing']);
         $g->post('/product/{slug}/pairing/{id}/delete', [MenuAdminController::class, 'removePairing']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('admin_panel'))
+        ->add(AuthMiddleware::class);
+
+    // Тикеты (Postgres). Право tickets = owner/admin.
+    $app->group('/admin/tickets', function ($g): void {
+        $g->get('', [TicketAdminController::class, 'index']);
+        $g->post('', [TicketAdminController::class, 'create']);
+        $g->post('/{id}/status', [TicketAdminController::class, 'setStatus']);
+        $g->post('/{id}/delete', [TicketAdminController::class, 'delete']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('tickets'))
+        ->add(AuthMiddleware::class);
+
+    // Галерея (Postgres + загрузка файлов).
+    $app->group('/admin/gallery', function ($g): void {
+        $g->get('', [GalleryAdminController::class, 'index']);
+        $g->post('/upload', [GalleryAdminController::class, 'upload']);
+        $g->post('/{id}/caption', [GalleryAdminController::class, 'updateCaption']);
+        $g->post('/{id}/delete', [GalleryAdminController::class, 'delete']);
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('admin_panel'))

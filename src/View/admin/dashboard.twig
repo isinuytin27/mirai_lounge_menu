@@ -7,12 +7,12 @@
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
     {% set tiles = [
-        {t:'Меню',        d:'Категории, товары, гастропары', href:'/admin/menu',  st:'pg',   cap:true},
-        {t:'Галерея',     d:'Фото интерьера',                href:'#',           st:'json', cap:true},
-        {t:'VIP',         d:'События, гости, лимит бара',    href:'#',           st:'json', cap:user.role.canAccessVip},
-        {t:'Турниры',     d:'Заявки и настройки',            href:'#',           st:'json', cap:true},
-        {t:'Тикеты',      d:'Заявки персонала',              href:'#',           st:'json', cap:user.role.canAccessTickets},
-        {t:'Пользователи',d:'Роли и доступы',                href:'#',           st:'json', cap:user.role.canManageUsers}
+        {t:'Меню',        d:'Категории, товары, гастропары', href:'/admin/menu',    st:'pg',   cap:true},
+        {t:'Галерея',     d:'Фото интерьера',                href:'/admin/gallery', st:'pg',   cap:true},
+        {t:'Тикеты',      d:'Заявки персонала',              href:'/admin/tickets', st:'pg',   cap:user.role.canAccessTickets},
+        {t:'VIP',         d:'События, гости, лимит бара',    href:'#',              st:'json', cap:user.role.canAccessVip},
+        {t:'Турниры',     d:'Заявки и настройки',            href:'#',              st:'json', cap:true},
+        {t:'Пользователи',d:'Роли и доступы',                href:'#',              st:'json', cap:user.role.canManageUsers}
     ] %}
     {% for x in tiles %}
         {% if x.cap %}

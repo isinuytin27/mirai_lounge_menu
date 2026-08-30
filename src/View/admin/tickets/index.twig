@@ -1,0 +1,83 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}Тикеты{% endblock %}
+
+{% block head %}
+<style>
+  .tk{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--line);
+    border-radius:12px;background:var(--panel);margin-bottom:8px}
+  .tk.closed{opacity:.55}
+  .tk .body{flex:1}
+  .tk .ti{font-weight:600;font-size:14px}
+  .tk .de{color:var(--dim);font-size:12.5px;margin-top:3px;white-space:pre-wrap}
+  .tk .mt{display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;align-items:center}
+  .pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .p-high{background:rgba(245,0,125,.15);color:#ffb3d6} .p-normal{background:rgba(123,92,255,.14);color:var(--accent2)} .p-low{background:rgba(138,131,160,.16);color:var(--dim)}
+  .cat{font-size:10.5px;color:var(--dim);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
+  .by{font-size:11px;color:var(--dim)}
+  .tk .act{display:flex;gap:6px;align-items:center}
+  select.mini,.mini{background:#170f1e;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:5px 8px;font-size:12px}
+  .del{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px}
+  .del:hover{border-color:var(--accent);color:#ffb3d6}
+  .cnt{display:flex;gap:10px;margin:0 0 16px}
+  .cnt div{font-size:12px;color:var(--dim)} .cnt b{color:var(--ink);font-size:18px;display:block}
+  form.inline{display:inline}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <a href="/admin" style="color:var(--dim)">← Обзор</a>
+    <h1 style="margin:0;font-size:22px">Тикеты</h1>
+    <span class="pill p-normal" style="margin-left:auto">Postgres</span>
+</div>
+
+<div class="cnt">
+    <div><b>{{ counts.open }}</b> открыто</div>
+    <div><b>{{ counts.in_progress }}</b> в работе</div>
+    <div><b>{{ counts.closed }}</b> закрыто</div>
+</div>
+
+<details class="card" style="margin-bottom:18px">
+    <summary style="cursor:pointer;font-weight:700">+ Новый тикет</summary>
+    <form method="post" action="/admin/tickets" style="margin-top:14px">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="field"><label>Заголовок</label><input class="input" name="title" required></div>
+        <div class="field"><label>Описание</label><textarea class="input" name="description" style="min-height:60px"></textarea></div>
+        <div style="display:flex;gap:12px">
+            <div class="field" style="flex:1"><label>Категория</label>
+                <select class="input" name="category">{% for k,l in categories %}<option value="{{ k }}">{{ l }}</option>{% endfor %}</select></div>
+            <div class="field" style="flex:1"><label>Приоритет</label>
+                <select class="input" name="priority">{% for k,l in priorities %}<option value="{{ k }}" {{ k=='normal'?'selected' }}>{{ l }}</option>{% endfor %}</select></div>
+        </div>
+        <button class="btn" type="submit">Создать</button>
+    </form>
+</details>
+
+{% for t in tickets %}
+    <div class="tk {{ t.status=='closed'?'closed' }}">
+        <div class="body">
+            <div class="ti">{{ t.title }}</div>
+            {% if t.description %}<div class="de">{{ t.description }}</div>{% endif %}
+            <div class="mt">
+                <span class="pill p-{{ t.priority }}">{{ t.priorityLabel }}</span>
+                <span class="cat">{{ t.categoryLabel }}</span>
+                {% if t.createdBy %}<span class="by">от {{ t.createdBy }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="act">
+            <form class="inline" method="post" action="/admin/tickets/{{ t.id }}/status">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                <select class="mini" name="status" onchange="this.form.submit()">
+                    {% for k,l in statuses %}<option value="{{ k }}" {{ k==t.status?'selected' }}>{{ l }}</option>{% endfor %}
+                </select>
+            </form>
+            <form class="inline" method="post" action="/admin/tickets/{{ t.id }}/delete" onsubmit="return confirm('Удалить тикет?')">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                <button class="del">✕</button>
+            </form>
+        </div>
+    </div>
+{% else %}
+    <p style="color:var(--dim)">Тикетов нет.</p>
+{% endfor %}
+{% endblock %}

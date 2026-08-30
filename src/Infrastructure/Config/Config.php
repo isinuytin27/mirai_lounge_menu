@@ -16,7 +16,21 @@ use RuntimeException;
 final class Config
 {
     /** @param array<string,mixed> $env снимок окружения (имя => значение) */
-    private function __construct(private readonly array $env) {}
+    private function __construct(
+        private readonly array $env,
+        private readonly string $projectRoot = '',
+    ) {}
+
+    public function projectRoot(): string
+    {
+        return $this->projectRoot;
+    }
+
+    /** Абсолютный путь каталога загрузок внутри public/ (и создаёт его при отсутствии). */
+    public function uploadDir(string $sub): string
+    {
+        return $this->projectRoot . '/public/' . trim($sub, '/');
+    }
 
     /**
      * Собирает конфиг: подхватывает .env из корня проекта (если есть), затем читает окружение.
@@ -48,13 +62,13 @@ final class Config
             $env[$k] = $v;
         }
 
-        return new self($env);
+        return new self($env, $projectRoot);
     }
 
     /** Явный конструктор для тестов. @param array<string,mixed> $env */
-    public static function fromArray(array $env): self
+    public static function fromArray(array $env, string $projectRoot = ''): self
     {
-        return new self($env);
+        return new self($env, $projectRoot);
     }
 
     private function str(string $key, string $default = ''): string
