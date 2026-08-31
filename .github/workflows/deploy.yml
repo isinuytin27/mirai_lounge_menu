@@ -1,12 +1,19 @@
-# Деплой кода на сервер по SSH (rsync). Данные и медиа из scripts/deploy-excludes.txt не трогаем.
-# Настройте Secrets в репозитории: Settings → Secrets and variables → Actions.
+# CI/CD Mirai Lounge (новый стек: Slim + Postgres + Vite).
+#
+# CI  (push/PR): composer + PHPUnit (unit+integration против сервисного Postgres) + PHPStan + Vite build.
+# CD  (push main): собрать артефакт (vendor --no-dev + dist), rsync на сервер, удалённо
+#     docker compose build/up + миграции. Данные НЕ трогаем (импорт — разовый, вручную).
+#
+# Secrets репозитория (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH, DEPLOY_SSH_KEY
+# На сервере в <DEPLOY_PATH>/.env заданы POSTGRES_*, MIRAI_TABLE_SIGNING_KEY (fail-closed!), TG/VAPID.
 
-name: Deploy to server
+name: CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -14,34 +21,98 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: mirailounge
+          POSTGRES_USER: mirailounge
+          POSTGRES_PASSWORD: ci_secret
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U mirailounge" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: dev
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: mirailounge
+      POSTGRES_USER: mirailounge
+      POSTGRES_PASSWORD: ci_secret
+      MIRAI_TABLE_SIGNING_KEY: ci-signing-key-0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_pgsql, fileinfo, zip
+          coverage: none
+
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Migrate + import (тестовые данные)
+        run: |
+          php vendor/bin/phinx migrate -c phinx.php
+          php bin/import-json
+
+      - name: PHPUnit
+        run: php vendor/bin/phpunit
+
+      - name: PHPStan
+        run: php vendor/bin/phpstan analyse src --level=5 --no-progress
+
+      - name: Node + Vite build
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          cd frontend
+          npm ci
+          npm run build
+
   deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Prepare SSH
+      # vendor собирается на сервере (docker build). Здесь готовим только Vite-dist.
+      - name: Node + Vite build
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: cd frontend && npm ci && npm run build
+
+      - name: SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Rsync code (excludes data & media)
-        env:
-          HOST: ${{ secrets.DEPLOY_HOST }}
-          USER: ${{ secrets.DEPLOY_USER }}
-          PATH_REMOTE: ${{ secrets.DEPLOY_PATH }}
+      - name: Rsync на сервер
         run: |
-          set -euo pipefail
-          if [ -z "${HOST:-}" ] || [ -z "${USER:-}" ] || [ -z "${PATH_REMOTE:-}" ]; then
-            echo "Задайте Secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH, DEPLOY_SSH_KEY" >&2
-            exit 1
-          fi
-          # Без --delete: на сервере сохраняются файлы, которых нет в git (меню, картинки, .env).
-          rsync -avz \
+          rsync -az --delete \
             --exclude-from=scripts/deploy-excludes.txt \
-            -e "ssh -i $HOME/.ssh/deploy_key -o IdentitiesOnly=yes" \
-            ./ "${USER}@${HOST}:${PATH_REMOTE}/"
+            -e "ssh -i ~/.ssh/deploy_key" \
+            ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
 
-      # После rsync на сервере выполните перезапуск стека (см. DEPLOY.md).
+      - name: Удалённо — платформа, стек, миграции
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s <<'REMOTE'
+          set -e
+          cd "${{ secrets.DEPLOY_PATH }}/docker"
+          # 1) общая платформа (Postgres) — поднять, если ещё не поднята
+          docker compose -f platform/docker-compose.yml up -d
+          # 2) стек сайта (пересобрать php при смене зависимостей, поднять)
+          docker compose build php
+          docker compose up -d
+          # 3) миграции БД (идемпотентно). Импорт данных НЕ здесь — он разовый.
+          docker compose exec -T php php vendor/bin/phinx migrate -c phinx.php
+          REMOTE

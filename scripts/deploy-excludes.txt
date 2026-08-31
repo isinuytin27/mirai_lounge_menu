@@ -1,18 +1,37 @@
-# Список для rsync --exclude-from (пути от корня репозитория).
-# На сервере эти файлы и каталоги не перезаписываются при деплое «только кода».
+# rsync --exclude-from (пути от корня репозитория). С --delete эти пути на сервере
+# НЕ удаляются и НЕ перезаписываются. ВНИМАНИЕ: без правильных исключений --delete
+# может стереть БД/секреты/чужие сайты.
 
-# Данные с продакшена
-/data/menu.json
-/data/gallery.json
-/data/orders.json
-/data/push_subscriptions.json
-/data/vip_events.json
-/data/vip_guests.json
+# --- ДАННЫЕ И БД (никогда не трогать) ---
+/data/                      # runtime + том Postgres (data/pg) — КРИТИЧНО
 
-# Загрузки из админок
+# --- Загрузки из админок ---
 /public/assets/img/menu/uploads/
 /public/assets/img/gallery/uploads/
 /public/assets/img/vip/partner_uploads/
-
-# Фото интерьера (столы) и прочие медиа зала — на сервере хранятся отдельно от git
 /public/assets/img/interior/
+
+# --- Секреты и dev-only ---
+/.env
+/docker/ssl/                # сертификаты живут на сервере, не в git
+/docker/docker-compose.override.yml   # локальный dev-override
+/docker/nginx/dev/          # dev-vhost
+/docker/php/Dockerfile.dev
+
+# --- Соседний арендатор (вне этого репо) ---
+/miraipro_site/
+
+# --- Мусор сборки / локальное ---
+/vendor/                    # собирается на сервере в образе php (Dockerfile composer install)
+/.git/
+/.github/
+/node_modules/
+/frontend/node_modules/
+/assets-doc/
+/graphify-out/
+/.playwright-mcp/
+/.claude/
+/var/
+/composer.phar
+*.png
+.DS_Store
