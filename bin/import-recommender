@@ -1,0 +1,148 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Заливает ассоциативный граф рекомендаций из resources/menu-association-model.json
+ * (аддон mirai-booking) в Postgres: rec_tags, rec_categories, rec_category_pairs,
+ * rec_tag_pairs, rec_config. Плюс проставляет menu_categories.rec_category и
+ * обогащает products.rec_tags по совпавшим названиям. Идемпотентно (полная перезаливка
+ * справочника). Запускать после миграций:  bin/migrate && bin/import-recommender
+ */
+
+use Mirai\Infrastructure\Db\Database;
+
+/** @var \Psr\Container\ContainerInterface $container */
+$container = require dirname(__DIR__) . '/src/bootstrap.php';
+
+$root = (string) $container->get('projectRoot');
+$db = $container->get(Database::class);
+$pdo = $db->pdo();
+
+$modelPath = $root . '/resources/menu-association-model.json';
+$model = json_decode((string) file_get_contents($modelPath), true);
+if (!is_array($model)) {
+    fwrite(STDERR, "Не читается модель: {$modelPath}\n");
+    exit(1);
+}
+
+// Наши категории (slug из menu_categories) -> категории модели.
+$CATEGORY_MAP = [
+    'kalyan' => 'hookah',
+    'author_cocktails' => 'author_ck',
+    'classic' => 'classic_ck',
+    'tinctures' => 'bitters',
+    'sours' => 'sours',
+    'tropical' => 'tropical_ck',
+    'na_cocktails' => 'mocktail',
+    'item' => 'beer',
+    'tea_leaf' => 'tea',
+    'tea_signature' => 'author_tea',
+    'item_2f338739' => 'energy',
+    'item_5a485d13' => 'soft',
+    'zakuski' => 'snacks',
+    'salaty' => 'salads',
+    'goryachee' => 'hot',
+    'pasta' => 'pasta',
+    'pizza' => 'pizza',
+    'desserts' => 'desserts',
+];
+
+// «Десерты» в модели нет — добавляем синтетически (категория + пары).
+$EXTRA_CATEGORIES = [
+    'desserts' => ['ru' => 'Десерты', 'group' => 'food', 'color' => '#c8791a',
+        'default_tags' => ['dessert', 'sweet'], 'margin' => 0.65],
+];
+$EXTRA_CATEGORY_PAIRS = [
+    ['a' => 'desserts', 'b' => 'author_tea', 'w' => 0.85],
+    ['a' => 'desserts', 'b' => 'tea', 'w' => 0.80],
+    ['a' => 'desserts', 'b' => 'hookah', 'w' => 0.60],
+    ['a' => 'desserts', 'b' => 'mocktail', 'w' => 0.50],
+    ['a' => 'desserts', 'b' => 'liqueur', 'w' => 0.50],
+];
+
+$norm = static fn (string $s): string => preg_replace('/\s+/u', ' ',
+    trim(mb_strtolower(str_replace(['«', '»', '"', "\u{2019}", "\u{2018}"], '', $s)))) ?? '';
+
+$counts = [];
+
+$db->transactional(function () use ($pdo, $model, $CATEGORY_MAP, $EXTRA_CATEGORIES, $EXTRA_CATEGORY_PAIRS, $norm, &$counts): void {
+    // --- rec_tags ---
+    $pdo->exec('TRUNCATE rec_tags');
+    $st = $pdo->prepare('INSERT INTO rec_tags (slug, ru, tag_group, color) VALUES (:slug, :ru, :g, :c)');
+    foreach ($model['tags'] as $slug => $t) {
+        $st->execute(['slug' => $slug, 'ru' => $t['ru'] ?? $slug, 'g' => $t['group'] ?? '', 'c' => $t['color'] ?? null]);
+    }
+    $counts['rec_tags'] = (int) $pdo->query('SELECT count(*) FROM rec_tags')->fetchColumn();
+
+    // --- rec_categories (модель + синтетические) ---
+    $pdo->exec('TRUNCATE rec_categories');
+    $st = $pdo->prepare('INSERT INTO rec_categories (slug, ru, cat_group, color, default_tags, margin)
+                         VALUES (:slug, :ru, :g, :c, CAST(:tags AS jsonb), :m)');
+    foreach ($model['categories'] as $slug => $c) {
+        $st->execute(['slug' => $slug, 'ru' => $c['ru'] ?? $slug, 'g' => $c['group'] ?? '',
+            'c' => $c['color'] ?? null, 'tags' => json_encode($c['default_tags'] ?? []), 'm' => $c['margin'] ?? 0]);
+    }
+    foreach ($EXTRA_CATEGORIES as $slug => $c) {
+        $st->execute(['slug' => $slug, 'ru' => $c['ru'], 'g' => $c['group'], 'c' => $c['color'],
+            'tags' => json_encode($c['default_tags']), 'm' => $c['margin']]);
+    }
+    $counts['rec_categories'] = (int) $pdo->query('SELECT count(*) FROM rec_categories')->fetchColumn();
+
+    // --- rec_category_pairs (модель + синтетические) ---
+    $pdo->exec('TRUNCATE rec_category_pairs');
+    $st = $pdo->prepare('INSERT INTO rec_category_pairs (a, b, weight) VALUES (:a, :b, :w)
+                         ON CONFLICT (a, b) DO UPDATE SET weight = EXCLUDED.weight');
+    foreach (array_merge($model['category_pairs'], $EXTRA_CATEGORY_PAIRS) as $p) {
+        $st->execute(['a' => $p['a'], 'b' => $p['b'], 'w' => $p['w']]);
+    }
+    $counts['rec_category_pairs'] = (int) $pdo->query('SELECT count(*) FROM rec_category_pairs')->fetchColumn();
+
+    // --- rec_tag_pairs ---
+    $pdo->exec('TRUNCATE rec_tag_pairs');
+    $st = $pdo->prepare('INSERT INTO rec_tag_pairs (a, b, weight) VALUES (:a, :b, :w)
+                         ON CONFLICT (a, b) DO UPDATE SET weight = EXCLUDED.weight');
+    foreach ($model['tag_pairs'] as $p) {
+        $st->execute(['a' => $p['a'], 'b' => $p['b'], 'w' => $p['w']]);
+    }
+    $counts['rec_tag_pairs'] = (int) $pdo->query('SELECT count(*) FROM rec_tag_pairs')->fetchColumn();
+
+    // --- rec_config (одна строка) ---
+    $pdo->exec('TRUNCATE rec_config RESTART IDENTITY');
+    $st = $pdo->prepare('INSERT INTO rec_config (data) VALUES (CAST(:d AS jsonb))');
+    $st->execute(['d' => json_encode($model['recommender'])]);
+    $counts['rec_config'] = 1;
+
+    // --- menu_categories.rec_category ---
+    $upd = $pdo->prepare('UPDATE menu_categories SET rec_category = :rc WHERE slug = :slug');
+    $mapped = 0;
+    foreach ($CATEGORY_MAP as $ourSlug => $recCat) {
+        $upd->execute(['rc' => $recCat, 'slug' => $ourSlug]);
+        $mapped += $upd->rowCount();
+    }
+    $counts['menu_categories.rec_category'] = $mapped;
+
+    // --- products.rec_tags — обогащение по совпадению названий с items модели ---
+    $itemsByName = [];
+    foreach ($model['items'] as $it) {
+        $itemsByName[$norm($it['name'])] = $it['tags'] ?? [];
+    }
+    $rows = $pdo->query('SELECT id, name FROM products')->fetchAll(PDO::FETCH_ASSOC);
+    $setTags = $pdo->prepare('UPDATE products SET rec_tags = CAST(:t AS jsonb) WHERE id = :id');
+    $enriched = 0;
+    foreach ($rows as $r) {
+        $tags = $itemsByName[$norm((string) $r['name'])] ?? null;
+        if ($tags) {
+            $setTags->execute(['t' => json_encode($tags), 'id' => $r['id']]);
+            $enriched++;
+        }
+    }
+    $counts['products.rec_tags'] = $enriched;
+});
+
+fwrite(STDOUT, "Импорт графа рекомендаций -> Postgres:\n");
+foreach ($counts as $k => $n) {
+    fwrite(STDOUT, sprintf("  %-28s %d\n", $k, $n));
+}
+fwrite(STDOUT, "Готово.\n");

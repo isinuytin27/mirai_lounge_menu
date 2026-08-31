@@ -7,10 +7,12 @@ namespace Mirai\Http\View;
 use Mirai\Domain\Menu\MenuRepository;
 use Mirai\Domain\Menu\PairedProduct;
 use Mirai\Domain\Menu\Product;
+use Mirai\Domain\Menu\Recommender;
 
 /**
  * View-model гостевого меню (drill-down: плашки-группы -> содержимое). Группы теперь
- * из БД (menu_groups), а не хардкод. Секции/товары из visibleMenu, граф гастропар — из pairings.
+ * из БД (menu_groups), а не хардкод. Секции/товары из visibleMenu; гастропары считает
+ * Recommender (граф категорий/тегов), а не ручные связки.
  */
 final class GuestMenuView
 {
@@ -27,14 +29,14 @@ final class GuestMenuView
      *
      * @return array{groups:list<array{id:string,label:string,count:int}>, sections:list<array<string,mixed>>, bar_wheel:list<array<string,mixed>>}
      */
-    public static function fromRepository(MenuRepository $menu): array
+    public static function fromRepository(MenuRepository $menu, Recommender $recommender): array
     {
         $visible = $menu->visibleMenu();
 
-        $slugs = [];
+        $all = [];
         foreach ($visible as $entry) {
             foreach ($entry['products'] as $p) {
-                $slugs[] = $p->slug;
+                $all[] = $p;
             }
         }
 
@@ -42,7 +44,7 @@ final class GuestMenuView
             $visible,
             $menu->groups(),
             $menu->allCategoryTitles(),
-            $menu->pairingsForSlugs($slugs),
+            $recommender->pairingsFor($all),
         );
     }
 

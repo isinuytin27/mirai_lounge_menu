@@ -10,7 +10,10 @@ namespace Mirai\Domain\Menu;
  */
 final class Product
 {
-    /** @param list<PairedProduct> $pairings сопутствующие товары (граф связок) */
+    /**
+     * @param ?string $recCategory категория движка рекомендаций (из menu_categories.rec_category)
+     * @param list<string> $recTags переопределение тегов (пусто => дефолт категории)
+     */
     public function __construct(
         public readonly int $id,
         public readonly string $slug,
@@ -28,15 +31,15 @@ final class Product
         public readonly bool $visible = true,
         public readonly bool $available = true,
         public readonly int $sortOrder = 0,
-        public readonly array $pairings = [],
+        public readonly ?string $recCategory = null,
+        public readonly array $recTags = [],
     ) {}
 
     /**
      * @param array<string,mixed> $row
      * @param string $line линия выдачи из категории
-     * @param list<PairedProduct> $pairings
      */
-    public static function fromRow(array $row, string $line, array $pairings = []): self
+    public static function fromRow(array $row, string $line): self
     {
         return new self(
             (int) ($row['id'] ?? 0),
@@ -55,8 +58,21 @@ final class Product
             self::boolish($row['visible'] ?? true),
             self::boolish($row['available'] ?? true),
             (int) ($row['sort_order'] ?? 0),
-            $pairings,
+            self::nullableStr($row['rec_category'] ?? null),
+            self::tagList($row['rec_tags'] ?? null),
         );
+    }
+
+    /** @return list<string> */
+    private static function tagList(mixed $v): array
+    {
+        if (is_string($v) && $v !== '') {
+            $v = json_decode($v, true);
+        }
+        if (!is_array($v)) {
+            return [];
+        }
+        return array_values(array_map('strval', $v));
     }
 
     /** Порция человекочитаемо: «270 г», «500 мл» или null. */

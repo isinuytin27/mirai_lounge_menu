@@ -43,6 +43,14 @@
     <div class="field"><label>Короткое описание (для карточки)</label><input class="input" name="description_short" value="{{ p.description_short ?? '' }}"></div>
     <div class="field"><label>Полное описание</label><textarea class="input" name="description">{{ p.description ?? '' }}</textarea></div>
     <div class="field"><label>Состав</label><textarea class="input" name="composition">{{ p.composition ?? '' }}</textarea></div>
+    <div class="field">
+        <label>Теги рекомендатора <span class="muted">— переопределяют теги категории; пусто = наследуются</span></label>
+        <input class="input" name="rec_tags" value="{{ rec_tags|join(' ') }}" placeholder="anchor smoky chill">
+        <div class="muted" style="margin-top:6px">
+            Доступные:
+            {% for t in all_tags %}<code title="{{ t.ru }} ({{ t.group }})">{{ t.slug }}</code>{% if not loop.last %} · {% endif %}{% endfor %}
+        </div>
+    </div>
     <div class="row" style="gap:24px;margin:6px 0 16px">
         <label class="check"><input type="checkbox" name="visible" {{ p.visible ? 'checked' }}> Виден гостю</label>
         <label class="check"><input type="checkbox" name="available" {{ p.available ? 'checked' }}> В наличии</label>
@@ -50,43 +58,14 @@
     <button class="btn" type="submit">Сохранить</button>
 </form>
 
-<h3>◆ Гастропары <span class="muted">— сопутствующие товары (граф)</span></h3>
-{% for pr in pairings %}
+<h3>◆ Гастропары <span class="muted">— считаются автоматически (граф категорий/тегов)</span></h3>
+{% for pr in recommendations %}
     <div class="pair">
         <span>{{ pr.name }} <span class="muted">· {{ pr.price }} ₽</span></span>
-        <span class="k">{{ pr.kind }}</span>
-        <span class="w">вес {{ pr.weight }}</span>
-        {% if pr.note %}<span class="muted">«{{ pr.note }}»</span>{% endif %}
-        <form method="post" action="/admin/menu/product/{{ p.slug }}/pairing/{{ pr.id }}/delete" style="margin-left:auto">
-            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-            <button class="del" title="Убрать">✕</button>
-        </form>
+        <span class="w">score {{ pr.weight }}</span>
     </div>
 {% else %}
-    <p class="muted">Пока нет связок. Добавьте — что хорошо к этому товару.</p>
+    <p class="muted">Движок не нашёл сильных пар (score ниже порога). Проверьте категорию/теги товара.</p>
 {% endfor %}
-
-<form class="card" method="post" action="/admin/menu/product/{{ p.slug }}/pairing" style="margin-top:12px">
-    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-    <div class="grid2">
-        <div class="field"><label>Сопутствующий товар</label>
-            <select class="input" name="to" required>
-                <option value="">— выбрать —</option>
-                {% for x in catalog %}{% if x.slug != p.slug %}<option value="{{ x.slug }}">{{ x.name }}</option>{% endif %}{% endfor %}
-            </select>
-        </div>
-        <div class="field"><label>Тип</label>
-            <select class="input" name="kind">
-                <option value="gastro">Гастропара</option>
-                <option value="upsell">Допродажа</option>
-                <option value="alt">Альтернатива</option>
-            </select>
-        </div>
-    </div>
-    <div class="grid2">
-        <div class="field"><label>Вес связи (0–1)</label><input class="input" name="weight" value="1.0"></div>
-        <div class="field"><label>Подпись (необяз.)</label><input class="input" name="note" placeholder="Классика к кальяну"></div>
-    </div>
-    <button class="btn" type="submit">Добавить связку</button>
-</form>
+<p class="muted" style="margin-top:8px">Связки не заводятся руками: задайте товару правильные теги — рекомендации подстроятся.</p>
 {% endblock %}

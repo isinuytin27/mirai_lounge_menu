@@ -6,6 +6,7 @@ namespace Mirai\Http\Controllers;
 
 use Mirai\Domain\Gallery\GalleryRepository;
 use Mirai\Domain\Menu\MenuRepository;
+use Mirai\Domain\Menu\Recommender;
 use Mirai\Domain\Orders\TableRegistry;
 use Mirai\Http\Middleware\TableSessionMiddleware;
 use Mirai\Http\View\GuestMenuView;
@@ -25,6 +26,7 @@ final class HomeController
 {
     public function __construct(
         private readonly MenuRepository $menu,
+        private readonly Recommender $recommender,
         private readonly GalleryRepository $gallery,
         private readonly TableRegistry $tables,
         private readonly TableCookie $tableCookie,
@@ -48,7 +50,7 @@ final class HomeController
         $table = $request->getAttribute(TableSessionMiddleware::ATTR);
 
         return Twig::fromRequest($request)->render($response, 'index.twig', [
-            'menu_view' => GuestMenuView::fromRepository($this->menu),
+            'menu_view' => GuestMenuView::fromRepository($this->menu, $this->recommender),
             'gallery' => $this->gallery->all(),
             'table_caption' => $table['caption'] ?? null,
             'table_bound' => $table !== null,

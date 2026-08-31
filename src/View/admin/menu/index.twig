@@ -45,7 +45,6 @@
                 <span class="nm">{{ p.name }}</span><span class="pr">{{ p.price }} ₽</span>
             </div>
             <div class="meta">
-                {% if p.pairings > 0 %}<span class="pill pair">◆ {{ p.pairings }} пар</span>{% endif %}
                 <form class="inline" method="post" action="/admin/menu/toggle/{{ p.slug }}/visible">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
                     <input type="hidden" name="value" value="{{ p.visible ? '' : '1' }}">

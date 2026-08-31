@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mirai\Http\Controllers;
 
 use Mirai\Domain\Menu\MenuRepository;
+use Mirai\Domain\Menu\Recommender;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -13,20 +14,23 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  */
 final class MenuApiController
 {
-    public function __construct(private readonly MenuRepository $menu) {}
+    public function __construct(
+        private readonly MenuRepository $menu,
+        private readonly Recommender $recommender,
+    ) {}
 
     public function __invoke(Request $request, Response $response): Response
     {
         $visible = $this->menu->visibleMenu();
 
-        // Гастропары (граф связок) для всех товаров.
-        $slugs = [];
+        // Гастропары считает движок рекомендаций (граф категорий/тегов).
+        $all = [];
         foreach ($visible as $group) {
             foreach ($group['products'] as $p) {
-                $slugs[] = $p->slug;
+                $all[] = $p;
             }
         }
-        $pairings = $this->menu->pairingsForSlugs($slugs);
+        $pairings = $this->recommender->pairingsFor($all);
 
         $categories = [];
         foreach ($visible as $group) {

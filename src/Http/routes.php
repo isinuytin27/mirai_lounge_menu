@@ -84,8 +84,6 @@ return static function (App $app): void {
         $g->get('/product/{slug}', [MenuAdminController::class, 'editProduct']);
         $g->post('/product/{slug}', [MenuAdminController::class, 'saveProduct']);
         $g->post('/toggle/{slug}/{field}', [MenuAdminController::class, 'toggle']);
-        $g->post('/product/{slug}/pairing', [MenuAdminController::class, 'addPairing']);
-        $g->post('/product/{slug}/pairing/{id}/delete', [MenuAdminController::class, 'removePairing']);
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('admin_panel'))

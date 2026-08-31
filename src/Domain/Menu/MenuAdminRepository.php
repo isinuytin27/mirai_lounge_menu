@@ -29,16 +29,9 @@ final class MenuAdminRepository extends Repository
              FROM products ORDER BY sort_order, name'
         );
 
-        $pairingCounts = [];
-        foreach ($this->fetchAll('SELECT product_id, count(*) AS c FROM product_pairings GROUP BY product_id') as $r) {
-            $pairingCounts[(int) $r['product_id']] = (int) $r['c'];
-        }
-
         $byCat = [];
         foreach ($prods as $p) {
-            $cid = (int) $p['category_id'];
-            $p['pairings'] = $pairingCounts[(int) $p['id']] ?? 0;
-            $byCat[$cid][] = $p;
+            $byCat[(int) $p['category_id']][] = $p;
         }
 
         $out = [];
@@ -68,12 +61,14 @@ final class MenuAdminRepository extends Repository
      */
     public function updateProduct(string $slug, array $data): void
     {
+        /** @var list<string> $recTags */
+        $recTags = $data['rec_tags'] ?? [];
         $this->execute(
             'UPDATE products SET
                 name = :name, price = :price,
                 description = :description, description_short = :description_short, composition = :composition,
                 portion_value = :portion_value, portion_unit = :portion_unit, prep_time = :prep_time,
-                visible = :visible, available = :available, updated_at = :now
+                visible = :visible, available = :available, rec_tags = CAST(:rec_tags AS jsonb), updated_at = :now
              WHERE slug = :slug',
             [
                 'name' => (string) $data['name'],
@@ -86,6 +81,8 @@ final class MenuAdminRepository extends Repository
                 'prep_time' => $data['prep_time'] ?: null,
                 'visible' => !empty($data['visible']) ? 'true' : 'false',
                 'available' => !empty($data['available']) ? 'true' : 'false',
+                // пусто => null (наследует теги категории); иначе — переопределение
+                'rec_tags' => $recTags === [] ? null : (string) json_encode($recTags),
                 'now' => date('c'),
                 'slug' => $slug,
             ]
@@ -104,54 +101,17 @@ final class MenuAdminRepository extends Repository
         );
     }
 
-    // ---------- граф гастропар ----------
-
     /**
-     * Связки товара (для редактирования) с данными цели.
-     * @return list<array<string,mixed>>
+     * Справочник тегов рекомендатора (для подсказок в редакторе), сгруппированный.
+     * @return list<array{slug:string,ru:string,group:string}>
      */
-    public function pairingsOf(string $slug): array
+    public function recTags(): array
     {
-        return $this->fetchAll(
-            'SELECT pp.id, pp.kind, pp.weight, pp.note, tgt.slug, tgt.name, tgt.price
-             FROM product_pairings pp
-             JOIN products src ON src.id = pp.product_id
-             JOIN products tgt ON tgt.id = pp.paired_product_id
-             WHERE src.slug = :slug ORDER BY pp.weight DESC, pp.sort_order',
-            ['slug' => $slug]
-        );
-    }
-
-    /** Добавить ребро графа (гастропару). */
-    public function addPairing(string $fromSlug, string $toSlug, string $kind, float $weight, ?string $note): void
-    {
-        if ($fromSlug === $toSlug) {
-            return;
-        }
-        $this->execute(
-            'INSERT INTO product_pairings (product_id, paired_product_id, kind, weight, note, created_at)
-             SELECT s.id, t.id, :kind, :weight, :note, :now
-             FROM products s, products t WHERE s.slug = :from AND t.slug = :to
-             ON CONFLICT (product_id, paired_product_id, kind) DO UPDATE SET weight = EXCLUDED.weight, note = EXCLUDED.note',
-            ['kind' => $kind, 'weight' => $weight, 'note' => $note ?: null, 'now' => date('c'), 'from' => $fromSlug, 'to' => $toSlug]
-        );
-    }
-
-    public function removePairing(int $pairingId): void
-    {
-        $this->execute('DELETE FROM product_pairings WHERE id = :id', ['id' => $pairingId]);
-    }
-
-    /**
-     * Список товаров для выбора цели связки (id/slug/name).
-     * @return list<array{slug:string,name:string}>
-     */
-    public function productsBrief(): array
-    {
-        $rows = $this->fetchAll('SELECT slug, name FROM products ORDER BY name');
+        $rows = $this->fetchAll('SELECT slug, ru, tag_group FROM rec_tags ORDER BY tag_group, ru');
         return array_map(static fn (array $r): array => [
             'slug' => (string) $r['slug'],
-            'name' => (string) $r['name'],
+            'ru' => (string) $r['ru'],
+            'group' => (string) $r['tag_group'],
         ], $rows);
     }
 }

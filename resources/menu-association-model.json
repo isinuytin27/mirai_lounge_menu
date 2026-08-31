@@ -1,0 +1,2332 @@
+{
+  "meta": {
+    "name": "MIRAI Lounge — associative recommendation model",
+    "source": "mirailounge.ru",
+    "version": "1.0",
+    "updated": "2026-08-30",
+    "items_count": 127,
+    "categories_count": 25,
+    "tags_count": 30,
+    "idea": "Рекомендации считаются по графу категория↔категория и тег↔тег. Новая позиция получает только {cat, tags} и сразу участвует в выдаче — без ручной привязки item→item."
+  },
+  "tags": {
+    "citrus": {
+      "ru": "Цитрус",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "berry": {
+      "ru": "Ягоды",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "stone": {
+      "ru": "Косточковые",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "pome": {
+      "ru": "Яблоко/груша",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "tropical": {
+      "ru": "Тропик",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "creamy": {
+      "ru": "Сливочное",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "herbal": {
+      "ru": "Травяное/мята",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "floral": {
+      "ru": "Цветочное",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "smoky": {
+      "ru": "Дымное",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "spicy": {
+      "ru": "Пряное/остр.",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "dessert": {
+      "ru": "Десерт/кофе",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "umami": {
+      "ru": "Умами/мясо",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "seafood": {
+      "ru": "Рыба/морепр.",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "sour": {
+      "ru": "Кислое",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "sweet": {
+      "ru": "Сладкое",
+      "group": "flavor",
+      "color": "#8a7bd8"
+    },
+    "anchor": {
+      "ru": "Якорь",
+      "group": "role",
+      "color": "#5a86d8"
+    },
+    "snack": {
+      "ru": "Снэк",
+      "group": "role",
+      "color": "#5a86d8"
+    },
+    "main": {
+      "ru": "Основное",
+      "group": "role",
+      "color": "#5a86d8"
+    },
+    "salad": {
+      "ru": "Лёгкое",
+      "group": "role",
+      "color": "#5a86d8"
+    },
+    "nonalc": {
+      "ru": "Безалк.",
+      "group": "strength",
+      "color": "#c96a3a"
+    },
+    "light": {
+      "ru": "Лёгкий алк.",
+      "group": "strength",
+      "color": "#c96a3a"
+    },
+    "strong": {
+      "ru": "Крепкий",
+      "group": "strength",
+      "color": "#c96a3a"
+    },
+    "shot": {
+      "ru": "Шот",
+      "group": "strength",
+      "color": "#c96a3a"
+    },
+    "hot": {
+      "ru": "Горячий",
+      "group": "temp",
+      "color": "#3aa6b0"
+    },
+    "cold": {
+      "ru": "Холодный",
+      "group": "temp",
+      "color": "#3aa6b0"
+    },
+    "asian": {
+      "ru": "Азиатское",
+      "group": "context",
+      "color": "#b07bc9"
+    },
+    "gaming": {
+      "ru": "Гейминг",
+      "group": "context",
+      "color": "#b07bc9"
+    },
+    "company": {
+      "ru": "Компания",
+      "group": "context",
+      "color": "#b07bc9"
+    },
+    "romance": {
+      "ru": "Романтика",
+      "group": "context",
+      "color": "#b07bc9"
+    },
+    "chill": {
+      "ru": "Чилл",
+      "group": "context",
+      "color": "#b07bc9"
+    }
+  },
+  "categories": {
+    "hookah": {
+      "ru": "Кальян",
+      "group": "hookah",
+      "color": "#7c4dff",
+      "default_tags": [
+        "anchor",
+        "smoky",
+        "chill"
+      ],
+      "margin": 0.9
+    },
+    "snacks": {
+      "ru": "Закуски",
+      "group": "food",
+      "color": "#c8791a",
+      "default_tags": [
+        "snack",
+        "umami"
+      ],
+      "margin": 0.6
+    },
+    "salads": {
+      "ru": "Салаты",
+      "group": "food",
+      "color": "#c8791a",
+      "default_tags": [
+        "salad"
+      ],
+      "margin": 0.4
+    },
+    "hot": {
+      "ru": "Горячее",
+      "group": "food",
+      "color": "#c8791a",
+      "default_tags": [
+        "main",
+        "umami"
+      ],
+      "margin": 0.4
+    },
+    "pasta": {
+      "ru": "Паста",
+      "group": "food",
+      "color": "#c8791a",
+      "default_tags": [
+        "main",
+        "creamy"
+      ],
+      "margin": 0.4
+    },
+    "pizza": {
+      "ru": "Пицца",
+      "group": "food",
+      "color": "#c8791a",
+      "default_tags": [
+        "main",
+        "umami"
+      ],
+      "margin": 0.5
+    },
+    "author_ck": {
+      "ru": "Авторские коктейли",
+      "group": "cocktail",
+      "color": "#c9407a",
+      "default_tags": [
+        "light",
+        "cold"
+      ],
+      "margin": 0.8
+    },
+    "classic_ck": {
+      "ru": "Классика",
+      "group": "cocktail",
+      "color": "#c9407a",
+      "default_tags": [
+        "light",
+        "cold",
+        "sour"
+      ],
+      "margin": 0.75
+    },
+    "bitters": {
+      "ru": "Настойки",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "shot",
+        "strong"
+      ],
+      "margin": 0.85
+    },
+    "sours": {
+      "ru": "Сауэры",
+      "group": "cocktail",
+      "color": "#c9407a",
+      "default_tags": [
+        "light",
+        "cold",
+        "sour"
+      ],
+      "margin": 0.75
+    },
+    "tropical_ck": {
+      "ru": "Тропические",
+      "group": "cocktail",
+      "color": "#c9407a",
+      "default_tags": [
+        "light",
+        "cold",
+        "tropical",
+        "sweet"
+      ],
+      "margin": 0.75
+    },
+    "draft": {
+      "ru": "Разливное пиво",
+      "group": "beer",
+      "color": "#b07b25",
+      "default_tags": [
+        "light",
+        "cold"
+      ],
+      "margin": 0.6
+    },
+    "beer": {
+      "ru": "Пиво",
+      "group": "beer",
+      "color": "#b07b25",
+      "default_tags": [
+        "light",
+        "cold"
+      ],
+      "margin": 0.55
+    },
+    "aperitif": {
+      "ru": "Аперитивы",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "shot",
+        "light"
+      ],
+      "margin": 0.7
+    },
+    "whiskey": {
+      "ru": "Виски",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "strong",
+        "shot"
+      ],
+      "margin": 0.7
+    },
+    "gin": {
+      "ru": "Джин",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "strong",
+        "shot"
+      ],
+      "margin": 0.65
+    },
+    "liqueur": {
+      "ru": "Ликёры",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "strong",
+        "shot",
+        "sweet",
+        "dessert"
+      ],
+      "margin": 0.7
+    },
+    "rum": {
+      "ru": "Ром",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "strong",
+        "shot"
+      ],
+      "margin": 0.6
+    },
+    "soju": {
+      "ru": "Соджу",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "light",
+        "cold",
+        "asian"
+      ],
+      "margin": 0.85
+    },
+    "tequila": {
+      "ru": "Текила",
+      "group": "spirit",
+      "color": "#e0556e",
+      "default_tags": [
+        "strong",
+        "shot"
+      ],
+      "margin": 0.6
+    },
+    "mocktail": {
+      "ru": "Безалк. коктейли",
+      "group": "soft",
+      "color": "#2aa77f",
+      "default_tags": [
+        "nonalc",
+        "cold",
+        "sweet"
+      ],
+      "margin": 0.55
+    },
+    "tea": {
+      "ru": "Чай листовой",
+      "group": "tea",
+      "color": "#0f9d6b",
+      "default_tags": [
+        "nonalc",
+        "hot"
+      ],
+      "margin": 0.6
+    },
+    "author_tea": {
+      "ru": "Авторский чай",
+      "group": "tea",
+      "color": "#0f9d6b",
+      "default_tags": [
+        "nonalc",
+        "hot",
+        "sweet"
+      ],
+      "margin": 0.75
+    },
+    "energy": {
+      "ru": "Напитки ⚡",
+      "group": "soft",
+      "color": "#2aa77f",
+      "default_tags": [
+        "nonalc",
+        "cold"
+      ],
+      "margin": 0.5
+    },
+    "soft": {
+      "ru": "Напитки б/а",
+      "group": "soft",
+      "color": "#2aa77f",
+      "default_tags": [
+        "nonalc",
+        "cold"
+      ],
+      "margin": 0.4
+    }
+  },
+  "category_pairs": [
+    {
+      "a": "hookah",
+      "b": "author_tea",
+      "w": 0.9
+    },
+    {
+      "a": "hookah",
+      "b": "tea",
+      "w": 0.85
+    },
+    {
+      "a": "hookah",
+      "b": "snacks",
+      "w": 0.7
+    },
+    {
+      "a": "hookah",
+      "b": "author_ck",
+      "w": 0.65
+    },
+    {
+      "a": "hookah",
+      "b": "bitters",
+      "w": 0.6
+    },
+    {
+      "a": "hookah",
+      "b": "soju",
+      "w": 0.55
+    },
+    {
+      "a": "hookah",
+      "b": "mocktail",
+      "w": 0.5
+    },
+    {
+      "a": "hookah",
+      "b": "energy",
+      "w": 0.5
+    },
+    {
+      "a": "hookah",
+      "b": "tropical_ck",
+      "w": 0.5
+    },
+    {
+      "a": "hookah",
+      "b": "liqueur",
+      "w": 0.35
+    },
+    {
+      "a": "pizza",
+      "b": "beer",
+      "w": 0.9
+    },
+    {
+      "a": "pizza",
+      "b": "draft",
+      "w": 0.9
+    },
+    {
+      "a": "pizza",
+      "b": "classic_ck",
+      "w": 0.5
+    },
+    {
+      "a": "pizza",
+      "b": "snacks",
+      "w": 0.4
+    },
+    {
+      "a": "hot",
+      "b": "beer",
+      "w": 0.75
+    },
+    {
+      "a": "hot",
+      "b": "whiskey",
+      "w": 0.6
+    },
+    {
+      "a": "hot",
+      "b": "energy",
+      "w": 0.5
+    },
+    {
+      "a": "hot",
+      "b": "classic_ck",
+      "w": 0.4
+    },
+    {
+      "a": "hot",
+      "b": "soju",
+      "w": 0.4
+    },
+    {
+      "a": "pasta",
+      "b": "classic_ck",
+      "w": 0.6
+    },
+    {
+      "a": "pasta",
+      "b": "gin",
+      "w": 0.5
+    },
+    {
+      "a": "pasta",
+      "b": "beer",
+      "w": 0.4
+    },
+    {
+      "a": "pasta",
+      "b": "author_ck",
+      "w": 0.4
+    },
+    {
+      "a": "salads",
+      "b": "sours",
+      "w": 0.7
+    },
+    {
+      "a": "salads",
+      "b": "gin",
+      "w": 0.55
+    },
+    {
+      "a": "salads",
+      "b": "mocktail",
+      "w": 0.5
+    },
+    {
+      "a": "salads",
+      "b": "author_ck",
+      "w": 0.45
+    },
+    {
+      "a": "snacks",
+      "b": "beer",
+      "w": 0.75
+    },
+    {
+      "a": "snacks",
+      "b": "soju",
+      "w": 0.7
+    },
+    {
+      "a": "snacks",
+      "b": "sours",
+      "w": 0.55
+    },
+    {
+      "a": "snacks",
+      "b": "bitters",
+      "w": 0.5
+    },
+    {
+      "a": "snacks",
+      "b": "whiskey",
+      "w": 0.4
+    },
+    {
+      "a": "snacks",
+      "b": "draft",
+      "w": 0.65
+    },
+    {
+      "a": "bitters",
+      "b": "snacks",
+      "w": 0.5
+    },
+    {
+      "a": "draft",
+      "b": "snacks",
+      "w": 0.55
+    },
+    {
+      "a": "liqueur",
+      "b": "author_tea",
+      "w": 0.45
+    },
+    {
+      "a": "liqueur",
+      "b": "tea",
+      "w": 0.35
+    },
+    {
+      "a": "tropical_ck",
+      "b": "snacks",
+      "w": 0.35
+    },
+    {
+      "a": "author_tea",
+      "b": "snacks",
+      "w": 0.3
+    },
+    {
+      "a": "tea",
+      "b": "snacks",
+      "w": 0.3
+    },
+    {
+      "a": "tequila",
+      "b": "snacks",
+      "w": 0.35
+    },
+    {
+      "a": "rum",
+      "b": "snacks",
+      "w": 0.3
+    },
+    {
+      "a": "aperitif",
+      "b": "pizza",
+      "w": 0.4
+    }
+  ],
+  "tag_pairs": [
+    {
+      "a": "citrus",
+      "b": "tropical",
+      "w": 0.7
+    },
+    {
+      "a": "citrus",
+      "b": "herbal",
+      "w": 0.6
+    },
+    {
+      "a": "citrus",
+      "b": "floral",
+      "w": 0.5
+    },
+    {
+      "a": "citrus",
+      "b": "berry",
+      "w": 0.4
+    },
+    {
+      "a": "citrus",
+      "b": "spicy",
+      "w": 0.45
+    },
+    {
+      "a": "berry",
+      "b": "stone",
+      "w": 0.6
+    },
+    {
+      "a": "berry",
+      "b": "creamy",
+      "w": 0.5
+    },
+    {
+      "a": "berry",
+      "b": "herbal",
+      "w": 0.4
+    },
+    {
+      "a": "berry",
+      "b": "sweet",
+      "w": 0.45
+    },
+    {
+      "a": "tropical",
+      "b": "creamy",
+      "w": 0.7
+    },
+    {
+      "a": "tropical",
+      "b": "sweet",
+      "w": 0.6
+    },
+    {
+      "a": "tropical",
+      "b": "sour",
+      "w": 0.4
+    },
+    {
+      "a": "creamy",
+      "b": "dessert",
+      "w": 0.6
+    },
+    {
+      "a": "creamy",
+      "b": "pome",
+      "w": 0.5
+    },
+    {
+      "a": "creamy",
+      "b": "umami",
+      "w": 0.35
+    },
+    {
+      "a": "smoky",
+      "b": "herbal",
+      "w": 0.5
+    },
+    {
+      "a": "smoky",
+      "b": "sweet",
+      "w": 0.45
+    },
+    {
+      "a": "smoky",
+      "b": "dessert",
+      "w": 0.4
+    },
+    {
+      "a": "umami",
+      "b": "light",
+      "w": 0.6
+    },
+    {
+      "a": "umami",
+      "b": "strong",
+      "w": 0.5
+    },
+    {
+      "a": "umami",
+      "b": "asian",
+      "w": 0.6
+    },
+    {
+      "a": "umami",
+      "b": "spicy",
+      "w": 0.45
+    },
+    {
+      "a": "spicy",
+      "b": "cold",
+      "w": 0.5
+    },
+    {
+      "a": "spicy",
+      "b": "sour",
+      "w": 0.4
+    },
+    {
+      "a": "dessert",
+      "b": "sweet",
+      "w": 0.6
+    },
+    {
+      "a": "dessert",
+      "b": "stone",
+      "w": 0.45
+    },
+    {
+      "a": "asian",
+      "b": "light",
+      "w": 0.5
+    },
+    {
+      "a": "asian",
+      "b": "cold",
+      "w": 0.4
+    },
+    {
+      "a": "stone",
+      "b": "sweet",
+      "w": 0.45
+    },
+    {
+      "a": "pome",
+      "b": "sweet",
+      "w": 0.4
+    },
+    {
+      "a": "hot",
+      "b": "sweet",
+      "w": 0.35
+    },
+    {
+      "a": "floral",
+      "b": "sweet",
+      "w": 0.4
+    },
+    {
+      "a": "snack",
+      "b": "light",
+      "w": 0.55
+    },
+    {
+      "a": "main",
+      "b": "light",
+      "w": 0.55
+    },
+    {
+      "a": "salad",
+      "b": "sour",
+      "w": 0.45
+    },
+    {
+      "a": "anchor",
+      "b": "hot",
+      "w": 0.55
+    },
+    {
+      "a": "anchor",
+      "b": "sweet",
+      "w": 0.45
+    }
+  ],
+  "items": [
+    {
+      "name": "Кальян Классика",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill"
+      ],
+      "price": 2000,
+      "id": "hookah__kalyan-klassika"
+    },
+    {
+      "name": "Кальян Bonche",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill",
+        "strong"
+      ],
+      "price": 2300,
+      "id": "hookah__kalyan-bonche"
+    },
+    {
+      "name": "Tropic Rave",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill",
+        "tropical",
+        "sweet"
+      ],
+      "price": 3000,
+      "id": "hookah__tropic-rave"
+    },
+    {
+      "name": "Electric Matcha",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill",
+        "herbal",
+        "asian"
+      ],
+      "price": 3200,
+      "id": "hookah__electric-matcha"
+    },
+    {
+      "name": "Mirai",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill"
+      ],
+      "price": 3500,
+      "id": "hookah__mirai"
+    },
+    {
+      "name": "Двойной Кальян",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill",
+        "company"
+      ],
+      "price": 3700,
+      "id": "hookah__dvoynoy-kalyan"
+    },
+    {
+      "name": "Тройной Кальян",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill",
+        "company"
+      ],
+      "price": 5200,
+      "id": "hookah__troynoy-kalyan"
+    },
+    {
+      "name": "Фруктовая чаша (грейпфрут)",
+      "cat": "hookah",
+      "tags": [
+        "anchor",
+        "smoky",
+        "chill",
+        "citrus"
+      ],
+      "price": 700,
+      "id": "hookah__fruktovaya-chasha-greypfrut"
+    },
+    {
+      "name": "Брускета с форелью",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "seafood"
+      ],
+      "price": 750,
+      "id": "snacks__brusketa-s-forelyu"
+    },
+    {
+      "name": "Брускета с ростбифом",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "berry"
+      ],
+      "price": 850,
+      "id": "snacks__brusketa-s-rostbifom"
+    },
+    {
+      "name": "Кушияки из куриного филе",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "asian"
+      ],
+      "price": 800,
+      "id": "snacks__kushiyaki-iz-kurinogo-file"
+    },
+    {
+      "name": "Кушияки из тигровой креветки",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "asian",
+        "seafood"
+      ],
+      "price": 900,
+      "id": "snacks__kushiyaki-iz-tigrovoy-krevetki"
+    },
+    {
+      "name": "Кушияки с неркой",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "asian",
+        "seafood"
+      ],
+      "price": 800,
+      "id": "snacks__kushiyaki-s-nerkoy"
+    },
+    {
+      "name": "Кушияки из курицы",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "asian"
+      ],
+      "price": 800,
+      "id": "snacks__kushiyaki-iz-kuricy"
+    },
+    {
+      "name": "Картофель фри",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "gaming"
+      ],
+      "price": 350,
+      "id": "snacks__kartofel-fri"
+    },
+    {
+      "name": "Наггетсы",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "gaming"
+      ],
+      "price": 450,
+      "id": "snacks__naggetsy"
+    },
+    {
+      "name": "Сырные палочки",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "creamy",
+        "gaming"
+      ],
+      "price": 500,
+      "id": "snacks__syrnye-palochki"
+    },
+    {
+      "name": "Гренки чесночные",
+      "cat": "snacks",
+      "tags": [
+        "snack",
+        "umami",
+        "spicy",
+        "gaming"
+      ],
+      "price": 350,
+      "id": "snacks__grenki-chesnochnye"
+    },
+    {
+      "name": "Цезарь с курицей",
+      "cat": "salads",
+      "tags": [
+        "salad"
+      ],
+      "price": 800,
+      "id": "salads__cezar-s-kuricey"
+    },
+    {
+      "name": "Цезарь с тигровой креветкой",
+      "cat": "salads",
+      "tags": [
+        "salad",
+        "seafood"
+      ],
+      "price": 990,
+      "id": "salads__cezar-s-tigrovoy-krevetkoy"
+    },
+    {
+      "name": "Греческий",
+      "cat": "salads",
+      "tags": [
+        "salad",
+        "herbal"
+      ],
+      "price": 700,
+      "id": "salads__grecheskiy"
+    },
+    {
+      "name": "Зелёный под соусом хумус",
+      "cat": "salads",
+      "tags": [
+        "salad",
+        "herbal"
+      ],
+      "price": 750,
+      "id": "salads__zelenyy-pod-sousom-humus"
+    },
+    {
+      "name": "Нисуаз с тунцом",
+      "cat": "salads",
+      "tags": [
+        "salad",
+        "seafood"
+      ],
+      "price": 950,
+      "id": "salads__nisuaz-s-tuncom"
+    },
+    {
+      "name": "Ростбиф-персик-кешью",
+      "cat": "salads",
+      "tags": [
+        "salad",
+        "stone",
+        "berry"
+      ],
+      "price": 950,
+      "id": "salads__rostbif-persik-keshyu"
+    },
+    {
+      "name": "Бефстроганов с пюре",
+      "cat": "hot",
+      "tags": [
+        "main",
+        "umami",
+        "strong"
+      ],
+      "price": 1200,
+      "id": "hot__befstroganov-s-pyure"
+    },
+    {
+      "name": "Ризотто с креветкой и спаржей",
+      "cat": "hot",
+      "tags": [
+        "main",
+        "umami",
+        "seafood",
+        "creamy"
+      ],
+      "price": 990,
+      "id": "hot__rizotto-s-krevetkoy-i-sparzhey"
+    },
+    {
+      "name": "Нерка под соусом Термидор",
+      "cat": "hot",
+      "tags": [
+        "main",
+        "umami",
+        "seafood",
+        "creamy"
+      ],
+      "price": 990,
+      "id": "hot__nerka-pod-sousom-termidor"
+    },
+    {
+      "name": "Бургер из мраморной говядины + фри",
+      "cat": "hot",
+      "tags": [
+        "main",
+        "umami",
+        "gaming"
+      ],
+      "price": 950,
+      "id": "hot__burger-iz-mramornoy-govyadiny-fri"
+    },
+    {
+      "name": "Чикенбургер + фри",
+      "cat": "hot",
+      "tags": [
+        "main",
+        "umami",
+        "gaming"
+      ],
+      "price": 850,
+      "id": "hot__chikenburger-fri"
+    },
+    {
+      "name": "Паста с креветкой",
+      "cat": "pasta",
+      "tags": [
+        "main",
+        "creamy",
+        "seafood"
+      ],
+      "price": 900,
+      "id": "pasta__pasta-s-krevetkoy"
+    },
+    {
+      "name": "Фетучини с курицей и грибами",
+      "cat": "pasta",
+      "tags": [
+        "main",
+        "creamy"
+      ],
+      "price": 800,
+      "id": "pasta__fetuchini-s-kuricey-i-gribami"
+    },
+    {
+      "name": "Карбонара",
+      "cat": "pasta",
+      "tags": [
+        "main",
+        "creamy"
+      ],
+      "price": 800,
+      "id": "pasta__karbonara"
+    },
+    {
+      "name": "Пепперони",
+      "cat": "pizza",
+      "tags": [
+        "main",
+        "umami",
+        "spicy"
+      ],
+      "price": 850,
+      "id": "pizza__pepperoni"
+    },
+    {
+      "name": "Груша-горгонзола",
+      "cat": "pizza",
+      "tags": [
+        "main",
+        "umami",
+        "pome",
+        "sweet"
+      ],
+      "price": 850,
+      "id": "pizza__grusha-gorgonzola"
+    },
+    {
+      "name": "Курица-грибы (Альфредо)",
+      "cat": "pizza",
+      "tags": [
+        "main",
+        "umami",
+        "creamy"
+      ],
+      "price": 900,
+      "id": "pizza__kurica-griby-alfredo"
+    },
+    {
+      "name": "4 сыра",
+      "cat": "pizza",
+      "tags": [
+        "main",
+        "umami",
+        "creamy"
+      ],
+      "price": 800,
+      "id": "pizza__4-syra"
+    },
+    {
+      "name": "Гавайская",
+      "cat": "pizza",
+      "tags": [
+        "main",
+        "umami",
+        "sweet"
+      ],
+      "price": 850,
+      "id": "pizza__gavayskaya"
+    },
+    {
+      "name": "Для него",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold"
+      ],
+      "price": 800,
+      "id": "author_ck__dlya-nego"
+    },
+    {
+      "name": "Для неё",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold"
+      ],
+      "price": 800,
+      "id": "author_ck__dlya-nee"
+    },
+    {
+      "name": "Apple James",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold",
+        "pome"
+      ],
+      "price": 800,
+      "id": "author_ck__apple-james"
+    },
+    {
+      "name": "Cherry Master",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold",
+        "berry",
+        "stone"
+      ],
+      "price": 800,
+      "id": "author_ck__cherry-master"
+    },
+    {
+      "name": "Green Flash",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold",
+        "herbal",
+        "citrus"
+      ],
+      "price": 800,
+      "id": "author_ck__green-flash"
+    },
+    {
+      "name": "Jasmine Fiz",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold",
+        "floral",
+        "tropical"
+      ],
+      "price": 800,
+      "id": "author_ck__jasmine-fiz"
+    },
+    {
+      "name": "Peach Spritz",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold",
+        "stone",
+        "citrus"
+      ],
+      "price": 800,
+      "id": "author_ck__peach-spritz"
+    },
+    {
+      "name": "Rafaelo Daiqiri",
+      "cat": "author_ck",
+      "tags": [
+        "light",
+        "cold",
+        "creamy",
+        "dessert",
+        "tropical"
+      ],
+      "price": 800,
+      "id": "author_ck__rafaelo-daiqiri"
+    },
+    {
+      "name": "Апероль Шприц",
+      "cat": "classic_ck",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "citrus"
+      ],
+      "price": 750,
+      "id": "classic_ck__aperol-shpric"
+    },
+    {
+      "name": "Кампари Содовая",
+      "cat": "classic_ck",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "citrus"
+      ],
+      "price": 700,
+      "id": "classic_ck__kampari-sodovaya"
+    },
+    {
+      "name": "Кампари-Тоник",
+      "cat": "classic_ck",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "citrus"
+      ],
+      "price": 700,
+      "id": "classic_ck__kampari-tonik"
+    },
+    {
+      "name": "Негрони",
+      "cat": "classic_ck",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "strong"
+      ],
+      "price": 750,
+      "id": "classic_ck__negroni"
+    },
+    {
+      "name": "Космополитен",
+      "cat": "classic_ck",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "berry"
+      ],
+      "price": 700,
+      "id": "classic_ck__kosmopoliten"
+    },
+    {
+      "name": "Барбарис-Брусника",
+      "cat": "bitters",
+      "tags": [
+        "shot",
+        "strong",
+        "berry"
+      ],
+      "price": 350,
+      "id": "bitters__barbaris-brusnika"
+    },
+    {
+      "name": "Лимончело",
+      "cat": "bitters",
+      "tags": [
+        "shot",
+        "strong",
+        "citrus",
+        "sweet"
+      ],
+      "price": 350,
+      "id": "bitters__limonchelo"
+    },
+    {
+      "name": "Яблоко-Киви",
+      "cat": "bitters",
+      "tags": [
+        "shot",
+        "strong",
+        "pome"
+      ],
+      "price": 350,
+      "id": "bitters__yabloko-kivi"
+    },
+    {
+      "name": "Виски Сауэр",
+      "cat": "sours",
+      "tags": [
+        "light",
+        "cold",
+        "sour"
+      ],
+      "price": 700,
+      "id": "sours__viski-sauer"
+    },
+    {
+      "name": "Грушевый Сауэр",
+      "cat": "sours",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "pome"
+      ],
+      "price": 700,
+      "id": "sours__grushevyy-sauer"
+    },
+    {
+      "name": "Дайкири",
+      "cat": "sours",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "citrus"
+      ],
+      "price": 700,
+      "id": "sours__daykiri"
+    },
+    {
+      "name": "Джин Сауэр",
+      "cat": "sours",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "herbal"
+      ],
+      "price": 700,
+      "id": "sours__dzhin-sauer"
+    },
+    {
+      "name": "Маргарита",
+      "cat": "sours",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "citrus"
+      ],
+      "price": 700,
+      "id": "sours__margarita"
+    },
+    {
+      "name": "Соджу Сауэр",
+      "cat": "sours",
+      "tags": [
+        "light",
+        "cold",
+        "sour",
+        "asian"
+      ],
+      "price": 700,
+      "id": "sours__sodzhu-sauer"
+    },
+    {
+      "name": "Пина Колада",
+      "cat": "tropical_ck",
+      "tags": [
+        "light",
+        "cold",
+        "tropical",
+        "sweet",
+        "creamy"
+      ],
+      "price": 750,
+      "id": "tropical_ck__pina-kolada"
+    },
+    {
+      "name": "Секс на пляже",
+      "cat": "tropical_ck",
+      "tags": [
+        "light",
+        "cold",
+        "tropical",
+        "sweet",
+        "stone",
+        "berry"
+      ],
+      "price": 750,
+      "id": "tropical_ck__seks-na-plyazhe"
+    },
+    {
+      "name": "Текила Санрайз",
+      "cat": "tropical_ck",
+      "tags": [
+        "light",
+        "cold",
+        "tropical",
+        "sweet",
+        "citrus"
+      ],
+      "price": 750,
+      "id": "tropical_ck__tekila-sanrayz"
+    },
+    {
+      "name": "Стелла Артуа",
+      "cat": "draft",
+      "tags": [
+        "light",
+        "cold"
+      ],
+      "price": 500,
+      "id": "draft__stella-artua"
+    },
+    {
+      "name": "Асахи ж/б",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold",
+        "asian"
+      ],
+      "price": 750,
+      "id": "beer__asahi-zhb"
+    },
+    {
+      "name": "Харбин ж/б",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold",
+        "asian"
+      ],
+      "price": 500,
+      "id": "beer__harbin-zhb"
+    },
+    {
+      "name": "Корона Экстра",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold",
+        "citrus"
+      ],
+      "price": 400,
+      "id": "beer__korona-ekstra"
+    },
+    {
+      "name": "Аббе Блонд",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold"
+      ],
+      "price": 400,
+      "id": "beer__abbe-blond"
+    },
+    {
+      "name": "Аббе Брюн",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold"
+      ],
+      "price": 400,
+      "id": "beer__abbe-bryun"
+    },
+    {
+      "name": "Францисканер",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold"
+      ],
+      "price": 400,
+      "id": "beer__franciskaner"
+    },
+    {
+      "name": "Бад",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold"
+      ],
+      "price": 350,
+      "id": "beer__bad"
+    },
+    {
+      "name": "Бад б/а",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold",
+        "nonalc"
+      ],
+      "price": 300,
+      "id": "beer__bad-ba"
+    },
+    {
+      "name": "Перл Ривер",
+      "cat": "beer",
+      "tags": [
+        "light",
+        "cold",
+        "asian"
+      ],
+      "price": 350,
+      "id": "beer__perl-river"
+    },
+    {
+      "name": "Апероль",
+      "cat": "aperitif",
+      "tags": [
+        "shot",
+        "light",
+        "citrus"
+      ],
+      "price": 500,
+      "id": "aperitif__aperol"
+    },
+    {
+      "name": "Кампари",
+      "cat": "aperitif",
+      "tags": [
+        "shot",
+        "light",
+        "citrus"
+      ],
+      "price": 500,
+      "id": "aperitif__kampari"
+    },
+    {
+      "name": "Чивас Регал 12",
+      "cat": "whiskey",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 1000,
+      "id": "whiskey__chivas-regal-12"
+    },
+    {
+      "name": "Джемесон",
+      "cat": "whiskey",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 700,
+      "id": "whiskey__dzhemeson"
+    },
+    {
+      "name": "Джим Бим",
+      "cat": "whiskey",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 650,
+      "id": "whiskey__dzhim-bim"
+    },
+    {
+      "name": "Джек Дэниэлс",
+      "cat": "whiskey",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 650,
+      "id": "whiskey__dzhek-deniels"
+    },
+    {
+      "name": "Бифитер",
+      "cat": "gin",
+      "tags": [
+        "strong",
+        "shot",
+        "herbal"
+      ],
+      "price": 650,
+      "id": "gin__bifiter"
+    },
+    {
+      "name": "Джин Хопперс",
+      "cat": "gin",
+      "tags": [
+        "strong",
+        "shot",
+        "herbal"
+      ],
+      "price": 550,
+      "id": "gin__dzhin-hoppers"
+    },
+    {
+      "name": "Ликёр дыня",
+      "cat": "liqueur",
+      "tags": [
+        "strong",
+        "shot",
+        "sweet",
+        "dessert"
+      ],
+      "price": 500,
+      "id": "liqueur__liker-dynya"
+    },
+    {
+      "name": "Ликёр кофе",
+      "cat": "liqueur",
+      "tags": [
+        "strong",
+        "shot",
+        "sweet",
+        "dessert"
+      ],
+      "price": 500,
+      "id": "liqueur__liker-kofe"
+    },
+    {
+      "name": "Крем-де-касис",
+      "cat": "liqueur",
+      "tags": [
+        "strong",
+        "shot",
+        "sweet",
+        "dessert",
+        "berry"
+      ],
+      "price": 500,
+      "id": "liqueur__krem-de-kasis"
+    },
+    {
+      "name": "Ликёр персик",
+      "cat": "liqueur",
+      "tags": [
+        "strong",
+        "shot",
+        "sweet",
+        "dessert",
+        "stone"
+      ],
+      "price": 500,
+      "id": "liqueur__liker-persik"
+    },
+    {
+      "name": "Ягермейстер",
+      "cat": "liqueur",
+      "tags": [
+        "strong",
+        "shot",
+        "sweet",
+        "dessert",
+        "herbal"
+      ],
+      "price": 600,
+      "id": "liqueur__yagermeyster"
+    },
+    {
+      "name": "Контрабандо (золотой)",
+      "cat": "rum",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 600,
+      "id": "rum__kontrabando-zolotoy"
+    },
+    {
+      "name": "Сангсон (пряный)",
+      "cat": "rum",
+      "tags": [
+        "strong",
+        "shot",
+        "spicy"
+      ],
+      "price": 500,
+      "id": "rum__sangson-pryanyy"
+    },
+    {
+      "name": "Ла Мариба (белый)",
+      "cat": "rum",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 500,
+      "id": "rum__la-mariba-belyy"
+    },
+    {
+      "name": "Джиниро Виноград",
+      "cat": "soju",
+      "tags": [
+        "light",
+        "cold",
+        "asian"
+      ],
+      "price": 1500,
+      "id": "soju__dzhiniro-vinograd"
+    },
+    {
+      "name": "Джиниро Грейпфрут",
+      "cat": "soju",
+      "tags": [
+        "light",
+        "cold",
+        "asian",
+        "citrus"
+      ],
+      "price": 1500,
+      "id": "soju__dzhiniro-greypfrut"
+    },
+    {
+      "name": "Джиниро Персик",
+      "cat": "soju",
+      "tags": [
+        "light",
+        "cold",
+        "asian",
+        "stone"
+      ],
+      "price": 1500,
+      "id": "soju__dzhiniro-persik"
+    },
+    {
+      "name": "Джиниро Слива",
+      "cat": "soju",
+      "tags": [
+        "light",
+        "cold",
+        "asian",
+        "stone"
+      ],
+      "price": 1500,
+      "id": "soju__dzhiniro-sliva"
+    },
+    {
+      "name": "Ольмека Сильвер",
+      "cat": "tequila",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 600,
+      "id": "tequila__olmeka-silver"
+    },
+    {
+      "name": "Ольмека Голд",
+      "cat": "tequila",
+      "tags": [
+        "strong",
+        "shot"
+      ],
+      "price": 600,
+      "id": "tequila__olmeka-gold"
+    },
+    {
+      "name": "Пина Колада б/а",
+      "cat": "mocktail",
+      "tags": [
+        "nonalc",
+        "cold",
+        "sweet",
+        "creamy",
+        "tropical"
+      ],
+      "price": 450,
+      "id": "mocktail__pina-kolada-ba"
+    },
+    {
+      "name": "Тропик Панч",
+      "cat": "mocktail",
+      "tags": [
+        "nonalc",
+        "cold",
+        "sweet",
+        "tropical"
+      ],
+      "price": 450,
+      "id": "mocktail__tropik-panch"
+    },
+    {
+      "name": "Юдзу-Маракуйя",
+      "cat": "mocktail",
+      "tags": [
+        "nonalc",
+        "cold",
+        "sweet",
+        "citrus",
+        "tropical",
+        "asian"
+      ],
+      "price": 450,
+      "id": "mocktail__yudzu-marakuyya"
+    },
+    {
+      "name": "Яблоко-Киви",
+      "cat": "mocktail",
+      "tags": [
+        "nonalc",
+        "cold",
+        "sweet",
+        "pome"
+      ],
+      "price": 450,
+      "id": "mocktail__yabloko-kivi"
+    },
+    {
+      "name": "Ассам",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot"
+      ],
+      "price": 400,
+      "id": "tea__assam"
+    },
+    {
+      "name": "Виноградный Улун",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot"
+      ],
+      "price": 400,
+      "id": "tea__vinogradnyy-ulun"
+    },
+    {
+      "name": "Габа медовая",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "sweet"
+      ],
+      "price": 400,
+      "id": "tea__gaba-medovaya"
+    },
+    {
+      "name": "Зелёный с жасмином",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "floral"
+      ],
+      "price": 400,
+      "id": "tea__zelenyy-s-zhasminom"
+    },
+    {
+      "name": "Каркаде",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "berry",
+        "sour"
+      ],
+      "price": 400,
+      "id": "tea__karkade"
+    },
+    {
+      "name": "Китайская мята",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "herbal"
+      ],
+      "price": 400,
+      "id": "tea__kitayskaya-myata"
+    },
+    {
+      "name": "Молочный Улун",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "creamy"
+      ],
+      "price": 400,
+      "id": "tea__molochnyy-ulun"
+    },
+    {
+      "name": "Нахал",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "berry"
+      ],
+      "price": 400,
+      "id": "tea__nahal"
+    },
+    {
+      "name": "Сенча",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "herbal"
+      ],
+      "price": 400,
+      "id": "tea__sencha"
+    },
+    {
+      "name": "Цветочный",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "floral"
+      ],
+      "price": 400,
+      "id": "tea__cvetochnyy"
+    },
+    {
+      "name": "Шу Пуэр",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "dessert"
+      ],
+      "price": 400,
+      "id": "tea__shu-puer"
+    },
+    {
+      "name": "Эрл Грей",
+      "cat": "tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "citrus"
+      ],
+      "price": 400,
+      "id": "tea__erl-grey"
+    },
+    {
+      "name": "Каркаде-Маракуйя-Личи",
+      "cat": "author_tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "sweet",
+        "berry",
+        "tropical"
+      ],
+      "price": 650,
+      "id": "author_tea__karkade-marakuyya-lichi"
+    },
+    {
+      "name": "Молочный Улун-Яблоко",
+      "cat": "author_tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "sweet",
+        "creamy",
+        "pome"
+      ],
+      "price": 650,
+      "id": "author_tea__molochnyy-ulun-yabloko"
+    },
+    {
+      "name": "Облепиха-Апельсин",
+      "cat": "author_tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "sweet",
+        "citrus"
+      ],
+      "price": 650,
+      "id": "author_tea__oblepiha-apelsin"
+    },
+    {
+      "name": "Лесные ягоды-Мята",
+      "cat": "author_tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "sweet",
+        "berry",
+        "herbal"
+      ],
+      "price": 650,
+      "id": "author_tea__lesnye-yagody-myata"
+    },
+    {
+      "name": "Хвоя-Чёрная смородина",
+      "cat": "author_tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "sweet",
+        "herbal",
+        "berry"
+      ],
+      "price": 650,
+      "id": "author_tea__hvoya-chernaya-smorodina"
+    },
+    {
+      "name": "Виноградный Улун-Барбарис-Вишня",
+      "cat": "author_tea",
+      "tags": [
+        "nonalc",
+        "hot",
+        "sweet",
+        "berry",
+        "stone"
+      ],
+      "price": 650,
+      "id": "author_tea__vinogradnyy-ulun-barbaris-vishnya"
+    },
+    {
+      "name": "Энергетик Классика ⚡",
+      "cat": "energy",
+      "tags": [
+        "nonalc",
+        "cold"
+      ],
+      "price": 300,
+      "id": "energy__energetik-klassika"
+    },
+    {
+      "name": "Энергетик Арбуз ⚡",
+      "cat": "energy",
+      "tags": [
+        "nonalc",
+        "cold",
+        "sweet"
+      ],
+      "price": 300,
+      "id": "energy__energetik-arbuz"
+    },
+    {
+      "name": "Энергетик Ирга ⚡",
+      "cat": "energy",
+      "tags": [
+        "nonalc",
+        "cold",
+        "berry"
+      ],
+      "price": 300,
+      "id": "energy__energetik-irga"
+    },
+    {
+      "name": "Энергетик Черника ⚡",
+      "cat": "energy",
+      "tags": [
+        "nonalc",
+        "cold",
+        "berry"
+      ],
+      "price": 300,
+      "id": "energy__energetik-chernika"
+    },
+    {
+      "name": "Вода Cristelle",
+      "cat": "soft",
+      "tags": [
+        "nonalc",
+        "cold"
+      ],
+      "price": 250,
+      "id": "soft__voda-cristelle"
+    },
+    {
+      "name": "Кока-кола",
+      "cat": "soft",
+      "tags": [
+        "nonalc",
+        "cold"
+      ],
+      "price": 250,
+      "id": "soft__koka-kola"
+    },
+    {
+      "name": "Кока-кола Зеро",
+      "cat": "soft",
+      "tags": [
+        "nonalc",
+        "cold"
+      ],
+      "price": 250,
+      "id": "soft__koka-kola-zero"
+    },
+    {
+      "name": "Спрайт",
+      "cat": "soft",
+      "tags": [
+        "nonalc",
+        "cold",
+        "citrus"
+      ],
+      "price": 250,
+      "id": "soft__sprayt"
+    },
+    {
+      "name": "Сангария Грейп",
+      "cat": "soft",
+      "tags": [
+        "nonalc",
+        "cold",
+        "berry"
+      ],
+      "price": 350,
+      "id": "soft__sangariya-greyp"
+    },
+    {
+      "name": "Сангария Мелона",
+      "cat": "soft",
+      "tags": [
+        "nonalc",
+        "cold",
+        "sweet"
+      ],
+      "price": 350,
+      "id": "soft__sangariya-melona"
+    },
+    {
+      "name": "Сок в ассортименте",
+      "cat": "soft",
+      "tags": [
+        "nonalc",
+        "cold"
+      ],
+      "price": 250,
+      "id": "soft__sok-v-assortimente"
+    }
+  ],
+  "recommender": {
+    "weights": {
+      "category_pair": 1.0,
+      "tag_harmony": 0.7,
+      "role_rule": 0.6,
+      "margin": 0.25,
+      "same_category_penalty": 0.6
+    },
+    "role_rules": [
+      {
+        "if_target": "anchor",
+        "boost_candidate_tags": [
+          "hot",
+          "nonalc",
+          "shot",
+          "light",
+          "snack"
+        ],
+        "w": 0.8,
+        "note": "К кальяну — чай, снэк, шот, коктейль"
+      },
+      {
+        "if_target": "main",
+        "boost_candidate_tags": [
+          "light",
+          "cold"
+        ],
+        "w": 0.7,
+        "note": "К основному блюду — пиво/лёгкий алк."
+      },
+      {
+        "if_target": "snack",
+        "boost_candidate_tags": [
+          "light",
+          "strong"
+        ],
+        "w": 0.6,
+        "note": "К закуске — пиво/крепкое"
+      },
+      {
+        "if_target": "salad",
+        "boost_candidate_tags": [
+          "sour",
+          "nonalc"
+        ],
+        "w": 0.5,
+        "note": "К салату — сауэр/безалк."
+      }
+    ],
+    "food_groups": [
+      "food"
+    ],
+    "drink_groups": [
+      "cocktail",
+      "spirit",
+      "beer",
+      "tea",
+      "soft"
+    ],
+    "cross_sell_prefers_other_side": true,
+    "output": {
+      "top_k": 5,
+      "min_score": 0.15
+    }
+  }
+}

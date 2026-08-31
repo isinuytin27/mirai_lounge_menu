@@ -36,10 +36,11 @@ services:
       - ../admin:/var/www/mirailounge/admin:ro
       - ../config:/var/www/mirailounge/config:ro
       - ../scripts:/var/www/mirailounge/scripts:ro
-      # Новый каркас (Slim): код, консольные утилиты, миграции
+      # Новый каркас (Slim): код, консольные утилиты, миграции, справочники
       - ../src:/var/www/mirailounge/src:ro
       - ../bin:/var/www/mirailounge/bin:ro
       - ../migrations:/var/www/mirailounge/migrations:ro
+      - ../resources:/var/www/mirailounge/resources:ro
       - ../phinx.php:/var/www/mirailounge/phinx.php:ro
       - ../data:/var/www/mirailounge/data
       - ../public/assets/img/menu/uploads:/var/www/mirailounge/public/assets/img/menu/uploads

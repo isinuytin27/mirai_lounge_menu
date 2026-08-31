@@ -145,9 +145,13 @@ sudo chmod 600 /var/www/mirailounge/docker/ssl/mirailounge.ru/privkey.pem
 ```bash
 cd /var/www/mirailounge
 docker compose exec -T php php bin/import-json
+# Граф рекомендаций (гастропары): справочник тегов/категорий + маппинг. Идемпотентно —
+# перезаливает справочник из resources/menu-association-model.json (можно повторять).
+docker compose exec -T php php bin/import-recommender
 ```
-> Импорт идемпотентный, но запускать его нужно ТОЛЬКО один раз — иначе он затрёт
-> правки, сделанные в новой админке, старым снимком JSON. В пайплайне его нет.
+> `import-json` идемпотентный, но запускать его нужно ТОЛЬКО один раз — иначе затрёт
+> правки из новой админки старым снимком JSON. В пайплайне его нет.
+> `import-recommender` можно гонять повторно (обновляет только справочник рекомендатора).
 4. Создать первого администратора (если нет в импорте):
 ```bash
 docker compose exec -T php php bin/create-admin <login> <пароль> owner
