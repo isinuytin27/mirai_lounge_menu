@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow">
+    <title>VIP · {{ site.name }}</title>
+    <style>
+      :root{color-scheme:dark;--accent:#f5007d;--ok:#39d98a;--dim:#9b8fae}
+      *{box-sizing:border-box}
+      body{margin:0;min-height:100vh;background:radial-gradient(700px 400px at 50% -80px,#1a0f1e,#0a0910 60%);
+        color:#f4eef7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+        display:grid;place-items:center;padding:24px}
+      .card{background:rgba(20,16,28,.7);border:1px solid rgba(245,0,125,.2);border-radius:20px;
+        padding:28px 26px;max-width:440px;width:100%;text-align:center;backdrop-filter:blur(14px)}
+      .brand{color:var(--accent);font-weight:800;letter-spacing:.14em;font-size:12px}
+      h1{font-size:24px;margin:.4em 0 .2em}
+      .org{color:var(--dim);font-size:14px}
+      .free{font-size:56px;font-weight:800;margin:18px 0 2px;color:var(--ok)}
+      .free.zero{color:var(--dim)}
+      .muted{color:var(--dim);font-size:13px}
+      .drink{display:flex;gap:8px;align-items:center;justify-content:space-between;
+        border:1px solid rgba(245,0,125,.18);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:14px}
+      .drink button{background:linear-gradient(135deg,var(--accent),#7b5cff);color:#fff;border:none;
+        border-radius:10px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+      .list{max-height:340px;overflow:auto;margin-top:14px;text-align:left}
+      .staff-tag{display:inline-block;font-size:11px;color:var(--accent);border:1px solid rgba(245,0,125,.3);padding:2px 10px;border-radius:20px;margin-bottom:8px}
+      #msg{margin-top:12px;font-size:13px;min-height:18px}
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="brand">◆ MIRAI LOUNGE · VIP</div>
+
+    {% if event is null %}
+        <h1>Событие не найдено</h1>
+        <p class="muted">Проверьте ссылку или QR.</p>
+    {% elseif guest is null %}
+        <h1>{{ event.organization ?: 'Добро пожаловать' }}</h1>
+        <p class="muted">Отсканируйте персональный QR гостя, чтобы открыть карту.</p>
+    {% elseif not is_staff %}
+        {# гость — приветствие #}
+        <h1>{{ guest.last_name }} {{ guest.first_name }}</h1>
+        <div class="org">{{ event.organization }}</div>
+        <div class="free {{ free_left == 0 ? 'zero' }}">{{ free_left }}</div>
+        <div class="muted">бесплатных напитков бара осталось</div>
+    {% else %}
+        {# staff-консоль #}
+        <span class="staff-tag">STAFF</span>
+        <h1>{{ guest.last_name }} {{ guest.first_name }}</h1>
+        <div class="org">{{ event.organization }} · осталось <b id="left">{{ free_left }}</b> бесплатных</div>
+        <div class="list">
+            {% for p in bar_products %}
+                <div class="drink">
+                    <span>{{ p.name }} <span class="muted">· {{ p.price }} ₽</span></span>
+                    <span>
+                        <button onclick="consume('{{ p.slug }}', false)">бесплатно</button>
+                        <button onclick="consume('{{ p.slug }}', true)" style="background:#2a2333">за счёт гостя</button>
+                    </span>
+                </div>
+            {% else %}
+                <p class="muted">Нет барных позиций в меню.</p>
+            {% endfor %}
+        </div>
+        <div id="msg"></div>
+        <script>
+        async function consume(productId, paid){
+          const msg=document.getElementById('msg'); msg.textContent='…'; msg.style.color='#9b8fae';
+          try{
+            const r=await fetch('/api/vip-consume',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+              body:JSON.stringify({event_slug:{{ event.slug|json_encode|raw }},token:{{ token|json_encode|raw }},product_id:productId,paid_by_guest:paid})});
+            const d=await r.json();
+            if(!d.ok){
+              const m={limit_reached:'Лимит бесплатных исчерпан',not_bar:'Не барная позиция',auth:'Нужен вход персонала'};
+              msg.textContent='✕ '+(m[d.error]||d.error); msg.style.color='#ffb3d6'; return;
+            }
+            document.getElementById('left').textContent=d.free_left;
+            msg.textContent=paid?'✓ Записано (за счёт гостя)':'✓ Списан бесплатный ('+d.free_left+' осталось)'; msg.style.color='#39d98a';
+          }catch(e){ msg.textContent='✕ Нет связи'; msg.style.color='#ffb3d6'; }
+        }
+        </script>
+    {% endif %}
+</div>
+</body>
+</html>

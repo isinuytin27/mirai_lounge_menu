@@ -1,0 +1,74 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}{{ event.organization ?: event.slug }}{% endblock %}
+
+{% block head %}
+<style>
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}.check input{width:18px;height:18px;accent-color:var(--accent)}
+  .gst{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:7px}
+  .gst .nm{font-weight:600;font-size:14px}
+  .gst .tok{color:var(--dim);font-size:11px;font-family:ui-monospace,Menlo,monospace}
+  .gst .used{margin-left:auto;font-size:12px;color:var(--accent2)}
+  .del{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px}
+  .del:hover{border-color:var(--accent);color:#ffb3d6}
+  .flash{background:rgba(57,217,138,.12);border:1px solid var(--line);color:var(--ok);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px}
+  .lnk{color:var(--accent2);font-size:12px}
+  form.inline{display:inline}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <a href="/admin/vip" style="color:var(--dim)">← VIP</a>
+    <h1 style="margin:0;font-size:21px">{{ event.organization ?: event.slug }}</h1>
+    <form class="inline" method="post" action="/admin/vip/{{ event.id }}/delete" onsubmit="return confirm('Удалить событие со всеми гостями?')" style="margin-left:auto">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="del">Удалить событие</button>
+    </form>
+</div>
+{% if flash %}<div class="flash">✓ {{ flash }}</div>{% endif %}
+
+<form class="card" method="post" action="/admin/vip/{{ event.id }}" style="margin-bottom:20px">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <div class="grid2">
+        <div class="field"><label>Slug</label><input class="input" name="slug" value="{{ event.slug }}" required></div>
+        <div class="field"><label>Организация</label><input class="input" name="organization" value="{{ event.organization }}"></div>
+        <div class="field"><label>Дата</label><input class="input" name="event_date" value="{{ event.event_date }}"></div>
+        <div class="field"><label>Бесплатных напитков бара</label><input class="input" type="number" name="bar_free_limit" value="{{ event.bar_free_limit }}"></div>
+        <div class="field"><label>Линия бара</label><input class="input" name="bar_line" value="{{ event.bar_line ?: 'bar' }}"></div>
+    </div>
+    <label class="check" style="margin:6px 0 14px"><input type="checkbox" name="active" {{ event.active ? 'checked' }}> Активно</label>
+    <div><button class="btn" type="submit">Сохранить</button>
+        <a class="lnk" href="/vipservice/{{ event.slug }}" style="margin-left:12px">Открыть staff-консоль →</a></div>
+</form>
+
+<h3 style="font-size:15px;margin:0 0 10px">Гости ({{ guests|length }})</h3>
+{% for g in guests %}
+    <div class="gst">
+        <div>
+            <div class="nm">{{ g.last_name }} {{ g.first_name }}{% if g.organization %} <span style="color:var(--dim);font-weight:400">· {{ g.organization }}</span>{% endif %}</div>
+            <div class="tok">?t={{ g.token }}</div>
+        </div>
+        <span class="used">{{ g.free_used }} исп. · {{ g.consumed }} списаний</span>
+        <form class="inline" method="post" action="/admin/vip/{{ event.id }}/guest/{{ g.id }}/delete" onsubmit="return confirm('Удалить гостя?')">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="del">✕</button>
+        </form>
+    </div>
+{% else %}
+    <p style="color:var(--dim)">Гостей нет.</p>
+{% endfor %}
+
+<details class="card" style="margin-top:12px">
+    <summary style="cursor:pointer;font-weight:700">+ Добавить гостя</summary>
+    <form method="post" action="/admin/vip/{{ event.id }}/guest" style="margin-top:14px">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="grid2">
+            <div class="field"><label>Фамилия</label><input class="input" name="last_name"></div>
+            <div class="field"><label>Имя</label><input class="input" name="first_name"></div>
+        </div>
+        <div class="field"><label>Организация (необяз.)</label><input class="input" name="organization"></div>
+        <button class="btn" type="submit">Добавить (токен создастся автоматически)</button>
+    </form>
+</details>
+{% endblock %}

@@ -8,7 +8,10 @@ use Mirai\Http\Controllers\Admin\GalleryAdminController;
 use Mirai\Http\Controllers\Admin\MenuAdminController;
 use Mirai\Http\Controllers\Admin\TicketAdminController;
 use Mirai\Http\Controllers\Admin\TournamentAdminController;
+use Mirai\Http\Controllers\Admin\VipAdminController;
 use Mirai\Http\Controllers\TournamentRegisterController;
+use Mirai\Http\Controllers\VipConsumeController;
+use Mirai\Http\Controllers\VipServiceController;
 use Mirai\Http\Controllers\HealthController;
 use Mirai\Http\Controllers\HomeController;
 use Mirai\Http\Controllers\MenuApiController;
@@ -55,6 +58,11 @@ return static function (App $app): void {
     $app->map(['POST'], '/api/tournament-register[.php]', TournamentRegisterController::class)
         ->add(new RateLimitMiddleware('tournament', 3));
 
+    // VIP: списание напитка (staff, авторизация проверяется внутри — JSON 403).
+    $app->map(['POST'], '/api/vip-consume[.php]', VipConsumeController::class);
+    // VIP-страница (гость по токену / staff-консоль).
+    $app->get('/vipservice/{slug}', VipServiceController::class);
+
     // SEO.
     $app->get('/robots.txt', [SeoController::class, 'robots']);
     $app->get('/sitemap.xml', [SeoController::class, 'sitemap']);
@@ -91,6 +99,20 @@ return static function (App $app): void {
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('tickets'))
+        ->add(AuthMiddleware::class);
+
+    // VIP (Postgres): события + гости.
+    $app->group('/admin/vip', function ($g): void {
+        $g->get('', [VipAdminController::class, 'index']);
+        $g->post('', [VipAdminController::class, 'createEvent']);
+        $g->get('/{id}', [VipAdminController::class, 'editEvent']);
+        $g->post('/{id}', [VipAdminController::class, 'saveEvent']);
+        $g->post('/{id}/delete', [VipAdminController::class, 'deleteEvent']);
+        $g->post('/{id}/guest', [VipAdminController::class, 'addGuest']);
+        $g->post('/{id}/guest/{gid}/delete', [VipAdminController::class, 'deleteGuest']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('vip'))
         ->add(AuthMiddleware::class);
 
     // Турниры (Postgres): настройки + заявки.
