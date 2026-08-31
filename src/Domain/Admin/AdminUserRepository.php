@@ -31,6 +31,37 @@ final class AdminUserRepository extends Repository
         return $row === null ? null : AdminUser::fromRow($row);
     }
 
+    /** @return list<AdminUser> все пользователи */
+    public function all(): array
+    {
+        $rows = $this->fetchAll('SELECT ' . self::COLS . ' FROM admin_users ORDER BY role, login');
+
+        return array_map(static fn (array $r): AdminUser => AdminUser::fromRow($r), $rows);
+    }
+
+    public function countOwners(): int
+    {
+        return (int) ($this->fetchOne("SELECT count(*) AS c FROM admin_users WHERE role = 'owner'")['c'] ?? 0);
+    }
+
+    /** Сменить роль (с защитой последнего владельца — вызывающий проверяет). */
+    public function setRole(string $id, Role $role): void
+    {
+        $this->execute('UPDATE admin_users SET role = :role, updated_at = :now WHERE id = :id',
+            ['role' => $role->value, 'now' => date('c'), 'id' => $id]);
+    }
+
+    public function resetPassword(string $id, string $plainPassword): void
+    {
+        $this->execute('UPDATE admin_users SET password_hash = :h, updated_at = :now WHERE id = :id',
+            ['h' => password_hash($plainPassword, PASSWORD_BCRYPT), 'now' => date('c'), 'id' => $id]);
+    }
+
+    public function delete(string $id): void
+    {
+        $this->execute('DELETE FROM admin_users WHERE id = :id', ['id' => $id]);
+    }
+
     /** Создать или обновить пользователя (по login). Пароль хэшируется, если задан. */
     public function upsert(
         string $login,

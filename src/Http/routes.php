@@ -8,6 +8,7 @@ use Mirai\Http\Controllers\Admin\GalleryAdminController;
 use Mirai\Http\Controllers\Admin\MenuAdminController;
 use Mirai\Http\Controllers\Admin\TicketAdminController;
 use Mirai\Http\Controllers\Admin\TournamentAdminController;
+use Mirai\Http\Controllers\Admin\UsersAdminController;
 use Mirai\Http\Controllers\Admin\VipAdminController;
 use Mirai\Http\Controllers\TournamentRegisterController;
 use Mirai\Http\Controllers\VipConsumeController;
@@ -113,6 +114,18 @@ return static function (App $app): void {
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('vip'))
+        ->add(AuthMiddleware::class);
+
+    // Пользователи (Postgres): только владелец.
+    $app->group('/admin/users', function ($g): void {
+        $g->get('', [UsersAdminController::class, 'index']);
+        $g->post('', [UsersAdminController::class, 'create']);
+        $g->post('/{id}/role', [UsersAdminController::class, 'setRole']);
+        $g->post('/{id}/password', [UsersAdminController::class, 'resetPassword']);
+        $g->post('/{id}/delete', [UsersAdminController::class, 'delete']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('users'))
         ->add(AuthMiddleware::class);
 
     // Турниры (Postgres): настройки + заявки.
