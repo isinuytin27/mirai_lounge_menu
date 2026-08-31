@@ -23,24 +23,8 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: mirailounge
-          POSTGRES_USER: mirailounge
-          POSTGRES_PASSWORD: ci_secret
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U mirailounge" --health-interval 5s
-          --health-timeout 5s --health-retries 10
     env:
       APP_ENV: dev
-      POSTGRES_HOST: 127.0.0.1
-      POSTGRES_PORT: "5432"
-      POSTGRES_DB: mirailounge
-      POSTGRES_USER: mirailounge
-      POSTGRES_PASSWORD: ci_secret
       MIRAI_TABLE_SIGNING_KEY: ci-signing-key-0123456789abcdef
     steps:
       - uses: actions/checkout@v4
@@ -55,13 +39,10 @@ jobs:
       - name: Composer install
         run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Migrate + import (тестовые данные)
-        run: |
-          php vendor/bin/phinx migrate -c phinx.php
-          php bin/import-json
-
-      - name: PHPUnit
-        run: php vendor/bin/phpunit
+      # Unit-тесты не требуют БД. Интеграционные (нужен Postgres + сиды данных)
+      # гоняются локально/на сервере, не в CI.
+      - name: PHPUnit (unit)
+        run: php vendor/bin/phpunit --testsuite unit
 
       - name: PHPStan
         run: php vendor/bin/phpstan analyse src --level=5 --no-progress
