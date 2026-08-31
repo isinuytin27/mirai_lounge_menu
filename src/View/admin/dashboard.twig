@@ -10,8 +10,8 @@
         {t:'Меню',        d:'Категории, товары, гастропары', href:'/admin/menu',    st:'pg',   cap:true},
         {t:'Галерея',     d:'Фото интерьера',                href:'/admin/gallery', st:'pg',   cap:true},
         {t:'Тикеты',      d:'Заявки персонала',              href:'/admin/tickets', st:'pg',   cap:user.role.canAccessTickets},
+        {t:'Турниры',     d:'Заявки и настройки',            href:'/admin/tournaments', st:'pg', cap:true},
         {t:'VIP',         d:'События, гости, лимит бара',    href:'#',              st:'json', cap:user.role.canAccessVip},
-        {t:'Турниры',     d:'Заявки и настройки',            href:'#',              st:'json', cap:true},
         {t:'Пользователи',d:'Роли и доступы',                href:'#',              st:'json', cap:user.role.canManageUsers}
     ] %}
     {% for x in tiles %}

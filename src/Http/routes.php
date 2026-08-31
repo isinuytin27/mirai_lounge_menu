@@ -7,6 +7,8 @@ use Mirai\Http\Controllers\Admin\AdminDashboardController;
 use Mirai\Http\Controllers\Admin\GalleryAdminController;
 use Mirai\Http\Controllers\Admin\MenuAdminController;
 use Mirai\Http\Controllers\Admin\TicketAdminController;
+use Mirai\Http\Controllers\Admin\TournamentAdminController;
+use Mirai\Http\Controllers\TournamentRegisterController;
 use Mirai\Http\Controllers\HealthController;
 use Mirai\Http\Controllers\HomeController;
 use Mirai\Http\Controllers\MenuApiController;
@@ -49,6 +51,10 @@ return static function (App $app): void {
         ->add(RateLimitMiddleware::class)
         ->add(TableSessionMiddleware::class);
 
+    // Приём заявки на турнир (публичный). Пишет в Postgres. Legacy .php сохранён.
+    $app->map(['POST'], '/api/tournament-register[.php]', TournamentRegisterController::class)
+        ->add(new RateLimitMiddleware('tournament', 3));
+
     // SEO.
     $app->get('/robots.txt', [SeoController::class, 'robots']);
     $app->get('/sitemap.xml', [SeoController::class, 'sitemap']);
@@ -85,6 +91,17 @@ return static function (App $app): void {
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('tickets'))
+        ->add(AuthMiddleware::class);
+
+    // Турниры (Postgres): настройки + заявки.
+    $app->group('/admin/tournaments', function ($g): void {
+        $g->get('', [TournamentAdminController::class, 'index']);
+        $g->post('/settings', [TournamentAdminController::class, 'saveSettings']);
+        $g->post('/app/{id}/status', [TournamentAdminController::class, 'appStatus']);
+        $g->post('/app/{id}/delete', [TournamentAdminController::class, 'appDelete']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('admin_panel'))
         ->add(AuthMiddleware::class);
 
     // Галерея (Postgres + загрузка файлов).
