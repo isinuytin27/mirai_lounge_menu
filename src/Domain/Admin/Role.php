@@ -43,6 +43,12 @@ enum Role: string
         return in_array($this, [self::Owner, self::Admin, self::Manager], true);
     }
 
+    /** Панель заказов (зал/бар/кухня) — доступна всем ролям, включая сотрудника зала. */
+    public function canAccessOrders(): bool
+    {
+        return true;
+    }
+
     /** Безопасный разбор строки роли (неизвестное -> staff). */
     public static function fromString(?string $role): self
     {

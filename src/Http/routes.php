@@ -24,6 +24,7 @@ use Mirai\Http\Controllers\HookahShowcaseController;
 use Mirai\Http\Controllers\MenuApiController;
 use Mirai\Http\Controllers\MenuPageController;
 use Mirai\Http\Controllers\OrderSubmitController;
+use Mirai\Http\Controllers\OrdersPanelController;
 use Mirai\Http\Controllers\SeoController;
 use Mirai\Http\Controllers\TableEntryController;
 use Mirai\Http\Controllers\VersionController;
@@ -94,6 +95,16 @@ return static function (App $app): void {
     $app->get('/admin/login', [AdminAuthController::class, 'showLogin']);
     $app->post('/admin/login', [AdminAuthController::class, 'login'])->add(CsrfMiddleware::class);
     $app->get('/admin/logout', [AdminAuthController::class, 'logout']);
+
+    // Панель заказов зала/бара/кухни (staff). Порт public/orders/. Роль orders = все роли.
+    $app->group('/orders', function ($g): void {
+        $g->get('', [OrdersPanelController::class, 'index']);
+        $g->get('/{id}', [OrdersPanelController::class, 'show']);
+        $g->post('/{id}/close', [OrdersPanelController::class, 'close']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('orders'))
+        ->add(AuthMiddleware::class);
 
     // Обзор — за входом и правом на админ-панель.
     $app->get('/admin', AdminDashboardController::class)

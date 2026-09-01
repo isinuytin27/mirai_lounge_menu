@@ -1,0 +1,65 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}Заказ · {{ order.tableCaption }}{% endblock %}
+
+{% block head %}
+<style>
+  .pill{font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
+  .pill.open{color:#7ee0a0;border-color:rgba(126,224,160,.4)}
+  .card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;margin-bottom:10px}
+  .sec-title{font-size:14px;font-weight:700;margin:0 0 10px;color:var(--ink)}
+  .line{display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .line:last-child{border-bottom:0}
+  .line-name{flex:1;color:var(--ink);font-size:14px}
+  .line-note{color:var(--accent2);font-size:12px}
+  .line-qty{color:var(--dim);font-variant-numeric:tabular-nums}
+  .kitchen{white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px;color:var(--ink);
+    background:#0d0d10;border:1px solid var(--line);border-radius:8px;padding:12px;line-height:1.5}
+  .btn.danger{background:none;border:1px solid rgba(245,0,125,.4);color:#ffb3d6}
+  .muted{color:var(--dim);font-size:12.5px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <a href="/orders" style="color:var(--dim)">← Все заказы</a>
+</div>
+
+<section class="card">
+    <h1 style="margin:0;font-size:21px">{{ order.tableCaption }}</h1>
+    <div class="meta">
+        <span class="pill {{ order.isOpen ? 'open' }}">{{ order.isOpen ? 'открыт' : 'закрыт' }}</span>
+        <span class="pill">{{ order.id }}</span>
+        <span class="pill">{{ order.items|length }} поз.</span>
+        <span class="pill">{{ order.total }} ₽</span>
+    </div>
+</section>
+
+{% set labels = {'hookah': 'Кальян', 'bar': 'Бар', 'kitchen': 'Кухня'} %}
+{% for key, label in labels %}
+    {% if groups[key] is not empty %}
+    <section class="card">
+        <div class="sec-title">{{ label }} · {{ groups[key]|length }}</div>
+        {% for it in groups[key] %}
+        <div class="line">
+            <span class="line-name">{{ it.name }}{% if it.note %} <span class="line-note">· {{ it.note }}</span>{% endif %}</span>
+            <span class="line-qty">× {{ it.qty }}</span>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+{% endfor %}
+
+<section class="card">
+    <div class="sec-title">Текст для кухни</div>
+    <div class="kitchen" id="kitchen-text">{{ kitchen_text }}</div>
+    <button type="button" class="btn" style="margin-top:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('kitchen-text').textContent).then(()=>{this.textContent='Скопировано ✓';setTimeout(()=>this.textContent='Скопировать',1500)})">Скопировать</button>
+</section>
+
+{% if order.isOpen %}
+<form method="post" action="/orders/{{ order.id }}/close" onsubmit="return confirm('Закрыть заказ? Новая отправка меню со стола откроет новый.')">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button type="submit" class="btn danger">Закрыть заказ</button>
+</form>
+{% endif %}
+{% endblock %}

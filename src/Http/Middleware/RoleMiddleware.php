@@ -29,6 +29,7 @@ final class RoleMiddleware implements MiddlewareInterface
             'users' => $role->canManageUsers(),
             'tickets' => $role->canAccessTickets(),
             'vip' => $role->canAccessVip(),
+            'orders' => $role->canAccessOrders(),
             default => false,
         };
 
