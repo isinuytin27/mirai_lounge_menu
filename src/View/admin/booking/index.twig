@@ -1,0 +1,84 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}Брони{% endblock %}
+
+{% block head %}
+<style>
+  .bk{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--line);
+    border-radius:12px;background:var(--panel);margin-bottom:8px}
+  .bk.cancelled,.bk.noshow{opacity:.5}
+  .bk .body{flex:1;min-width:0}
+  .bk .who{font-weight:600;font-size:14px}
+  .bk .sub{color:var(--dim);font-size:12.5px;margin-top:3px}
+  .bk .mt{display:flex;gap:8px;margin-top:7px;flex-wrap:wrap;align-items:center}
+  .chip{font-size:10.5px;color:var(--dim);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
+  .chip.tbl{color:var(--accent2);border-color:var(--accent2)}
+  .src{font-size:10.5px;color:var(--dim)}
+  .bk .act{display:flex;gap:6px;align-items:center;flex-shrink:0}
+  select.mini{background:#170f1e;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:5px 8px;font-size:12px}
+  .del{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px}
+  .del:hover{border-color:var(--accent);color:#ffb3d6}
+  form.inline{display:inline}
+  h3{font-size:15px;margin:26px 0 10px}
+  .muted{color:var(--dim);font-size:12px}
+  .st-confirmed{color:#7ee0a0} .st-seated{color:var(--accent2)} .st-cancelled{color:#ffb3d6} .st-noshow{color:#d8a13a}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <a href="/admin" style="color:var(--dim)">← Обзор</a>
+    <h1 style="margin:0;font-size:22px">Брони</h1>
+    <span class="chip" style="margin-left:auto">Postgres</span>
+</div>
+
+{% if flash %}<p class="muted">✓ {{ flash }}</p>{% endif %}
+
+{% for b in bookings %}
+    <div class="bk {{ b.status }}">
+        <div class="body">
+            <div class="who">{{ b.name ?? '—' }} <span class="muted">· {{ b.phone ?? '' }}</span></div>
+            <div class="sub">
+                📅 {{ b.dateISO }}{% if b.time %} · 🕐 {{ b.time }}{% endif %} · гостей: {{ b.guests ?? '?' }}
+                {% if b.comment %}<br>💬 {{ b.comment }}{% endif %}
+            </div>
+            <div class="mt">
+                {% if b.tableLabel %}<span class="chip tbl">🪑 {{ b.tableLabel }}{% if b.zone %} · {{ b.zone }}{% endif %}</span>{% endif %}
+                <span class="st-{{ b.status }}">{{ b.status }}</span>
+                <span class="src">{{ b.source }}</span>
+            </div>
+        </div>
+        <div class="act">
+            <form class="inline" method="post" action="/admin/booking/{{ b.id }}/status">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                <select class="mini" name="status" onchange="this.form.submit()">
+                    {% for s in statuses %}<option value="{{ s }}" {{ s==b.status?'selected' }}>{{ s }}</option>{% endfor %}
+                </select>
+            </form>
+            <form class="inline" method="post" action="/admin/booking/{{ b.id }}/delete" onsubmit="return confirm('Удалить бронь?')">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                <button class="del" title="Удалить">✕</button>
+            </form>
+        </div>
+    </div>
+{% else %}
+    <p class="muted">Броней пока нет.</p>
+{% endfor %}
+
+<h3>Лист ожидания <span class="muted">({{ waitlist|length }})</span></h3>
+{% for w in waitlist %}
+    <div class="bk">
+        <div class="body">
+            <div class="who">{{ w.name ?? '—' }} <span class="muted">· {{ w.phone ?? '' }}</span></div>
+            <div class="sub">📅 {{ w.booking_date }} · гостей: {{ w.guests ?? '?' }}{% if w.comment %} · 💬 {{ w.comment }}{% endif %}</div>
+        </div>
+        <div class="act">
+            <form class="inline" method="post" action="/admin/booking/waitlist/{{ w.id }}/delete">
+                <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                <button class="del" title="Убрать">✕</button>
+            </form>
+        </div>
+    </div>
+{% else %}
+    <p class="muted">Лист ожидания пуст.</p>
+{% endfor %}
+{% endblock %}

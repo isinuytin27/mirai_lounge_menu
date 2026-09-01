@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Mirai\Http\Controllers\Admin\AdminAuthController;
 use Mirai\Http\Controllers\Admin\AdminDashboardController;
+use Mirai\Http\Controllers\Admin\BookingAdminController;
 use Mirai\Http\Controllers\Admin\GalleryAdminController;
 use Mirai\Http\Controllers\Admin\MenuAdminController;
 use Mirai\Http\Controllers\Admin\TicketAdminController;
@@ -14,6 +15,7 @@ use Mirai\Http\Controllers\TournamentRegisterController;
 use Mirai\Http\Controllers\VipConsumeController;
 use Mirai\Http\Controllers\VipServiceController;
 use Mirai\Http\Controllers\HealthController;
+use Mirai\Http\Controllers\BookingApiController;
 use Mirai\Http\Controllers\HomeController;
 use Mirai\Http\Controllers\MenuApiController;
 use Mirai\Http\Controllers\MenuPageController;
@@ -48,6 +50,13 @@ return static function (App $app): void {
 
     // API меню (JSON) — для фронта и проверки данных.
     $app->get('/api/menu', MenuApiController::class);
+
+    // Бронирование (публичное API — замена restoplace).
+    $app->get('/api/booking/hall', [BookingApiController::class, 'hall']);
+    $app->post('/api/booking', [BookingApiController::class, 'create'])
+        ->add(new RateLimitMiddleware('booking', 3));
+    $app->post('/api/booking/waitlist', [BookingApiController::class, 'waitlist'])
+        ->add(new RateLimitMiddleware('booking', 3));
 
     // Приём заказа. table-session (проверка cookie) + rate-limit (too_fast).
     // Legacy-путь .php сохранён, чтобы текущий menu.js работал без правок.
@@ -84,6 +93,17 @@ return static function (App $app): void {
         $g->get('/product/{slug}', [MenuAdminController::class, 'editProduct']);
         $g->post('/product/{slug}', [MenuAdminController::class, 'saveProduct']);
         $g->post('/toggle/{slug}/{field}', [MenuAdminController::class, 'toggle']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('admin_panel'))
+        ->add(AuthMiddleware::class);
+
+    // Брони (Postgres): список, статусы, лист ожидания.
+    $app->group('/admin/booking', function ($g): void {
+        $g->get('', [BookingAdminController::class, 'index']);
+        $g->post('/{id}/status', [BookingAdminController::class, 'setStatus']);
+        $g->post('/{id}/delete', [BookingAdminController::class, 'delete']);
+        $g->post('/waitlist/{id}/delete', [BookingAdminController::class, 'waitlistDelete']);
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('admin_panel'))
