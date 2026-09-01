@@ -80,7 +80,7 @@ jobs:
       - name: Rsync на сервер
         run: |
           rsync -az --delete \
-            --include='/public/assets/booking/scheme/zal.png' \
+            --include='/public/assets/booking/***' \
             --exclude-from=scripts/deploy-excludes.txt \
             -e "ssh -i ~/.ssh/deploy_key" \
             ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"

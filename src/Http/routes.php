@@ -16,6 +16,7 @@ use Mirai\Http\Controllers\VipConsumeController;
 use Mirai\Http\Controllers\VipServiceController;
 use Mirai\Http\Controllers\HealthController;
 use Mirai\Http\Controllers\BookingApiController;
+use Mirai\Http\Controllers\BookingMapController;
 use Mirai\Http\Controllers\HomeController;
 use Mirai\Http\Controllers\MenuApiController;
 use Mirai\Http\Controllers\MenuPageController;
@@ -50,6 +51,9 @@ return static function (App $app): void {
 
     // API меню (JSON) — для фронта и проверки данных.
     $app->get('/api/menu', MenuApiController::class);
+
+    // 3D-карта зала (standalone-страница, встраивается в экран брони через iframe).
+    $app->get('/booking/map', BookingMapController::class);
 
     // Бронирование (публичное API — замена restoplace).
     $app->get('/api/booking/hall', [BookingApiController::class, 'hall']);

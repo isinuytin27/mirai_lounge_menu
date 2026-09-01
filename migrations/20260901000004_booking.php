@@ -63,32 +63,25 @@ final class Booking extends AbstractMigration
             ->addIndex(['booking_date'])
             ->create();
 
-        // --- Сид столов зала из схемы виджета аддона (booking.js: столы 1–8) ---
-        // [id, label, x%, y%, seats, shape, zone]
+        // --- Сид столов зала из 3D-карты аддона (map.html: столы 11–18, зона Lounge) ---
+        // pos_x/pos_y — доли (0..1) центра стола на изометрии (view-a/view-b.png).
+        // [id, num, x, y]
         $hall = [
-            ['1', '1', 85, 20, 6, 'square', 'Lounge · Reception'],
-            ['2', '2', 85, 52, 6, 'square', 'Lounge · Reception'],
-            ['3', '3', 82, 82, 4, 'square', 'VIP PS 2'],
-            ['4', '4', 48, 82, 4, 'square', 'Food & Hookah'],
-            ['5', '5', 18, 82, 4, 'square', 'VIP PS 1'],
-            ['6', '6', 15, 50, 4, 'square', 'VIP PS 1'],
-            ['7', '7', 45, 46, 6, 'round', 'Food & Hookah'],
-            ['8', '8', 45, 16, 6, 'round', 'Food & Hookah'],
+            ['t11', '11', 0.305, 0.315], ['t12', '12', 0.385, 0.270],
+            ['t13', '13', 0.552, 0.385], ['t14', '14', 0.300, 0.430],
+            ['t15', '15', 0.300, 0.515], ['t16', '16', 0.298, 0.585],
+            ['t17', '17', 0.415, 0.415], ['t18', '18', 0.445, 0.485],
         ];
         $sort = 0;
-        foreach ($hall as [$id, $label, $x, $y, $seats, $shape, $zone]) {
+        foreach ($hall as [$id, $num, $x, $y]) {
             $this->execute(sprintf(
                 "INSERT INTO tables (id, caption, capacity, active, zone, seats, shape, pos_x, pos_y, sort_order)
-                 VALUES ('%s', 'Стол %s', %d, TRUE, '%s', %d, '%s', %d, %d, %d)
+                 VALUES ('%s', 'Стол %s', 4, TRUE, 'Lounge', 4, 'poly', %s, %s, %d)
                  ON CONFLICT (id) DO UPDATE SET
                    zone = EXCLUDED.zone, seats = EXCLUDED.seats, shape = EXCLUDED.shape,
                    pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, sort_order = EXCLUDED.sort_order",
                 $id,
-                $label,
-                $seats,
-                $zone,
-                $seats,
-                $shape,
+                $num,
                 $x,
                 $y,
                 $sort++
@@ -98,7 +91,7 @@ final class Booking extends AbstractMigration
 
     public function down(): void
     {
-        $this->execute("DELETE FROM tables WHERE id IN ('1','2','3','4','5','6','7','8')");
+        $this->execute("DELETE FROM tables WHERE id IN ('t11','t12','t13','t14','t15','t16','t17','t18')");
         $this->table('waitlist')->drop()->save();
         $this->table('bookings')->drop()->save();
         $this->table('tables')

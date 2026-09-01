@@ -1,0 +1,267 @@
+/* ============================================================
+   MIRAI — Design System Tokens & Base
+   киберклуб / esports lounge · 未来 · ミライ
+   Language: 静電 — calm (静) Japanese restraint + electric (電) neon
+   ============================================================ */
+
+/* ---------- FONTS ---------- */
+@font-face {
+  font-family: "AKONY";
+  src: url("fonts/AKONY.otf") format("opentype"),
+       url("fonts/AKONY.ttf") format("truetype");
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Helvetica Now";
+  src: url("fonts/helvetica_regular.otf") format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Helvetica Now";
+  src: url("fonts/helvetica_bold.otf") format("opentype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  /* ===== COLOR — SUMI INK (墨) backgrounds ===== */
+  --sumi-900: #08080a;   /* void — deepest field */
+  --sumi-800: #0c0c0f;   /* base canvas */
+  --sumi-700: #131318;   /* surface */
+  --sumi-600: #1a1a21;   /* raised surface */
+  --sumi-500: #24242d;   /* hairline / divider on dark */
+  --sumi-400: #34343f;   /* stronger border */
+
+  /* ===== COLOR — WASHI (和紙) ink/text ===== */
+  --washi:        #f4f1ea;  /* primary text — warm white */
+  --washi-dim:    #a8a6a0;  /* secondary text */
+  --washi-faint:  #6c6a66;  /* tertiary / disabled */
+  --washi-ghost:  #3c3b39;  /* faintest hint */
+
+  /* ===== COLOR — NEON (hero — brand magenta) ===== */
+  --neon:        #f5007d;   /* MIRAI magenta — the one hero */
+  --neon-bright: #ff2e97;   /* hover / lift */
+  --neon-deep:   #b00059;   /* pressed / shadow tone */
+  --neon-soft:   rgba(245, 0, 125, 0.14); /* tint fills */
+  --neon-line:   rgba(245, 0, 125, 0.34); /* tint borders */
+
+  /* ===== COLOR — ELECTRIC accents (used sparingly) ===== */
+  --cyan:   #2de2e6;        /* live / online / connected */
+  --cyan-soft: rgba(45, 226, 230, 0.12);
+  --amber:  #ffb627;        /* caution / ending soon */
+  --jade:   #3ddc84;        /* win / available / success */
+
+  /* status semantic aliases */
+  --status-free:  var(--jade);
+  --status-busy:  var(--neon);
+  --status-soon:  var(--amber);
+  --status-off:   var(--washi-faint);
+
+  /* ===== LIQUID GLASS (intensity ~50) ===== */
+  --glass-fill:    rgba(244, 241, 234, 0.045);
+  --glass-fill-2:  rgba(244, 241, 234, 0.07);
+  --glass-border:  rgba(244, 241, 234, 0.10);
+  --glass-edge:    rgba(244, 241, 234, 0.18); /* top highlight */
+  --glass-blur:    20px;
+  --glass-sat:     135%;
+
+  /* glows */
+  --glow-neon:  0 0 28px rgba(245, 0, 125, 0.45), 0 0 6px rgba(245, 0, 125, 0.6);
+  --glow-cyan:  0 0 24px rgba(45, 226, 230, 0.4);
+  --glow-soft:  0 1px 0 var(--glass-edge) inset, 0 18px 50px -20px rgba(0,0,0,0.8);
+
+  /* ===== TYPE ===== */
+  --font-display: "AKONY", "Helvetica Now", system-ui, sans-serif;
+  --font-body:    "Helvetica Now", system-ui, "Segoe UI", sans-serif;
+
+  /* fluid display scale (big-screen first) */
+  --t-mega:   clamp(72px, 9vw, 160px);  /* station numbers, hero count */
+  --t-hero:   clamp(48px, 6vw, 96px);
+  --t-h1:     clamp(36px, 4vw, 64px);
+  --t-h2:     clamp(28px, 3vw, 44px);
+  --t-h3:     22px;
+  --t-lead:   clamp(20px, 1.6vw, 28px);
+  --t-body:   18px;
+  --t-label:  15px;   /* uppercase tracked */
+  --t-caption:13px;
+
+  --track-label: 0.22em;
+  --track-display: 0.01em;
+
+  /* ===== SPACING (4pt) ===== */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+  --s9: 96px; --s10: 128px;
+
+  /* ===== RADIUS — sharp, geometric (echoes the logo) ===== */
+  --r-none: 0px;
+  --r-xs: 3px;
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  /* signature chamfer size for notched corners */
+  --chamfer: 14px;
+
+  --grid-max: 1680px;
+}
+
+/* ---------- RESET / BASE ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+/* ── Noise texture URI (film grain for Japanese paper feel) ── */
+:root {
+  --noise-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.042'/%3E%3C/svg%3E");
+  --canvas: #111215; /* canonical page bg: slightly warm grey, not pure black */
+}
+
+body {
+  background-color: var(--canvas);
+  background-image: var(--noise-bg);
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  color: var(--washi);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: var(--neon); color: #fff; }
+
+/* Reusable noise overlay for panels/sections */
+.noise {
+  background-image: var(--noise-bg);
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* Scanline overlay for cyberpunk panels */
+.scanlines::after {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px
+  );
+}
+
+/* Hairline pixel grid */
+.grid-bg::before {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(244,241,234,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244,241,234,.018) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ---------- TYPE HELPERS ---------- */
+.display { font-family: var(--font-display); font-weight: 700; letter-spacing: var(--track-display); line-height: 0.96; text-transform: uppercase; }
+.t-mega { font-family: var(--font-display); font-weight: 700; font-size: var(--t-mega); line-height: 0.88; letter-spacing: var(--track-display); text-transform: uppercase; }
+.t-hero { font-family: var(--font-display); font-weight: 700; font-size: var(--t-hero); line-height: 0.94; text-transform: uppercase; }
+.t-h1 { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h1); line-height: 1.0; text-transform: uppercase; }
+.t-h2 { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h2); line-height: 1.04; text-transform: uppercase; }
+.t-h3 { font-family: var(--font-display); font-weight: 700; font-size: var(--t-h3); line-height: 1.1; text-transform: uppercase; letter-spacing: 0.02em; }
+.t-lead { font-size: var(--t-lead); line-height: 1.45; color: var(--washi-dim); }
+.t-body { font-size: var(--t-body); }
+.t-label {
+  font-family: var(--font-body); font-weight: 700;
+  font-size: var(--t-label); text-transform: uppercase;
+  letter-spacing: var(--track-label); color: var(--washi-dim);
+}
+.t-caption { font-size: var(--t-caption); color: var(--washi-faint); letter-spacing: 0.04em; }
+.t-num { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; }
+.neon-text { color: var(--neon); }
+.neon-glow { color: var(--neon); text-shadow: var(--glow-neon); }
+.jp { font-family: var(--font-body); letter-spacing: 0.18em; }
+
+/* ---------- LIQUID GLASS PANEL ---------- */
+.glass {
+  position: relative;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glow-soft);
+  border-radius: var(--r-md);
+}
+.glass::before { /* top edge highlight */
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--glass-edge), transparent 22%);
+  opacity: 0.6; pointer-events: none;
+}
+.glass-strong { background: var(--glass-fill-2); }
+
+/* signature notched corner (top-right + bottom-left) */
+.chamfer {
+  clip-path: polygon(
+    0 0, calc(100% - var(--chamfer)) 0, 100% var(--chamfer),
+    100% 100%, var(--chamfer) 100%, 0 calc(100% - var(--chamfer))
+  );
+}
+
+/* ---------- BUTTONS ---------- */
+.btn {
+  font-family: var(--font-body); font-weight: 700;
+  font-size: var(--t-label); letter-spacing: 0.16em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: var(--s3);
+  padding: 16px 28px; min-height: 52px;
+  border: 1px solid transparent; border-radius: var(--r-sm);
+  cursor: pointer; transition: all .18s ease; text-decoration: none;
+  background: var(--neon); color: #fff;
+}
+.btn:hover { background: var(--neon-bright); box-shadow: var(--glow-neon); transform: translateY(-1px); }
+.btn:active { background: var(--neon-deep); transform: translateY(0); }
+.btn--ghost {
+  background: transparent; color: var(--washi);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+}
+.btn--ghost:hover { background: var(--glass-fill-2); border-color: var(--neon-line); color: var(--washi); box-shadow: none; }
+.btn--neon-line {
+  background: transparent; color: var(--neon);
+  border-color: var(--neon-line);
+}
+.btn--neon-line:hover { background: var(--neon-soft); border-color: var(--neon); box-shadow: var(--glow-neon); color: var(--neon-bright); }
+.btn--lg { min-height: 64px; padding: 20px 40px; font-size: 17px; }
+.btn--sm { min-height: 40px; padding: 10px 18px; font-size: 12px; }
+
+/* ---------- BADGES / STATUS DOTS ---------- */
+.badge {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  font-family: var(--font-body); font-weight: 700; font-size: 12px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 6px 12px; border-radius: var(--r-pill);
+  background: var(--glass-fill-2); border: 1px solid var(--glass-border);
+  color: var(--washi-dim);
+}
+.badge--free { color: var(--jade); border-color: rgba(61,220,132,.4); background: rgba(61,220,132,.08); }
+.badge--busy { color: var(--neon); border-color: var(--neon-line); background: var(--neon-soft); }
+.badge--live { color: var(--cyan); border-color: rgba(45,226,230,.4); background: var(--cyan-soft); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.dot--pulse { animation: dotPulse 1.8s ease-in-out infinite; }
+@keyframes dotPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ---------- HAIRLINE DIVIDER ---------- */
+.rule { height: 1px; background: var(--sumi-500); border: 0; }
+.rule--neon { height: 2px; background: linear-gradient(90deg, var(--neon), transparent); box-shadow: 0 0 12px var(--neon-line); }
+
+/* ---------- SEIGAIHA CLOUD texture helpers (uses brand/mirai-clouds.svg) ---------- */
+.clouds-band {
+  background-image: url("brand/mirai-clouds.svg");
+  background-repeat: repeat-x;
+  background-position: center bottom;
+  background-size: auto 100%;
+  opacity: 0.5;
+}
+
+/* ---------- LAYOUT ---------- */
+.wrap { max-width: var(--grid-max); margin: 0 auto; padding: 0 var(--s7); }
+.stack > * + * { margin-top: var(--s4); }
+.row { display: flex; align-items: center; gap: var(--s4); }
+.grid { display: grid; gap: var(--s5); }

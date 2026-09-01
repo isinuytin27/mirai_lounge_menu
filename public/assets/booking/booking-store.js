@@ -30,12 +30,23 @@
     return fetch(path, opts);
   }
 
+  // Карта зала (booking-map.js) перерисовывается по этому событию.
+  function emitSync() { try { window.dispatchEvent(new CustomEvent("mirai-sync")); } catch (e) {} }
+
+  var _lastDate = null;
+
   var MiraiStore = {
     online: function () { return true; },
+
+    /** Запуск синхронизации (карта вызывает start("public")): начальная подгрузка сегодня. */
+    start: function () {
+      return this.pullOccupancy(todayISO());
+    },
 
     /** Прогреть занятость на дату (по умолчанию — сегодня): пишем в кэш брони этого дня. */
     pullOccupancy: function (dateISO) {
       var date = dateISO || todayISO();
+      _lastDate = date;
       return api("/api/booking/hall?date=" + encodeURIComponent(date))
         .then(function (r) { return r.json(); })
         .then(function (j) {
@@ -46,6 +57,7 @@
             rest.push({ tableId: o.tableId, dateISO: o.dateISO, time: o.time, status: o.status });
           });
           lset(rest);
+          emitSync();
         })
         .catch(function () {});
     },
@@ -60,6 +72,7 @@
             var list = lget();
             list.push({ tableId: rec.tableId, dateISO: rec.dateISO, time: rec.time, status: "confirmed" });
             lset(list);
+            emitSync();
             return { ok: true, booking: res.j.booking };
           }
           return { ok: false, error: (res.j && res.j.error) || "error" };

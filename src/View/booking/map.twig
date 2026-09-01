@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>MIRAI · Карта зала</title>
+<link rel="stylesheet" href="/assets/booking/mirai.css?v={{ av }}">
+<link rel="stylesheet" href="/assets/booking/booking.css?v={{ av }}">
+<style>
+
+  html,body{height:100%;overflow:hidden;background:var(--canvas);}
+  @keyframes mkRing{0%{transform:translate(-50%,-50%) scale(.6);opacity:.9}70%{opacity:0}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
+  @keyframes mkBob{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-3px)}}
+  .mk-hs{position:absolute;width:0;height:0;will-change:left,top;}
+  .mk-hs *{pointer-events:auto;}
+  .mk-dot-wrap{position:absolute;left:0;top:0;transform:translate(-50%,-50%) scale(var(--inv,1));transform-origin:center;cursor:pointer;}
+  .mk-pop{position:absolute;left:0;top:0;transform-origin:bottom center;opacity:0;pointer-events:none;}
+  .mk-pop[data-open="1"]{opacity:1;pointer-events:auto;}
+  .mk-table{position:absolute;will-change:opacity;pointer-events:none;}
+  .mk-tshape{fill:var(--tfill,rgba(245,0,125,.20));stroke:var(--tstroke,#F5007D);stroke-width:2.5;vector-effect:non-scaling-stroke;cursor:pointer;pointer-events:auto;transition:fill .15s ease;filter:var(--tglow,drop-shadow(0 0 5px rgba(245,0,125,.55)));}
+  .mk-tshape:hover{fill:var(--tfill-h,rgba(245,0,125,.46));}
+  .mk-tnum{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(var(--inv,1));transform-origin:center;color:#fff;font-weight:700;font-size:15px;text-shadow:0 1px 4px rgba(0,0,0,.85),var(--glow-neon);pointer-events:none;}
+  .mk-handle{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--cyan);border:2px solid #07171a;box-shadow:0 0 8px var(--cyan);cursor:grab;pointer-events:auto;transform:translate(-50%,-50%) scale(var(--inv,1));transform-origin:center;z-index:6;}
+  .mk-note{position:absolute;left:0;top:0;transform:translate(-50%,-100%) scale(var(--inv,1));transform-origin:bottom center;z-index:7;cursor:pointer;pointer-events:auto;}
+  .mk-note .mk-pin{position:relative;width:30px;height:30px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);background:rgba(13,13,16,.94);border:1.5px solid var(--neon);box-shadow:var(--glow-neon);display:flex;align-items:center;justify-content:center;transition:transform .15s ease;}
+  .mk-note:hover .mk-pin{transform:rotate(45deg) scale(1.08);}
+  .mk-note .mk-pin svg{transform:rotate(-45deg);}
+  body.mk-noting [ref] {}
+
+  /* попап не должен вылезать за экран на узких устройствах */
+  .mk-pop{ max-width:86vw; }
+
+  /* ---------- МОБИЛЬНЫЙ ФОРМАТ ---------- */
+  @media (max-width: 640px){
+    .mk-header{ padding:14px 16px !important; }
+    .mk-kicker{ gap:8px !important; margin-bottom:8px !important; }
+    .mk-kicker .t-caption{ font-size:9px !important; }
+    .mk-kicker img{ height:18px !important; }
+    .mk-title{ font-size:30px !important; }
+    .mk-daybar{ top:auto !important; bottom:84px !important; left:50% !important; right:auto !important;
+      transform:translateX(-50%) !important; padding:8px 12px !important; gap:9px !important; z-index:7 !important; }
+    .mk-daybar .mk-legend{ display:none !important; }
+    .mk-daybar > :nth-child(3){ display:none !important; }   /* разделитель перед легендой */
+    .mk-hint{ display:none !important; }                      /* подсказку прячем — управление тач-жестами */
+    .mk-slider{ bottom:22px !important; width:88vw !important; }
+    .mk-zoom{ right:12px !important; bottom:140px !important; gap:7px !important; }
+    .mk-zoom .mk-zbtn{ width:40px !important; height:40px !important; }
+  }
+  @media (max-width: 380px){
+    .mk-title{ font-size:26px !important; }
+    .mk-zoom{ bottom:148px !important; }
+  }
+
+</style>
+</head>
+<body>
+
+<div data-screen-label="Карта зала" data-ref="setRoot" style="position:fixed;inset:0;overflow:hidden;background:var(--canvas);font-family:var(--font-body);color:var(--washi);user-select:none;-webkit-user-select:none;">
+
+  <div style="position:absolute;top:-32%;left:50%;width:120%;height:60%;transform:translateX(-50%);background:radial-gradient(ellipse 50% 55% at 50% 26%,rgba(245,0,125,.12),transparent 66%);pointer-events:none;"></div>
+  <div style="position:absolute;bottom:-30%;left:28%;width:70%;height:55%;background:radial-gradient(ellipse 50% 60% at 50% 72%,rgba(245,0,125,.10),transparent 70%);pointer-events:none;"></div>
+  <div class="grid-bg" style="position:absolute;inset:0;pointer-events:none;"></div>
+  <img src="/assets/booking/seigaiha-corner.svg" alt="" style="position:absolute;right:-40px;bottom:-30px;width:340px;opacity:.16;filter:drop-shadow(0 0 18px rgba(245,0,125,.5));pointer-events:none;">
+
+  <div data-ref="setStage" style="position:absolute;inset:0;touch-action:none;cursor:grab;">
+    <div data-ref="setWorld" style="position:absolute;left:0;top:0;will-change:transform;transform-origin:center center;">
+      <img data-ref="setImgA" src="/assets/booking/view-a.png" draggable="false" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;pointer-events:none;">
+      <img data-ref="setImgB" src="/assets/booking/view-b.png" draggable="false" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;-webkit-user-drag:none;pointer-events:none;">
+      <!-- турнтейбл-кадры (assets/frames/frame-001.png…) подгружаются сюда автоматически -->
+      <div data-ref="setFrames" style="position:absolute;inset:0;pointer-events:none;"></div>
+      <svg class="mk-mask" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;overflow:visible;">
+        
+      </svg>
+
+      <div class="mk-table" data-table="11" data-x="0.305" data-y="0.315" data-w="0.115" data-ar="1.9"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">11</div></div>
+      <div class="mk-table" data-table="12" data-x="0.385" data-y="0.270" data-w="0.105" data-ar="2.3"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">12</div></div>
+      <div class="mk-table" data-table="13" data-x="0.552" data-y="0.385" data-w="0.16" data-ar="3.2"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">13</div></div>
+      <div class="mk-table" data-table="14" data-x="0.300" data-y="0.430" data-w="0.105" data-ar="1.9"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">14</div></div>
+      <div class="mk-table" data-table="15" data-x="0.300" data-y="0.515" data-w="0.105" data-ar="1.9"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">15</div></div>
+      <div class="mk-table" data-table="16" data-x="0.298" data-y="0.585" data-w="0.10" data-ar="1.9"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">16</div></div>
+      <div class="mk-table" data-table="17" data-x="0.415" data-y="0.415" data-w="0.115" data-ar="2.6"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">17</div></div>
+      <div class="mk-table" data-table="18" data-x="0.445" data-y="0.485" data-w="0.115" data-ar="1.9"><svg viewBox="0 0 100 40" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;"><polygon class="mk-tshape" points="0,20.4 63,0 100,19.6 37,40"></polygon></svg><div class="mk-tnum">18</div></div>
+      <div class="mk-pop" data-pop="table" style="width:212px;">
+        <div class="glass chamfer scanlines" style="--chamfer:12px;background:rgba(14,14,18,.95);padding:16px;border:1px solid var(--neon-line);box-shadow:0 18px 50px rgba(0,0,0,.6),var(--glow-neon);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+            <span data-table-badge="" class="badge badge--busy"><span class="dot"></span><span data-table-num="">Стол 11</span></span>
+            <button data-act="close" style="background:none;border:0;color:var(--washi-faint);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;">×</button>
+          </div>
+          <div data-table-photo="" style="display:none;width:100%;aspect-ratio:16/10;border-radius:var(--r-sm);overflow:hidden;margin-bottom:12px;border:1px solid var(--sumi-500);"><img alt="" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+          <div data-table-desc="" style="font-size:13px;color:var(--washi-dim);line-height:1.5;margin-bottom:14px;">Lounge · бронирование стола заранее</div>
+          <a data-table-call="" class="btn btn--sm" href="tel:+74242218080" style="width:100%;">Забронировать</a>
+        </div>
+        <div data-arrow="down" style="position:absolute;left:50%;bottom:-7px;width:14px;height:14px;background:rgba(14,14,18,.95);border-right:1px solid var(--neon-line);border-bottom:1px solid var(--neon-line);transform:translateX(-50%) rotate(45deg);"></div>
+        <div data-arrow="up" style="display:none;position:absolute;left:50%;top:-7px;width:14px;height:14px;background:rgba(14,14,18,.95);border-left:1px solid var(--neon-line);border-top:1px solid var(--neon-line);transform:translateX(-50%) rotate(45deg);"></div>
+      </div>
+
+      <div class="mk-pop" data-pop="note" style="width:248px;">
+        <div class="glass chamfer scanlines" style="--chamfer:14px;background:rgba(14,14,18,.96);padding:16px;border:1px solid var(--neon-line);box-shadow:0 18px 50px rgba(0,0,0,.6),var(--glow-neon);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="badge badge--busy"><span class="dot"></span>Заметка</span>
+            <div style="display:flex;gap:2px;">
+              <button data-note-act="edit" title="Редактировать" style="background:none;border:0;color:var(--washi-faint);cursor:pointer;font-size:14px;line-height:1;padding:3px 5px;">✎</button>
+              <button data-note-act="close" style="background:none;border:0;color:var(--washi-faint);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;">×</button>
+            </div>
+          </div>
+          <div data-note-read>
+            <div data-note-photo-r style="display:none;width:100%;aspect-ratio:16/10;border-radius:var(--r-sm);overflow:hidden;margin-bottom:12px;border:1px solid var(--sumi-500);"><img alt="" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+            <div data-note-text-r style="font-size:13px;color:var(--washi-dim);line-height:1.55;white-space:pre-wrap;word-break:break-word;">—</div>
+          </div>
+          <div data-note-edit style="display:none;">
+            <textarea data-note-input placeholder="Комментарий…" style="width:100%;min-height:74px;resize:vertical;background:rgba(0,0,0,.32);border:1px solid var(--sumi-400);border-radius:var(--r-sm);color:var(--washi);font-family:var(--font-body);font-size:13px;padding:9px 10px;line-height:1.5;outline:none;box-sizing:border-box;"></textarea>
+            <div data-note-photo-e style="display:none;position:relative;width:100%;aspect-ratio:16/10;border-radius:var(--r-sm);overflow:hidden;margin-top:10px;border:1px solid var(--sumi-500);"><img alt="" style="width:100%;height:100%;object-fit:cover;display:block;"><button data-note-act="rmphoto" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.72);border:1px solid var(--sumi-400);color:#fff;cursor:pointer;font-size:13px;line-height:1;">×</button></div>
+            <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;height:38px;border:1px dashed var(--sumi-400);border-radius:var(--r-sm);color:var(--washi-dim);cursor:pointer;font-size:12px;letter-spacing:.04em;">
+              <span>＋ Добавить фото</span>
+              <input data-note-file type="file" accept="image/*" style="display:none;">
+            </label>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+              <button data-note-act="delete" class="btn btn--sm" style="flex:0 0 auto;background:none;border:1px solid var(--sumi-400);color:var(--washi-faint);">Удалить</button>
+              <button data-note-act="save" class="btn btn--sm" style="flex:1;">Сохранить</button>
+            </div>
+          </div>
+        </div>
+        <div data-arrow="down" style="position:absolute;left:50%;bottom:-7px;width:14px;height:14px;background:rgba(14,14,18,.96);border-right:1px solid var(--neon-line);border-bottom:1px solid var(--neon-line);transform:translateX(-50%) rotate(45deg);"></div>
+        <div data-arrow="up" style="display:none;position:absolute;left:50%;top:-7px;width:14px;height:14px;background:rgba(14,14,18,.96);border-left:1px solid var(--neon-line);border-top:1px solid var(--neon-line);transform:translateX(-50%) rotate(45deg);"></div>
+      </div>
+
+      <!-- хотспоты зон строятся динамически из mirai_admin_v1.hotspots (см. buildHotspots) -->
+    </div>
+  </div>
+
+  <header class="mk-header" style="position:absolute;top:0;left:0;padding:28px 32px;pointer-events:none;">
+    <div class="mk-kicker" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <img src="/assets/booking/brand/mirai-logo.svg" alt="MIRAI" style="height:32px;">
+      <span style="width:1px;height:18px;background:var(--sumi-400);"></span>
+      <span class="t-caption" style="letter-spacing:.18em;">未来 · ИНТЕРАКТИВНАЯ 3D-МОДЕЛЬ</span>
+    </div>
+    <div class="display mk-title" style="font-size:clamp(34px,5vw,60px);line-height:.94;">Карта зала</div>
+  </header>
+
+  <button data-pwa-install class="glass chamfer mk-install" style="--chamfer:8px;display:none;position:absolute;top:28px;right:26px;z-index:8;align-items:center;gap:8px;padding:10px 15px;border:1px solid var(--neon-line);color:var(--washi);font-family:var(--font-body);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"/></svg>
+    <span>Установить</span>
+  </button>
+
+  <div class="glass chamfer mk-daybar" style="--chamfer:10px;position:absolute;top:122px;left:32px;padding:10px 14px;display:flex;align-items:center;gap:12px;z-index:6;">
+    <span class="t-caption" style="letter-spacing:.16em;">ДЕНЬ</span>
+    <input type="date" data-act="mapdate" style="background:none;border:0;color:var(--washi);font-family:var(--font-body);font-weight:700;font-size:14px;outline:none;color-scheme:dark;cursor:pointer;">
+    <span style="width:1px;height:18px;background:var(--sumi-400);"></span>
+    <span class="mk-legend" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--washi-faint);"><span style="width:9px;height:9px;border-radius:50%;background:var(--jade);box-shadow:0 0 8px var(--jade);"></span>свободно</span>
+    <span class="mk-legend" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--washi-faint);"><span style="width:9px;height:9px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);"></span>занято</span>
+  </div>
+
+  <div data-ref="setHint" class="mk-hint" style="position:absolute;left:50%;bottom:120px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(17,18,21,.6);border:1px solid var(--sumi-500);backdrop-filter:blur(8px);padding:9px 16px;border-radius:999px;font-size:12px;color:var(--washi-dim);letter-spacing:.04em;transition:opacity .4s ease;pointer-events:none;white-space:nowrap;">
+    <span style="color:var(--neon);">⟳</span> Тяни, чтобы повернуть · колесо — зум · клик по точке — бронь
+  </div>
+
+  <div class="mk-slider" style="position:absolute;left:50%;bottom:30px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:9px;width:min(420px,72vw);">
+    <div style="display:flex;align-items:center;gap:14px;font-size:11px;letter-spacing:.2em;color:var(--washi-faint);text-transform:uppercase;">
+      <span data-view-end="a" style="cursor:pointer;">Вид A</span>
+      <span data-ref="setViewLabel" style="color:var(--neon);font-weight:700;min-width:74px;text-align:center;">Вид A</span>
+      <span data-view-end="b" style="cursor:pointer;">Вид B</span>
+    </div>
+    <div data-ref="setTrack" style="position:relative;width:100%;height:34px;display:flex;align-items:center;cursor:pointer;touch-action:none;">
+      <div style="position:absolute;left:0;right:0;height:3px;background:var(--sumi-500);border-radius:2px;"></div>
+      <div data-ref="setTrackFill" style="position:absolute;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--neon),var(--cyan));border-radius:2px;box-shadow:0 0 10px var(--neon-line);"></div>
+      <div data-ref="setHandle" style="position:absolute;left:0;top:50%;width:26px;height:26px;border-radius:50%;background:var(--canvas);border:2px solid var(--neon);box-shadow:var(--glow-neon);transform:translate(-50%,-50%);"></div>
+    </div>
+  </div>
+
+  <div class="mk-zoom" style="position:absolute;right:26px;bottom:30px;display:flex;flex-direction:column;gap:8px;">
+    <button data-act="zin" class="mk-zbtn" style="width:46px;height:46px;border-radius:var(--r-sm);background:rgba(17,18,21,.7);border:1px solid var(--sumi-400);backdrop-filter:blur(8px);color:var(--washi);cursor:pointer;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
+    <button data-act="zout" class="mk-zbtn" style="width:46px;height:46px;border-radius:var(--r-sm);background:rgba(17,18,21,.7);border:1px solid var(--sumi-400);backdrop-filter:blur(8px);color:var(--washi);cursor:pointer;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;">−</button>
+    <button data-act="reset" class="mk-zbtn" style="width:46px;height:46px;border-radius:var(--r-sm);background:rgba(17,18,21,.7);border:1px solid var(--sumi-400);backdrop-filter:blur(8px);color:var(--washi-dim);cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;letter-spacing:.1em;">⤢</button>
+  </div>
+
+
+</div>
+
+<script src="/assets/booking/booking-store.js?v={{ av }}"></script>
+<script src="/assets/booking/booking.js?v={{ av }}"></script>
+<script src="/assets/booking/booking-map.js?v={{ av }}"></script>
+</body>
+</html>
