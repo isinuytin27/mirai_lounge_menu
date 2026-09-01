@@ -5,12 +5,20 @@ declare(strict_types=1);
 namespace Mirai\Tests\Unit;
 
 use Mirai\Domain\Menu\Product;
+use Mirai\Domain\Menu\BowlPricing;
 use Mirai\Domain\Menu\ProductFinder;
 use Mirai\Domain\Orders\OrderItemResolver;
 use PHPUnit\Framework\TestCase;
 
 final class OrderItemResolverTest extends TestCase
 {
+    private function bowls(): BowlPricing
+    {
+        return new class implements BowlPricing {
+            public function surcharge(string $productSlug, string $bowlSlug): ?array { return null; }
+        };
+    }
+
     private function finder(): ProductFinder
     {
         return new class implements ProductFinder {
@@ -27,7 +35,7 @@ final class OrderItemResolverTest extends TestCase
 
     public function testResolvesValidItemsAndTakesPriceFromMenu(): void
     {
-        $resolver = new OrderItemResolver($this->finder());
+        $resolver = new OrderItemResolver($this->finder(), $this->bowls());
 
         // Клиент пытается подсунуть свою цену — она игнорируется.
         $items = $resolver->resolve([
@@ -44,7 +52,7 @@ final class OrderItemResolverTest extends TestCase
 
     public function testDropsUnknownProductAndBadQty(): void
     {
-        $resolver = new OrderItemResolver($this->finder());
+        $resolver = new OrderItemResolver($this->finder(), $this->bowls());
 
         $items = $resolver->resolve([
             ['id' => 'nope', 'qty' => 1],       // нет в меню
@@ -61,7 +69,7 @@ final class OrderItemResolverTest extends TestCase
 
     public function testAcceptsProductIdAlias(): void
     {
-        $resolver = new OrderItemResolver($this->finder());
+        $resolver = new OrderItemResolver($this->finder(), $this->bowls());
         $items = $resolver->resolve([['product_id' => 'p_food', 'qty' => 1]]);
 
         self::assertCount(1, $items);
@@ -69,7 +77,7 @@ final class OrderItemResolverTest extends TestCase
 
     public function testNonArrayInputYieldsEmpty(): void
     {
-        $resolver = new OrderItemResolver($this->finder());
+        $resolver = new OrderItemResolver($this->finder(), $this->bowls());
 
         self::assertSame([], $resolver->resolve('nope'));
         self::assertSame([], $resolver->resolve([]));

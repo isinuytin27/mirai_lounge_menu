@@ -122,8 +122,8 @@ final class OrderRepository extends Repository implements OrderStore
         $next = ((int) $maxStmt->fetchColumn()) + 1;
 
         $insert = $pdo->prepare(
-            'INSERT INTO order_items (order_id, product_id, name, qty, price, line, category_id, added_at, sort_order)
-             VALUES (:oid, :pid, :name, :qty, :price, :line, :cat, :added, :sort)'
+            'INSERT INTO order_items (order_id, product_id, name, qty, price, line, category_id, note, added_at, sort_order)
+             VALUES (:oid, :pid, :name, :qty, :price, :line, :cat, :note, :added, :sort)'
         );
         foreach ($items as $item) {
             $insert->execute([
@@ -134,6 +134,7 @@ final class OrderRepository extends Repository implements OrderStore
                 'price' => $item->price,
                 'line' => $item->line,
                 'cat' => $item->categoryId,
+                'note' => $item->note,
                 'added' => $now,
                 'sort' => $next++,
             ]);
@@ -144,7 +145,7 @@ final class OrderRepository extends Repository implements OrderStore
     private function itemsFor(string $orderId): array
     {
         $rows = $this->fetchAll(
-            'SELECT product_id, name, qty, price, line, category_id
+            'SELECT product_id, name, qty, price, line, category_id, note
              FROM order_items WHERE order_id = :id ORDER BY sort_order',
             ['id' => $orderId]
         );

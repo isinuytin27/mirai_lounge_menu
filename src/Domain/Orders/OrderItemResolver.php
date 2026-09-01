@@ -4,20 +4,24 @@ declare(strict_types=1);
 
 namespace Mirai\Domain\Orders;
 
+use Mirai\Domain\Menu\BowlPricing;
 use Mirai\Domain\Menu\ProductFinder;
 
 /**
- * Превращает «сырой» ввод клиента ([{id, qty}, …]) в валидированные позиции заказа.
+ * Превращает «сырой» ввод клиента ([{id, qty, bowl?}, …]) в валидированные позиции заказа.
  *
- * Клиент присылает только id и qty; имя/цену/линию сервер берёт из меню (ProductFinder),
- * поэтому подделать цену/название нельзя. Невалидные строки молча отбрасываются
- * (как в старом order-submit.php).
+ * Клиент присылает только id, qty и (для кальяна из витрины) slug чаши; имя/цену/линию
+ * и наценку чаши сервер берёт сам (ProductFinder/BowlPricing) — подделать цену нельзя.
+ * Невалидные строки молча отбрасываются (как в старом order-submit.php).
  */
 final class OrderItemResolver
 {
     private const MAX_QTY = 99;
 
-    public function __construct(private readonly ProductFinder $products) {}
+    public function __construct(
+        private readonly ProductFinder $products,
+        private readonly BowlPricing $bowls,
+    ) {}
 
     /**
      * @param mixed $rawItems ожидается list<array{id?:string,product_id?:string,qty?:int}>
@@ -45,14 +49,27 @@ final class OrderItemResolver
                 continue;
             }
 
+            // Кальян из витрины: наценка выбранной чаши (× число шахт) + подпись.
+            $price = $product->price;
+            $note = null;
+            $bowl = trim((string) ($row['bowl'] ?? ''));
+            if ($bowl !== '') {
+                $s = $this->bowls->surcharge($product->slug, $bowl);
+                if ($s !== null) {
+                    $price += $s['extra'] * $s['units'];
+                    $note = 'Чаша: ' . $s['name'] . ($s['units'] > 1 ? ' ×' . $s['units'] : '');
+                }
+            }
+
             // В заказ пишем slug товара (стабильный снимок), а не суррогатный id.
             $resolved[] = new OrderItem(
                 $product->slug,
                 $product->name,
                 $qty,
-                $product->price,
+                $price,
                 $product->line,
                 $product->categorySlug,
+                $note,
             );
         }
 

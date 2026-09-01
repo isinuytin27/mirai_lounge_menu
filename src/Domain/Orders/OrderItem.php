@@ -16,6 +16,7 @@ final class OrderItem
         public readonly int $price,
         public readonly string $line,
         public readonly string $categoryId,
+        public readonly ?string $note = null, // модификатор (напр. «Чаша: Грейпфрут»)
     ) {}
 
     /** @param array<string,mixed> $row */
@@ -26,6 +27,8 @@ final class OrderItem
             $line = MenuLine::KITCHEN;
         }
 
+        $note = $row['note'] ?? null;
+
         return new self(
             (string) ($row['product_id'] ?? ''),
             (string) ($row['name'] ?? ''),
@@ -33,10 +36,11 @@ final class OrderItem
             (int) ($row['price'] ?? 0),
             $line,
             (string) ($row['category_id'] ?? ''),
+            ($note !== null && $note !== '') ? (string) $note : null,
         );
     }
 
-    /** @return array{product_id:string,name:string,qty:int,price:int,line:string,category_id:string} */
+    /** @return array{product_id:string,name:string,qty:int,price:int,line:string,category_id:string,note:?string} */
     public function toArray(): array
     {
         return [
@@ -46,6 +50,7 @@ final class OrderItem
             'price' => $this->price,
             'line' => $this->line,
             'category_id' => $this->categoryId,
+            'note' => $this->note,
         ];
     }
 

@@ -8,6 +8,8 @@ declare(strict_types=1);
  */
 
 use DI\ContainerBuilder;
+use Mirai\Domain\Menu\BowlPricing;
+use Mirai\Domain\Menu\HookahShowcaseRepository;
 use Mirai\Domain\Menu\MenuRepository;
 use Mirai\Domain\Menu\ProductFinder;
 use Mirai\Domain\Orders\OrderRepository;
@@ -42,6 +44,7 @@ $builder->addDefinitions([
 
     // Привязки доменных интерфейсов к реализациям.
     ProductFinder::class => get(MenuRepository::class),
+    BowlPricing::class => get(HookahShowcaseRepository::class),
     OrderStore::class => get(OrderRepository::class),
     TableRegistry::class => get(TableRepository::class),
     OrderNotifier::class => autowire(NullOrderNotifier::class),

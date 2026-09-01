@@ -664,6 +664,8 @@
                 }
 
                 function openGroup(groupId, label) {
+                    // «Кальян» — премиальный экран-витрина выбора кальяна (карусель+чаши).
+                    if (groupId === "hookah") { window.location.href = "/vitrina"; return; }
                     if (groupId === "bar") openBarWheel(label);
                     else openPlainGroup(groupId, label);
                 }

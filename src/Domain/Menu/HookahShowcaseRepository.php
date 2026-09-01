@@ -10,8 +10,38 @@ use Mirai\Infrastructure\Db\Repository;
  * Витрина кальянов: кальяны (products + витринные поля), чаши, витринные напитки.
  * Отдаёт данные в форме, которую ждёт фронт карусели (design_handoff_vitrina_kalyanov).
  */
-final class HookahShowcaseRepository extends Repository
+final class HookahShowcaseRepository extends Repository implements BowlPricing
 {
+    /**
+     * Наценка чаши: extra (за 1 кальян) × units (число шахт кальяна).
+     *
+     * @return array{extra:int,name:string,units:int}|null
+     */
+    public function surcharge(string $productSlug, string $bowlSlug): ?array
+    {
+        $bowl = $this->fetchOne(
+            'SELECT name, extra FROM hookah_bowls WHERE slug = :slug AND active = TRUE',
+            ['slug' => $bowlSlug]
+        );
+        if ($bowl === null) {
+            return null;
+        }
+
+        $row = $this->fetchOne(
+            'SELECT s.anchors FROM hookah_showcase s JOIN products p ON p.id = s.product_id WHERE p.slug = :slug',
+            ['slug' => $productSlug]
+        );
+        $units = 1;
+        if ($row !== null) {
+            $anchors = json_decode((string) $row['anchors'], true);
+            if (is_array($anchors) && $anchors !== []) {
+                $units = count($anchors);
+            }
+        }
+
+        return ['extra' => (int) $bowl['extra'], 'name' => (string) $bowl['name'], 'units' => $units];
+    }
+
     /**
      * @return array{hookahs:list<array<string,mixed>>,bowls:list<array<string,mixed>>,drinks:list<array<string,mixed>>}
      */

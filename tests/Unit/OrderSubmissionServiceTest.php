@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mirai\Tests\Unit;
 
 use Mirai\Domain\Menu\Product;
+use Mirai\Domain\Menu\BowlPricing;
 use Mirai\Domain\Menu\ProductFinder;
 use Mirai\Domain\Orders\Order;
 use Mirai\Domain\Orders\OrderItem;
@@ -16,6 +17,13 @@ use PHPUnit\Framework\TestCase;
 
 final class OrderSubmissionServiceTest extends TestCase
 {
+    private function bowls(): BowlPricing
+    {
+        return new class implements BowlPricing {
+            public function surcharge(string $productSlug, string $bowlSlug): ?array { return null; }
+        };
+    }
+
     private function finder(): ProductFinder
     {
         return new class implements ProductFinder {
@@ -52,7 +60,7 @@ final class OrderSubmissionServiceTest extends TestCase
     public function testEmptyInputFailsWithEmptyItems(): void
     {
         $service = new OrderSubmissionService(
-            new OrderItemResolver($this->finder()),
+            new OrderItemResolver($this->finder(), $this->bowls()),
             $this->store(),
             $this->recordingNotifier(),
         );
@@ -66,7 +74,7 @@ final class OrderSubmissionServiceTest extends TestCase
     public function testAllInvalidItemsFailsWithNoValidItems(): void
     {
         $service = new OrderSubmissionService(
-            new OrderItemResolver($this->finder()),
+            new OrderItemResolver($this->finder(), $this->bowls()),
             $this->store(),
             $this->recordingNotifier(),
         );
@@ -83,7 +91,7 @@ final class OrderSubmissionServiceTest extends TestCase
         $notifier = $this->recordingNotifier();
 
         $service = new OrderSubmissionService(
-            new OrderItemResolver($this->finder()),
+            new OrderItemResolver($this->finder(), $this->bowls()),
             $store,
             $notifier,
         );
