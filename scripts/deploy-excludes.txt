@@ -33,5 +33,7 @@
 /.claude/
 /var/
 /composer.phar
+# ВНИМАНИЕ: *.png исключает и реальные ассеты. Фон карты зала брони возвращаем
+# явным --include в deploy.yml (rsync). Новые важные png — добавляй include там же.
 *.png
 .DS_Store

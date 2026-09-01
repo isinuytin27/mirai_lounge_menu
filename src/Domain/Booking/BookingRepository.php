@@ -29,12 +29,12 @@ final class BookingRepository extends Repository
     /**
      * Столы зала для карты (активные, с местом на схеме).
      *
-     * @return list<array{id:string,label:string,zone:?string,seats:?int,x:?float,y:?float}>
+     * @return list<array{id:string,label:string,zone:?string,seats:?int,shape:string,x:?float,y:?float}>
      */
     public function hallTables(): array
     {
         $rows = $this->fetchAll(
-            "SELECT id, caption, zone, COALESCE(seats, capacity) AS seats, pos_x, pos_y
+            "SELECT id, caption, zone, shape, COALESCE(seats, capacity) AS seats, pos_x, pos_y
              FROM tables WHERE active = TRUE AND pos_x IS NOT NULL
              ORDER BY sort_order, id"
         );
@@ -44,6 +44,7 @@ final class BookingRepository extends Repository
             'label' => (string) ($r['caption'] ?? $r['id']),
             'zone' => $r['zone'] !== null ? (string) $r['zone'] : null,
             'seats' => $r['seats'] !== null ? (int) $r['seats'] : null,
+            'shape' => (string) ($r['shape'] ?? 'square'),
             'x' => $r['pos_x'] !== null ? (float) $r['pos_x'] : null,
             'y' => $r['pos_y'] !== null ? (float) $r['pos_y'] : null,
         ], $rows);

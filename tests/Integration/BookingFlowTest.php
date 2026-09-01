@@ -19,7 +19,7 @@ final class BookingFlowTest extends TestCase
     private ContainerInterface $c;
     private BookingRepository $repo;
     private string $date = '2099-01-15'; // заведомо чистая дата
-    private string $table = 't13';
+    private string $table = '7';
 
     protected function setUp(): void
     {

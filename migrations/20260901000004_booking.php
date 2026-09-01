@@ -22,11 +22,13 @@ final class Booking extends AbstractMigration
         $ts = ['timezone' => true];
 
         // --- Расширяем каталог столов для карты зала ---
+        // pos_x/pos_y — проценты 0..100 (позиция центра стола на схеме зала).
         $this->table('tables')
             ->addColumn('zone', 'string', ['limit' => 40, 'null' => true])
             ->addColumn('seats', 'integer', ['null' => true])
-            ->addColumn('pos_x', 'decimal', ['precision' => 6, 'scale' => 4, 'null' => true])
-            ->addColumn('pos_y', 'decimal', ['precision' => 6, 'scale' => 4, 'null' => true])
+            ->addColumn('shape', 'string', ['limit' => 12, 'null' => true]) // round|square
+            ->addColumn('pos_x', 'decimal', ['precision' => 6, 'scale' => 3, 'null' => true])
+            ->addColumn('pos_y', 'decimal', ['precision' => 6, 'scale' => 3, 'null' => true])
             ->addColumn('sort_order', 'integer', ['default' => 0])
             ->update();
 
@@ -61,23 +63,32 @@ final class Booking extends AbstractMigration
             ->addIndex(['booking_date'])
             ->create();
 
-        // --- Сид столов зала (Lounge) из карты аддона (map.html: столы 11–18) ---
+        // --- Сид столов зала из схемы виджета аддона (booking.js: столы 1–8) ---
+        // [id, label, x%, y%, seats, shape, zone]
         $hall = [
-            ['t11', 'Стол 11', 0.305, 0.315], ['t12', 'Стол 12', 0.385, 0.270],
-            ['t13', 'Стол 13', 0.552, 0.385], ['t14', 'Стол 14', 0.300, 0.430],
-            ['t15', 'Стол 15', 0.300, 0.515], ['t16', 'Стол 16', 0.298, 0.585],
-            ['t17', 'Стол 17', 0.415, 0.415], ['t18', 'Стол 18', 0.445, 0.485],
+            ['1', '1', 85, 20, 6, 'square', 'Lounge · Reception'],
+            ['2', '2', 85, 52, 6, 'square', 'Lounge · Reception'],
+            ['3', '3', 82, 82, 4, 'square', 'VIP PS 2'],
+            ['4', '4', 48, 82, 4, 'square', 'Food & Hookah'],
+            ['5', '5', 18, 82, 4, 'square', 'VIP PS 1'],
+            ['6', '6', 15, 50, 4, 'square', 'VIP PS 1'],
+            ['7', '7', 45, 46, 6, 'round', 'Food & Hookah'],
+            ['8', '8', 45, 16, 6, 'round', 'Food & Hookah'],
         ];
         $sort = 0;
-        foreach ($hall as [$id, $label, $x, $y]) {
+        foreach ($hall as [$id, $label, $x, $y, $seats, $shape, $zone]) {
             $this->execute(sprintf(
-                "INSERT INTO tables (id, caption, capacity, active, zone, seats, pos_x, pos_y, sort_order)
-                 VALUES ('%s', '%s', 4, TRUE, 'Lounge', 4, %s, %s, %d)
+                "INSERT INTO tables (id, caption, capacity, active, zone, seats, shape, pos_x, pos_y, sort_order)
+                 VALUES ('%s', 'Стол %s', %d, TRUE, '%s', %d, '%s', %d, %d, %d)
                  ON CONFLICT (id) DO UPDATE SET
-                   zone = EXCLUDED.zone, seats = EXCLUDED.seats,
+                   zone = EXCLUDED.zone, seats = EXCLUDED.seats, shape = EXCLUDED.shape,
                    pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, sort_order = EXCLUDED.sort_order",
                 $id,
                 $label,
+                $seats,
+                $zone,
+                $seats,
+                $shape,
                 $x,
                 $y,
                 $sort++
@@ -87,11 +98,11 @@ final class Booking extends AbstractMigration
 
     public function down(): void
     {
-        $this->execute("DELETE FROM tables WHERE id IN ('t11','t12','t13','t14','t15','t16','t17','t18')");
+        $this->execute("DELETE FROM tables WHERE id IN ('1','2','3','4','5','6','7','8')");
         $this->table('waitlist')->drop()->save();
         $this->table('bookings')->drop()->save();
         $this->table('tables')
-            ->removeColumn('zone')->removeColumn('seats')
+            ->removeColumn('zone')->removeColumn('seats')->removeColumn('shape')
             ->removeColumn('pos_x')->removeColumn('pos_y')->removeColumn('sort_order')
             ->update();
     }
