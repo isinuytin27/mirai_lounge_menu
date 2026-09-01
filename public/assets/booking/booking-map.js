@@ -122,6 +122,7 @@ class Component extends DCLogic {
     window.addEventListener('resize', this._onResize);
     this.layout();
     this.initFrames();   // если в assets/frames/ есть кадры турнтейбла — используем их вместо вида A/B
+    this.loadHallConfig(); // подтянуть геометрию столов/зон/заметок из БД (перестроит карту)
   }
 
   componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
@@ -461,7 +462,31 @@ class Component extends DCLogic {
     });
   }
 
-  readAdmin() { try { return JSON.parse(localStorage.getItem('mirai_admin_v1')); } catch (e) { return null; } }
+  // Источник геометрии — наш API (/api/booking/hall). До загрузки конфига
+  // buildTables/buildHotspots используют seed (мгновенный рендер), затем
+  // loadHallConfig() перестраивает по данным БД.
+  readAdmin() {
+    if (!this._hall) return null;
+    return { positions: this._hall.tables || [], hotspots: this._hall.zones || [] };
+  }
+
+  // Тянем карту зала (столы/зоны/заметки) из БД и перестраиваем.
+  loadHallConfig() {
+    return fetch('/api/booking/hall?date=' + encodeURIComponent(this.bkDate || this.todayISO()))
+      .then(r => r.json())
+      .then(j => {
+        if (!j || !j.ok) return;
+        this._hall = { tables: j.tables || [], zones: j.zones || [], notes: j.notes || [] };
+        this.buildHotspots();
+        this.buildTables();
+        this.tableEls.forEach(el => { this.layoutTable(el); el.style.opacity = '0'; });
+        this.loadNotes();
+        this.buildNotes();
+        this.applyBookingStatuses();
+        this.layout();
+      })
+      .catch(() => {});
+  }
 
   seedPositions() {
     const T = [['11',.305,.315,.115,.0856],['12',.385,.270,.105,.0645],['13',.552,.385,.16,.0707],
@@ -756,7 +781,7 @@ class Component extends DCLogic {
     if (this.openPopKey === 'note' && this._openNoteEl && (this._openNoteEl.dataset.view || 'a') !== cv) this.closePops();
   }
 
-  loadNotes() { try { this.notes = JSON.parse(localStorage.getItem('mirai_notes_v1')) || []; } catch (e) { this.notes = []; } if (!Array.isArray(this.notes)) this.notes = []; }
+  loadNotes() { this.notes = (this._hall && Array.isArray(this._hall.notes)) ? this._hall.notes : []; }
   saveNotes() { try { localStorage.setItem('mirai_notes_v1', JSON.stringify(this.notes)); } catch (e) {} }
 
   buildNotes() {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mirai\Http\Controllers;
 
 use Mirai\Domain\Booking\BookingRepository;
+use Mirai\Domain\Booking\HallRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -14,9 +15,12 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  */
 final class BookingApiController
 {
-    public function __construct(private readonly BookingRepository $repo) {}
+    public function __construct(
+        private readonly BookingRepository $repo,
+        private readonly HallRepository $hall,
+    ) {}
 
-    /** GET /api/booking/hall?date=YYYY-MM-DD — столы карты + занятость на дату. */
+    /** GET /api/booking/hall?date=YYYY-MM-DD — карта зала (столы/зоны/заметки) + занятость. */
     public function hall(Request $request, Response $response): Response
     {
         $date = $this->date($request->getQueryParams()['date'] ?? '');
@@ -24,7 +28,9 @@ final class BookingApiController
         return $this->json($response, 200, [
             'ok' => true,
             'date' => $date,
-            'tables' => $this->repo->hallTables(),
+            'tables' => $this->hall->tables(),
+            'zones' => $this->hall->zones(),
+            'notes' => $this->hall->notes(),
             'occupancy' => $this->repo->occupancy($date),
         ]);
     }
