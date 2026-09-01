@@ -25,6 +25,7 @@ use Mirai\Http\Controllers\OrderSubmitController;
 use Mirai\Http\Controllers\SeoController;
 use Mirai\Http\Controllers\TableEntryController;
 use Mirai\Http\Controllers\VersionController;
+use Mirai\Http\Controllers\VitrinaController;
 use Mirai\Http\Middleware\AuthMiddleware;
 use Mirai\Http\Middleware\CsrfMiddleware;
 use Mirai\Http\Middleware\RateLimitMiddleware;
@@ -55,6 +56,8 @@ return static function (App $app): void {
 
     // Витрина кальянов (JSON: кальяны + чаши + напитки).
     $app->get('/api/hookah-showcase', HookahShowcaseController::class);
+    // Экран-витрина выбора кальяна (standalone-страница; стол — из cookie).
+    $app->get('/vitrina', VitrinaController::class)->add(TableSessionMiddleware::class);
 
     // 3D-карта зала (standalone-страница, встраивается в экран брони через iframe).
     $app->get('/booking/map', BookingMapController::class);

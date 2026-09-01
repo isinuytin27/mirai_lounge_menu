@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>MIRAI · Витрина кальянов</title>
+<link rel="stylesheet" href="/assets/booking/mirai.css?v={{ av }}">
+<style>
+  html,body{margin:0;background:#111215;overscroll-behavior-y:none}
+  .trk{scrollbar-width:none;-ms-overflow-style:none}
+  .trk::-webkit-scrollbar{display:none}
+  .vt-cta{margin-top:2px;align-self:flex-start;cursor:pointer;font-family:var(--font-body);font-weight:700;
+    font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#f5007d;border:0;
+    border-radius:6px;padding:14px 30px;-webkit-tap-highlight-color:transparent;box-shadow:0 10px 34px -10px rgba(245,0,125,.5);
+    transition:background .18s ease,transform .12s ease}
+  .vt-cta:active{transform:translateY(1px)} .vt-cta[disabled]{opacity:.7}
+  .vt-back{position:absolute;left:14px;top:16px;z-index:6;width:38px;height:38px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.9);text-decoration:none}
+</style>
+</head>
+<body>
+<div id="vitrina" style="max-width:480px;margin:0 auto;min-height:100vh;position:relative;background:#111215;border-left:1px solid var(--sumi-600);border-right:1px solid var(--sumi-600);display:flex;flex-direction:column;overflow:hidden">
+
+  <div style="position:absolute;left:0;right:0;top:0;height:860px;background-image:url(/assets/img/vitrina/bg-mirai.jpg);background-repeat:no-repeat;background-size:auto 840px;background-position:center -72px;opacity:.92"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(17,18,21,.7) 0%,rgba(17,18,21,.18) 22%,rgba(17,18,21,.28) 38%,rgba(17,18,21,.72) 52%,rgba(17,18,21,.94) 66%,#111215 82%)"></div>
+  <div style="position:absolute;left:0;right:0;top:526px;height:120px;background:linear-gradient(180deg,rgba(33,35,43,.9) 0%,rgba(23,25,32,.5) 36%,rgba(17,18,21,0) 100%);box-shadow:0 -1px 0 rgba(244,241,234,.13)"></div>
+
+  <a class="vt-back" href="/" aria-label="Назад"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a>
+
+  <div style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:20px 20px 14px 60px">
+    <div style="font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:.02em;color:var(--washi)">MIRAI</div>
+    <div class="jp t-caption" style="color:var(--washi-faint)">ミライ · ВИТРИНА</div>
+  </div>
+  <hr class="rule" style="margin:0 20px;position:relative">
+
+  <div style="position:relative;height:452px;flex:0 0 auto">
+    <div id="trk-hookah" class="trk" style="position:absolute;left:0;right:0;bottom:0;height:452px;display:flex;overflow-x:auto;scroll-snap-type:x mandatory"></div>
+    <div id="trk-bowl" class="trk" style="position:absolute;left:0;right:0;top:0;height:150px;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;z-index:3"></div>
+    <div style="position:absolute;left:20px;top:8px;z-index:4;font-family:var(--font-body);font-weight:700;font-size:12px;letter-spacing:.22em;color:var(--washi);writing-mode:vertical-rl">ЧАША</div>
+    <div style="position:absolute;left:20px;bottom:96px;font-family:var(--font-body);font-weight:800;font-size:12px;letter-spacing:.22em;color:var(--washi);writing-mode:vertical-rl">КАЛЬЯН</div>
+  </div>
+
+  <div id="vt-dots" style="position:relative;display:flex;justify-content:center;gap:7px;padding:4px 0 18px"></div>
+
+  <div style="position:relative;padding:0 20px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div id="vt-name" style="font-family:var(--font-display);font-weight:700;font-size:36px;line-height:.96;text-transform:uppercase;color:var(--washi)"></div>
+      <div id="vt-total" class="t-num" style="font-size:26px;color:var(--washi)"></div>
+      <div id="vt-desc" class="t-caption" style="color:var(--washi-faint);line-height:1.5;letter-spacing:0;text-transform:none;font-size:13px;max-width:100%"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div id="vt-model" class="t-caption" style="letter-spacing:.14em;text-transform:uppercase"></div>
+      <div id="vt-note" class="t-caption"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div id="vt-time" class="badge"></div>
+      <div id="vt-bowlbadge" class="badge badge--busy"></div>
+    </div>
+    <button id="vt-order" class="vt-cta" type="button">Заказать</button>
+  </div>
+
+  <div style="position:relative;padding:22px 20px 0;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="t-label" style="font-size:12px">Напитки</div>
+      <div class="t-caption" style="letter-spacing:.1em">сопутствующие товары</div>
+    </div>
+    <div id="vt-drinks" class="trk" style="display:flex;gap:10px;overflow-x:auto"></div>
+  </div>
+
+  <div style="height:28px"></div>
+</div>
+<script src="/assets/vitrina/vitrina.js?v={{ av }}"></script>
+</body>
+</html>
