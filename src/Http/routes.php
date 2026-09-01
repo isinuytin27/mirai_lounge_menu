@@ -17,6 +17,7 @@ use Mirai\Http\Controllers\TournamentRegisterController;
 use Mirai\Http\Controllers\VipConsumeController;
 use Mirai\Http\Controllers\VipServiceController;
 use Mirai\Http\Controllers\HealthController;
+use Mirai\Http\Controllers\AmateurCupController;
 use Mirai\Http\Controllers\BookingApiController;
 use Mirai\Http\Controllers\BookingMapController;
 use Mirai\Http\Controllers\HomeController;
@@ -86,6 +87,10 @@ return static function (App $app): void {
     $app->map(['POST'], '/api/vip-consume[.php]', VipConsumeController::class);
     // VIP-страница (гость по токену / staff-консоль).
     $app->get('/vipservice/{slug}', VipServiceController::class);
+
+    // Лендинг регистрации на турнир CS2 (публичный). Форма шлёт в /api/tournament-register.
+    $app->get('/amateur_cup[/]', AmateurCupController::class);
+    $app->get('/amateur-cup[/]', AmateurCupController::class);
 
     // SEO.
     $app->get('/robots.txt', [SeoController::class, 'robots']);

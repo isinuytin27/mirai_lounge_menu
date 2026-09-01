@@ -14,6 +14,11 @@ final class TournamentRepository extends Repository
 {
     public const STATUSES = ['new' => 'Новая', 'accepted' => 'Принята', 'rejected' => 'Отклонена'];
     public const SOURCES = ['instagram' => 'Instagram', 'staff' => 'От персонала', 'friends' => 'От друзей'];
+
+    /** Диапазоны Premier-рейтинга и опыт — для формы регистрации (лендинг amateur_cup). */
+    public const RATING_OPTIONS = ['До 5 000', '5 000 – 10 000', '10 000 – 15 000', '15 000 – 20 000', '20 000+', 'Нет Premier рейтинга'];
+    public const EXPERIENCE_OPTIONS = ['Первый турнир', 'Участвовали 1–3 раза', 'Более 3 турниров', 'Регулярно участвуем'];
+
     private const TOURNAMENT_ID = 1;
 
     /** @return array<string,mixed> настройки (с дефолтами, если строки нет) */

@@ -71,7 +71,8 @@ final class TournamentRegisterController
         if ($data['captain_phone'] === '') $errors[] = 'captain_phone';
         if ($players === []) $errors[] = 'players';
         if ($sources === []) $errors[] = 'sources';
-        if (empty($body['consent'])) $errors[] = 'consent';
+        // Согласие: клиент (amateur-cup.js) шлёт два флага — оба обязательны.
+        if (empty($body['agree_rules']) || empty($body['agree_privacy'])) $errors[] = 'consent';
 
         if ($errors !== []) {
             return $this->json($response, 422, ['ok' => false, 'error' => 'validation', 'fields' => $errors]);

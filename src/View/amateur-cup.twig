@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Регистрация команды на любительский турнир по CS2 от Mirai Lounge.">
+    <title>Любительский турнир по CS2 — регистрация · Mirai Lounge</title>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/amateur-cup.css?v={{ av }}">
+</head>
+<body>
+{% set spotsClass = slots_left <= 0 ? 'spots-full' : (slots_left <= 3 ? 'spots-low' : 'spots-ok') %}
+<div class="wrapper">
+    <div class="header">
+        <div class="badge">Открытый набор</div>
+        <h1>Любительский турнир<br>по CS2</h1>
+        <p class="by-lounge">by Mirai Lounge</p>
+        <p class="subtitle">Заполни заявку и займи своё место на турнире. Принимаем команды любого уровня.</p>
+    </div>
+
+    <div class="info-strip">
+        <div class="info-item"><span class="info-label">Формат</span><span class="info-value">{{ settings.format }}</span></div>
+        <div class="info-item"><span class="info-label">Состав</span><span class="info-value">{{ settings.roster }}</span></div>
+        <div class="info-item"><span class="info-label">Приём заявок</span><span class="info-value">до <span>{{ settings.deadline }}</span></span></div>
+        <div class="info-item"><span class="info-label">Взнос</span><span class="info-value"><span>{{ settings.fee }}</span></span></div>
+        <div class="info-item"><span class="info-label">Осталось мест</span><span class="info-value {{ spotsClass }}" id="spotsDisplay">{{ slots_left }} / {{ max_slots }}</span></div>
+    </div>
+
+    <div class="notice-banner" id="noticeBanner"></div>
+
+    <form id="regForm" novalidate>
+        <div class="card">
+            <div class="section-title">Информация о команде</div>
+            <div class="grid-2">
+                <div class="field">
+                    <label>Название команды <span class="req">*</span></label>
+                    <input type="text" name="teamName" placeholder="NAVI Academy" maxlength="40" required>
+                    <span class="field-error" id="err-teamName">Введите название команды</span>
+                </div>
+                <div class="field">
+                    <label>Средний рейтинг Premier <span class="req">*</span></label>
+                    <select name="rating" required>
+                        <option value="" disabled selected>Диапазон рейтинга</option>
+                        {% for opt in rating_options %}<option>{{ opt }}</option>{% endfor %}
+                    </select>
+                    <span class="field-error" id="err-rating">Укажите рейтинг</span>
+                </div>
+                <div class="field field--full">
+                    <label>Опыт участия в турнирах</label>
+                    <select name="experience">
+                        <option value="" disabled selected>Выберите опыт</option>
+                        {% for opt in experience_options %}<option>{{ opt }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Капитан команды</div>
+            <div class="grid-2">
+                <div class="field">
+                    <label>Имя / Никнейм <span class="req">*</span></label>
+                    <input type="text" name="captainName" placeholder="s1mple" maxlength="40" required>
+                    <span class="field-error" id="err-captainName">Введите никнейм капитана</span>
+                </div>
+                <div class="field">
+                    <label>Steam профиль (URL) <span class="req">*</span></label>
+                    <input type="url" name="captainSteam" placeholder="https://steamcommunity.com/id/…" required>
+                    <span class="field-error" id="err-captainSteam">Введите корректную ссылку Steam</span>
+                </div>
+                <div class="field">
+                    <label>Telegram <span class="req">*</span></label>
+                    <input type="text" name="captainTelegram" placeholder="@username" maxlength="60" required>
+                    <span class="field-error" id="err-captainTelegram">Введите Telegram</span>
+                </div>
+                <div class="field">
+                    <label>Номер телефона <span class="req">*</span></label>
+                    <input type="tel" name="captainPhone" placeholder="+7 (999) 000-00-00" maxlength="32" required>
+                    <span class="field-error" id="err-captainPhone">Введите номер телефона</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Состав команды</div>
+            <p class="field-hint" style="margin-bottom:20px;">До 5 игроков включая капитана. Укажите Steam-никнейм и ссылку на профиль.</p>
+            <div class="players-list" id="playersList"></div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Дополнительно</div>
+            <div class="field" style="margin-bottom:24px;">
+                <label>Комментарий к заявке</label>
+                <textarea name="comment" id="commentArea" placeholder="Любые вопросы или пожелания…" maxlength="500"></textarea>
+                <div class="char-count"><span id="charCount">0</span> / 500</div>
+            </div>
+            <div class="field">
+                <label style="margin-bottom:12px;">Откуда узнали о турнире? <span class="req">*</span></label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label"><input type="checkbox" name="source" value="instagram"><span class="checkbox-text">Instagram</span></label>
+                    <label class="checkbox-label"><input type="checkbox" name="source" value="staff"><span class="checkbox-text">От персонала</span></label>
+                    <label class="checkbox-label"><input type="checkbox" name="source" value="friends"><span class="checkbox-text">От друзей</span></label>
+                </div>
+                <span class="field-error" id="err-source">Выберите хотя бы один вариант</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Согласие</div>
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="rulesCheck">
+                    <span class="checkbox-text">Я ознакомился с правилами турнира и согласен с ними <span class="req">*</span></span>
+                </label>
+                <span class="field-error" id="err-rules">Необходимо принять правила</span>
+                <label class="checkbox-label" style="margin-top:4px;">
+                    <input type="checkbox" id="privacyCheck">
+                    <span class="checkbox-text">Я даю согласие на обработку персональных данных <span class="req">*</span></span>
+                </label>
+                <span class="field-error" id="err-privacy">Необходимо дать согласие</span>
+            </div>
+        </div>
+
+        <div class="submit-wrap">
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Подать заявку
+            </button>
+            <div class="submit-error" id="submitError"></div>
+            <p class="submit-note">Мы свяжемся с капитаном в течение 48 часов.<br>Взнос: <strong style="color:var(--accent)">{{ settings.fee }}</strong></p>
+        </div>
+    </form>
+
+    <div class="success-screen" id="successScreen">
+        <div class="success-icon">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M7 18l7 7 15-15" stroke="#F5007D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2 class="success-title">Заявка принята!</h2>
+        <p class="success-sub">Спасибо! Ваша заявка зарегистрирована. Капитан получит подтверждение в ближайшее время.</p>
+    </div>
+</div>
+
+<script type="application/json" id="amateur-cup-config">{{ client_config|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }}</script>
+<script defer src="/assets/js/amateur-cup.js?v={{ av }}"></script>
+</body>
+</html>
