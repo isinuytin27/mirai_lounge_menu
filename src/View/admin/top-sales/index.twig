@@ -1,0 +1,74 @@
+{% extends 'admin/layout.twig' %}
+{% block title %}Хиты продаж{% endblock %}
+
+{% block head %}
+<style>
+  .hs{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);
+    border-radius:12px;background:var(--panel);margin-bottom:8px}
+  .hs.off{opacity:.5}
+  .hs img{width:52px;height:52px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#0d0d10}
+  .hs .nm{font-weight:600;font-size:14px}
+  .hs .pr{color:var(--dim);font-size:12px}
+  .hs .grow{flex:1;min-width:0}
+  .hs input.input{background:#170f1e;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 8px;font-size:13px}
+  .hs .w110{width:110px}
+  .ord{display:flex;flex-direction:column;gap:2px}
+  .ord button,.del,.btn.mini{background:none;border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:3px 8px;cursor:pointer;font-size:12px}
+  .btn.mini{background:var(--accent);border-color:var(--accent);color:#fff}
+  .del:hover{border-color:var(--accent);color:#ffb3d6}
+  .check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
+  form.inline{display:inline}
+  .muted{color:var(--dim);font-size:12px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <a href="/admin" style="color:var(--dim)">← Обзор</a>
+    <h1 style="margin:0;font-size:22px">🔥 Хиты продаж</h1>
+    <a href="/menu" target="_blank" class="pill" style="margin-left:auto;text-decoration:none;color:var(--accent2)">↗ Меню</a>
+</div>
+{% if flash %}<p class="muted">✓ {{ flash }}</p>{% endif %}
+<p class="muted">Стрип «Хиты» вверху экрана меню. Имя/цена/фото — из товара; здесь порядок, бейдж, вкл/выкл.</p>
+
+<details class="hs" style="display:block">
+    <summary style="cursor:pointer;font-weight:700">+ Добавить товар в хиты</summary>
+    <form method="post" action="/admin/top-sales" style="display:flex;gap:10px;align-items:flex-end;margin-top:12px;flex-wrap:wrap">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <div class="grow" style="min-width:200px">
+            <label class="muted">Товар</label><br>
+            <select class="input grow" name="product_id" required style="width:100%">
+                <option value="">— выбрать —</option>
+                {% for p in available %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div><label class="muted">Бейдж</label><br><input class="input w110" name="badge" placeholder="ХИТ"></div>
+        <button class="btn mini" type="submit">Добавить</button>
+    </form>
+</details>
+
+{% for h in items %}
+<div class="hs {{ h.active ? '' : 'off' }}">
+    <div class="ord">
+        <form class="inline" method="post" action="/admin/top-sales/{{ h.id }}/move/up"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button title="Выше">▲</button></form>
+        <form class="inline" method="post" action="/admin/top-sales/{{ h.id }}/move/down"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button title="Ниже">▼</button></form>
+    </div>
+    <img src="/{{ h.image|default('')|trim('/') }}" alt="" onerror="this.style.opacity=.2">
+    <div class="grow">
+        <div class="nm">{{ h.name }}</div>
+        <div class="pr">{{ h.price }} ₽</div>
+    </div>
+    <form class="inline" method="post" action="/admin/top-sales/{{ h.id }}" style="display:flex;gap:8px;align-items:center">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input class="input w110" name="badge" value="{{ h.badge ?? '' }}" placeholder="бейдж">
+        <label class="check"><input type="checkbox" name="active" {{ h.active ? 'checked' }}> вкл</label>
+        <button class="btn mini" type="submit">✓</button>
+    </form>
+    <form class="inline" method="post" action="/admin/top-sales/{{ h.id }}/delete" onsubmit="return confirm('Убрать из хитов?')">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button class="del">✕</button>
+    </form>
+</div>
+{% else %}
+<p class="muted">Пусто. Добавьте товары в хиты.</p>
+{% endfor %}
+{% endblock %}

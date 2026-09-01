@@ -889,6 +889,17 @@
                         openGroup(t.getAttribute("data-group"), t.getAttribute("data-label"));
                     });
                 });
+
+                // Хит из стрипа «🔥 Хиты» — открыть группу товара (как плашку группы).
+                root.querySelectorAll("[data-hit-group]").forEach((h) => {
+                    h.addEventListener("click", () => {
+                        const gid = h.getAttribute("data-hit-group");
+                        if (!gid) return;
+                        const tile = tiles.find((t) => t.getAttribute("data-group") === gid);
+                        if (backBtn) backBtn.hidden = false;
+                        openGroup(gid, tile ? tile.getAttribute("data-label") : "");
+                    });
+                });
                 backBtn?.addEventListener("click", goBack);
 
                 /* При уходе с экрана меню возвращаемся на уровень плашек (после того, как экран уехал). */

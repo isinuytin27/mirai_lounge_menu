@@ -8,6 +8,7 @@ use Mirai\Http\Controllers\Admin\BookingAdminController;
 use Mirai\Http\Controllers\Admin\GalleryAdminController;
 use Mirai\Http\Controllers\Admin\MenuAdminController;
 use Mirai\Http\Controllers\Admin\TicketAdminController;
+use Mirai\Http\Controllers\Admin\TopSalesAdminController;
 use Mirai\Http\Controllers\Admin\TournamentAdminController;
 use Mirai\Http\Controllers\Admin\UsersAdminController;
 use Mirai\Http\Controllers\Admin\VipAdminController;
@@ -120,6 +121,18 @@ return static function (App $app): void {
         $g->get('/hall-editor', [BookingAdminController::class, 'hallEditor']);
         $g->post('/hall', [BookingAdminController::class, 'saveHall']);
         $g->post('/hall/photo', [BookingAdminController::class, 'uploadHallPhoto']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('admin_panel'))
+        ->add(AuthMiddleware::class);
+
+    // Хиты продаж (Postgres): курируемый стрип вверху меню.
+    $app->group('/admin/top-sales', function ($g): void {
+        $g->get('', [TopSalesAdminController::class, 'index']);
+        $g->post('', [TopSalesAdminController::class, 'add']);
+        $g->post('/{id}', [TopSalesAdminController::class, 'update']);
+        $g->post('/{id}/move/{dir}', [TopSalesAdminController::class, 'move']);
+        $g->post('/{id}/delete', [TopSalesAdminController::class, 'delete']);
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('admin_panel'))

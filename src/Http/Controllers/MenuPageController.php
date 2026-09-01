@@ -6,6 +6,7 @@ namespace Mirai\Http\Controllers;
 
 use Mirai\Domain\Menu\MenuRepository;
 use Mirai\Domain\Menu\Recommender;
+use Mirai\Domain\Menu\TopSalesRepository;
 use Mirai\Http\Middleware\TableSessionMiddleware;
 use Mirai\Http\View\GuestMenuView;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -21,6 +22,7 @@ final class MenuPageController
     public function __construct(
         private readonly MenuRepository $menu,
         private readonly Recommender $recommender,
+        private readonly TopSalesRepository $topSales,
     ) {}
 
     public function __invoke(Request $request, Response $response): Response
@@ -30,6 +32,7 @@ final class MenuPageController
 
         return Twig::fromRequest($request)->render($response, 'menu.twig', [
             'menu_view' => GuestMenuView::fromRepository($this->menu, $this->recommender),
+            'top_sales' => $this->topSales->visible(),
             'table_caption' => $table['caption'] ?? null,
             'table_bound' => $table !== null,
         ]);

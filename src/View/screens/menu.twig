@@ -28,6 +28,22 @@
             <div class="menu-track" data-menu-track>
 
                 <div class="menu-panel menu-panel--tiles" data-menu-panel="tiles">
+                    {% if top_sales is defined and top_sales %}
+                    <div class="menu-hits" data-menu-hits>
+                        <div class="menu-hits-head">🔥 Хиты</div>
+                        <div class="menu-hits-row">
+                            {% for h in top_sales %}
+                            <button type="button" class="menu-hit" data-hit-group="{{ h.group }}" title="{{ h.name }}">
+                                <span class="menu-hit-img"{% if h.image %} style="background-image:url('{{ h.image }}')"{% endif %}>
+                                    {% if h.badge %}<span class="menu-hit-badge">{{ h.badge }}</span>{% endif %}
+                                </span>
+                                <span class="menu-hit-name">{{ h.name }}</span>
+                                <span class="menu-hit-price">{{ h.price }} ₽</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="menu-tiles" data-menu-tiles>
                         {% for g in menu_view.groups %}
                             <button type="button" class="menu-tile" data-group-tile data-group="{{ g.id }}" data-label="{{ g.label }}"{% if g.count == 0 %} data-empty="1"{% endif %}>
