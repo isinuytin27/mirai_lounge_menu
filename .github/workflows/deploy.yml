@@ -81,6 +81,7 @@ jobs:
         run: |
           rsync -az --delete \
             --include='/public/assets/booking/***' \
+            --include='/public/assets/img/vitrina/***' \
             --exclude-from=scripts/deploy-excludes.txt \
             -e "ssh -i ~/.ssh/deploy_key" \
             ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"

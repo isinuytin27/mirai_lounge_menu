@@ -1,0 +1,127 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Заливает данные витрины кальянов (design_handoff_vitrina_kalyanov) в Postgres:
+ *   - создаёт недостающие кальяны-товары в категории kalyan (ON CONFLICT DO NOTHING —
+ *     ручные правки в админке сохраняются)
+ *   - перезаливает справочники hookah_showcase / hookah_bowls / hookah_drinks
+ * Идемпотентно. Запуск после миграций:  bin/migrate && bin/import-vitrina
+ */
+
+use Mirai\Infrastructure\Db\Database;
+
+/** @var \Psr\Container\ContainerInterface $container */
+$container = require dirname(__DIR__) . '/src/bootstrap.php';
+$pdo = $container->get(Database::class)->pdo();
+$db = $container->get(Database::class);
+
+$IMG = '/assets/img/vitrina/';
+
+// Кальяны-товары (slug, name, price, prep_time, desc) — из массива hookahs дизайна.
+$HOOKAHS = [
+    ['kalyan_tropic_rave', 'Tropic Rave', 3000, '40-60 минут',
+        'Взрыв тропической энергии в каждой затяжке. Сочная мультифруктовая смесь — сладость без приторности, свежесть без резкости: вкус, который сразу задаёт настроение вечеринке.'],
+    ['kalyan_electric_matcha', 'Electric matcha', 3200, '40-60 минут',
+        'Заряженная энергия японского чая в дымной подаче. Насыщенный вкус матча раскрывается с лёгкой горчинкой и травяной глубиной, а тонкий цитрусовый или мятный подтон добавляет «электрический» разряд свежести. Плотный, чуть терпкий, бодрящий — как эспрессо-шот, только в дыме.'],
+    ['kalyan_mirai', 'Mirai', 3500, '40-60 минут',
+        'Кальян, вдохновлённый одноимённым коктейлем на сахалинской клоповке (шикше). Терпкая таёжная ягода встречается здесь с мягким дымом — вкус сдержанный и глубокий: лёгкая кислинка, едва уловимая смолистость и прохладное ягодное послевкусие. Mirai («будущее» — яп.) — дальневосточный терруар через призму современной кальянной культуры.'],
+    ['kalyan_kalyan_classic', 'Кальян Классика', 2000, '40-60 минут',
+        'Традиция и чистый вкус табака, плотная тяга и спокойная атмосфера.'],
+    ['kalyan_duo', 'Дуо', 3700, '40-60 минут',
+        'Выгода при одновременном заказе двух кальянов.'],
+    ['kalyan_trio', 'Трио', 5200, '40-60 минут',
+        'Выгода при одновременном заказе трёх кальянов.'],
+];
+
+// Витринные поля (slug кальяна => image, img_w, img_h, anchors[], model), порядок = sort.
+$SHOWCASE = [
+    ['kalyan_tropic_rave',    'h-tropic.png',  673, 900, [['cx' => 0.5, 'w' => 1]], 'Alpha Hookah Mirai'],
+    ['kalyan_electric_matcha','h-matcha.png',  656, 900, [['cx' => 0.5, 'w' => 1]], 'Alpha Hookah Mirai'],
+    ['kalyan_mirai',          'h-mirai.png',   578, 900, [['cx' => 0.5, 'w' => 1]], 'Alpha Hookah Mirai'],
+    ['kalyan_kalyan_classic', 'h-classic.png', 471, 914, [['cx' => 0.4989, 'w' => 1]], 'Классика · смола'],
+    ['kalyan_duo',            'h-double.png', 1000, 911, [['cx' => 0.2055, 'w' => 0.412], ['cx' => 0.792, 'w' => 0.415]], 'Классика · 2 кальяна'],
+    ['kalyan_trio',           'h-triple.png', 1427, 922, [['cx' => 0.1514, 'w' => 0.3034], ['cx' => 0.4989, 'w' => 0.302], ['cx' => 0.8472, 'w' => 0.3048]], 'Классика · 3 кальяна'],
+];
+
+// Чаши (slug, name, image, img_w, img_h, f, extra, kind).
+$BOWLS = [
+    ['classic', 'Классическая', 'bowl-cobalt.png', 518, 700, 0.44, 0,   'Фаннел · глазурь'],
+    ['grapefruit', 'Грейпфрут',  'bowl-fruit.png', 1239, 700, 0.82, 700, 'Фрукт · грейпфрут'],
+    ['bonche', 'Bonche',        'bowl-bonche.png',  688, 910, 0.46, 300, 'Фаннел · Bonche Хайп'],
+];
+
+// Витринные напитки (name, image).
+$DRINKS = [
+    ['Green Flash', 'drink-greenflash.jpg'],
+    ['Jasmine Fizz', 'drink-jasminefizz.jpg'],
+    ['Mirai', 'drink-mirai.jpg'],
+    ['Apple James', 'drink-applejames.jpg'],
+];
+
+$counts = [];
+
+$db->transactional(function () use ($pdo, $IMG, $HOOKAHS, $SHOWCASE, $BOWLS, $DRINKS, &$counts): void {
+    // Категория kalyan.
+    $catId = $pdo->query("SELECT id FROM menu_categories WHERE slug = 'kalyan'")->fetchColumn();
+    if ($catId === false) {
+        throw new RuntimeException('Категория kalyan не найдена — импортированы ли меню?');
+    }
+
+    // 1) Кальяны-товары (не трогаем существующие).
+    $ins = $pdo->prepare(
+        "INSERT INTO products (slug, category_id, name, price, description, prep_time, visible, available, sort_order)
+         VALUES (:slug, :cat, :name, :price, :descr, :prep, TRUE, TRUE, :sort)
+         ON CONFLICT (slug) DO NOTHING"
+    );
+    $sort = 0;
+    foreach ($HOOKAHS as [$slug, $name, $price, $prep, $descr]) {
+        $ins->execute(['slug' => $slug, 'cat' => $catId, 'name' => $name, 'price' => $price,
+            'descr' => $descr, 'prep' => $prep, 'sort' => $sort++]);
+    }
+    $counts['products (создано/есть)'] = count($HOOKAHS);
+
+    // 2) hookah_showcase (перезаливка).
+    $pdo->exec('TRUNCATE hookah_showcase RESTART IDENTITY');
+    $st = $pdo->prepare(
+        "INSERT INTO hookah_showcase (product_id, image, img_w, img_h, anchors, model, sort_order)
+         SELECT p.id, :image, :w, :h, CAST(:anchors AS jsonb), :model, :sort
+         FROM products p WHERE p.slug = :slug"
+    );
+    $sort = 0;
+    foreach ($SHOWCASE as [$slug, $img, $w, $h, $anchors, $model]) {
+        $st->execute(['image' => $IMG . $img, 'w' => $w, 'h' => $h,
+            'anchors' => json_encode($anchors), 'model' => $model, 'sort' => $sort++, 'slug' => $slug]);
+    }
+    $counts['hookah_showcase'] = (int) $pdo->query('SELECT count(*) FROM hookah_showcase')->fetchColumn();
+
+    // 3) hookah_bowls (перезаливка).
+    $pdo->exec('TRUNCATE hookah_bowls RESTART IDENTITY');
+    $st = $pdo->prepare(
+        'INSERT INTO hookah_bowls (slug, name, image, img_w, img_h, f, extra, kind, sort_order)
+         VALUES (:slug, :name, :image, :w, :h, :f, :extra, :kind, :sort)'
+    );
+    $sort = 0;
+    foreach ($BOWLS as [$slug, $name, $img, $w, $h, $f, $extra, $kind]) {
+        $st->execute(['slug' => $slug, 'name' => $name, 'image' => $IMG . $img,
+            'w' => $w, 'h' => $h, 'f' => $f, 'extra' => $extra, 'kind' => $kind, 'sort' => $sort++]);
+    }
+    $counts['hookah_bowls'] = (int) $pdo->query('SELECT count(*) FROM hookah_bowls')->fetchColumn();
+
+    // 4) hookah_drinks (перезаливка).
+    $pdo->exec('TRUNCATE hookah_drinks RESTART IDENTITY');
+    $st = $pdo->prepare('INSERT INTO hookah_drinks (name, image, sort_order) VALUES (:name, :image, :sort)');
+    $sort = 0;
+    foreach ($DRINKS as [$name, $img]) {
+        $st->execute(['name' => $name, 'image' => $IMG . $img, 'sort' => $sort++]);
+    }
+    $counts['hookah_drinks'] = (int) $pdo->query('SELECT count(*) FROM hookah_drinks')->fetchColumn();
+});
+
+fwrite(STDOUT, "Импорт витрины кальянов -> Postgres:\n");
+foreach ($counts as $k => $n) {
+    fwrite(STDOUT, sprintf("  %-28s %d\n", $k, $n));
+}
+fwrite(STDOUT, "Готово.\n");
