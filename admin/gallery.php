@@ -1,4 +1,0 @@
-<?php
-declare(strict_types=1);
-header("Location: /admin/dashboard.php?tab=gallery");
-exit;
