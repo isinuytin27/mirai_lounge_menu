@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>MIRAI · Редактор карты зала</title>
+<link rel="stylesheet" href="/assets/booking/mirai.css?v={{ av }}">
+<style>
+
+  html,body{height:100%;overflow:hidden;background:var(--canvas);}
+  .ad-scroll::-webkit-scrollbar{width:8px;}
+  .ad-scroll::-webkit-scrollbar-thumb{background:var(--sumi-400);border-radius:4px;}
+  .ad-in{width:100%;background:rgba(8,8,11,.6);border:1px solid var(--sumi-400);border-radius:var(--r-sm);color:var(--washi);font-family:var(--font-body);font-size:14px;padding:9px 11px;outline:none;transition:border-color .15s ease;box-sizing:border-box;}
+  .ad-in:focus{border-color:var(--neon);}
+  .ad-lab{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--washi-faint);margin-bottom:6px;}
+  .ad-row{display:flex;gap:10px;align-items:center;}
+  input[type=range].ad-rng{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--sumi-400);flex:1;outline:none;}
+  input[type=range].ad-rng::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--neon);box-shadow:var(--glow-neon);cursor:pointer;}
+  .ad-shape{position:absolute;cursor:move;pointer-events:auto;}
+  .ad-shape svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+  .ad-num{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;font-weight:700;font-size:14px;text-shadow:0 1px 4px rgba(0,0,0,.9);pointer-events:none;white-space:nowrap;}
+  .ad-handle{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--cyan);border:2px solid #07171a;box-shadow:0 0 8px var(--cyan);cursor:grab;pointer-events:auto;transform:translate(-50%,-50%);z-index:6;}
+  .ad-li{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:var(--r-sm);padding:9px 10px;cursor:pointer;color:var(--washi);transition:background .15s ease;}
+  .ad-li:hover{background:rgba(255,255,255,.05);}
+  .ad-li[data-sel="1"]{background:rgba(245,0,125,.16);box-shadow:inset 0 0 0 1px var(--neon-line);}
+  .ad-seg{flex:1;background:rgba(8,8,11,.5);border:1px solid var(--sumi-400);color:var(--washi-dim);font-size:12px;font-weight:700;padding:8px 4px;cursor:pointer;border-radius:0;transition:all .15s ease;}
+  .ad-seg[data-on="1"]{background:var(--neon);color:#fff;border-color:var(--neon);}
+
+  .adm-backlink{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--sumi-400);border-radius:var(--r-sm);color:var(--washi-dim);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;}
+  .adm-backlink:hover{color:var(--washi);border-color:var(--neon-line);}
+
+  /* ---------- МОБИЛЬНЫЙ ФОРМАТ ---------- */
+  @media (max-width:760px){
+    .ed-head{flex-wrap:wrap;gap:8px 10px;padding:10px 14px;}
+    .ed-head [data-ref="setSaveMsg"]{min-width:auto;text-align:left;order:99;width:100%;}
+    .ed-head .btn{padding:8px 12px;font-size:12px;}
+    .ed-main{flex-direction:column;}
+    .ed-main [data-ref="setStage"]{flex:0 0 40vh;height:40vh;}
+    .ed-main [data-ref="setPanel"]{width:100%;flex:1 1 auto;min-height:0;border-left:0;border-top:1px solid var(--sumi-500);}
+  }
+</style>
+</head>
+<body>
+
+<div data-screen-label="Админ — Карта зала" data-ref="setRoot" style="position:fixed;inset:0;display:flex;flex-direction:column;background:var(--canvas);font-family:var(--font-body);color:var(--washi);user-select:none;-webkit-user-select:none;">
+
+  <div class="grid-bg" style="position:absolute;inset:0;pointer-events:none;opacity:.5;"></div>
+
+  <header class="ed-head" style="position:relative;display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--sumi-500);background:rgba(13,13,16,.7);backdrop-filter:blur(10px);z-index:5;">
+    <img src="/assets/booking/brand/mirai-logo.svg" alt="MIRAI" style="height:30px;">
+    <span style="width:1px;height:18px;background:var(--sumi-400);"></span>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <span class="t-caption" style="letter-spacing:.18em;font-size:10px;color:var(--washi-faint);">未来 · АДМИН-ПАНЕЛЬ</span>
+      <span style="font-weight:700;font-size:15px;letter-spacing:.02em;">Редактор карты зала</span>
+    </div>
+    <div style="flex:1;"></div>
+    <div style="display:flex;align-items:center;border:1px solid var(--sumi-400);border-radius:var(--r-sm);overflow:hidden;">
+      <button data-view="a" class="ad-seg" style="border:0;border-right:1px solid var(--sumi-400);">Вид A</button>
+      <button data-view="b" class="ad-seg" style="border:0;">Вид B</button>
+    </div>
+    <span data-ref="setSaveMsg" style="font-size:11px;color:var(--washi-faint);min-width:96px;text-align:right;letter-spacing:.04em;">Сохранено</span>
+    <button data-act="save" class="btn btn--sm" style="white-space:nowrap;">💾 Сохранить</button>
+    <button data-act="export" class="btn btn--neon-line btn--sm" style="white-space:nowrap;">Экспорт JSON</button>
+    <button data-act="import" class="btn btn--ghost btn--sm" style="white-space:nowrap;">Импорт</button>
+    <a href="map.html" class="btn btn--ghost btn--sm" style="white-space:nowrap;text-decoration:none;">← Просмотр</a>
+    <input data-ref="setImportInput" type="file" accept="application/json" style="display:none;">
+  </header>
+
+  <div class="ed-main" style="position:relative;flex:1;display:flex;min-height:0;z-index:2;">
+
+    <div data-ref="setStage" style="position:relative;flex:1;overflow:hidden;background:radial-gradient(ellipse 60% 50% at 50% 30%,rgba(245,0,125,.07),transparent 70%);touch-action:none;">
+      <div data-ref="setWorld" style="position:absolute;left:0;top:0;">
+        <img data-ref="setImgA" src="/assets/booking/view-a.png" draggable="false" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none;pointer-events:none;">
+        <img data-ref="setImgB" src="/assets/booking/view-b.png" draggable="false" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;-webkit-user-drag:none;pointer-events:none;">
+        <div data-ref="setLayer" style="position:absolute;inset:0;"></div>
+      </div>
+      <div style="position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:9px;background:rgba(17,18,21,.7);border:1px solid var(--sumi-500);backdrop-filter:blur(8px);padding:8px 14px;border-radius:999px;font-size:11px;color:var(--washi-dim);letter-spacing:.03em;pointer-events:none;white-space:nowrap;">
+        <span style="color:var(--cyan);">◇</span> Тяни кнопку — позиция · узлы — форма · колесо на кнопке — размер
+      </div>
+    </div>
+
+    <aside data-ref="setPanel" class="ad-scroll" style="position:relative;width:360px;flex-shrink:0;border-left:1px solid var(--sumi-500);background:rgba(13,13,16,.82);backdrop-filter:blur(10px);overflow-y:auto;display:flex;flex-direction:column;">
+
+      <div style="padding:18px 18px 12px;border-bottom:1px solid var(--sumi-600);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span class="t-label" style="font-size:11px;">Позиции <span data-ref="setCount" style="color:var(--washi-faint);">0</span></span>
+          <button data-act="add" class="btn btn--sm" style="padding:6px 12px;font-size:12px;">+ Добавить</button>
+        </div>
+        <div data-ref="setList" style="display:flex;flex-direction:column;gap:3px;max-height:22vh;overflow-y:auto;" class="ad-scroll"></div>
+      </div>
+
+      <div style="padding:16px 18px 12px;border-bottom:1px solid var(--sumi-600);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span class="t-label" style="font-size:11px;">Заметки <span data-ref="setNoteCount" style="color:var(--washi-faint);">0</span></span>
+          <button data-act="note-add" class="btn btn--sm" style="padding:6px 12px;font-size:12px;">+ Заметка</button>
+        </div>
+        <div style="font-size:11px;color:var(--washi-faint);margin-bottom:10px;line-height:1.4;">для текущего <b data-ref="setNoteViewLab">вида A</b></div>
+        <div data-ref="setNoteList" style="display:flex;flex-direction:column;gap:3px;max-height:18vh;overflow-y:auto;" class="ad-scroll"></div>
+      </div>
+
+      <div style="padding:16px 18px 12px;border-bottom:1px solid var(--sumi-600);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span class="t-label" style="font-size:11px;">Зоны (кнопки) <span data-ref="setHotCount" style="color:var(--washi-faint);">0</span></span>
+          <button data-act="hot-add" class="btn btn--sm" style="padding:6px 12px;font-size:12px;">+ Зона</button>
+        </div>
+        <div style="font-size:11px;color:var(--washi-faint);margin-bottom:10px;line-height:1.4;">перетаскивай отдельно на виде A и виде B</div>
+        <div data-ref="setHotList" style="display:flex;flex-direction:column;gap:3px;max-height:18vh;overflow-y:auto;" class="ad-scroll"></div>
+      </div>
+
+      <div data-ref="setHotEditor" style="display:none;flex-direction:column;gap:16px;padding:18px;">
+        <div>
+          <span class="ad-lab">Название кнопки</span>
+          <input data-ref="setHLabel" class="ad-in" type="text" placeholder="Lounge">
+        </div>
+        <div>
+          <span class="ad-lab">Тип</span>
+          <div style="display:flex;gap:7px;">
+            <button data-hkind="zone" class="ad-seg" style="border-radius:var(--r-sm);">Бронь зоны</button>
+            <button data-hkind="phone" class="ad-seg" style="border-radius:var(--r-sm);">Телефон</button>
+          </div>
+        </div>
+        <div>
+          <span class="ad-lab">Акцент</span>
+          <div style="display:flex;gap:7px;">
+            <button data-haccent="neon" class="ad-seg" style="border-radius:var(--r-sm);">Магента</button>
+            <button data-haccent="cyan" class="ad-seg" style="border-radius:var(--r-sm);">Циан</button>
+          </div>
+        </div>
+        <div>
+          <span class="ad-lab">Заголовок попапа</span>
+          <input data-ref="setHTitle" class="ad-in" type="text" placeholder="Зона со столами">
+        </div>
+        <div>
+          <span class="ad-lab">Описание</span>
+          <textarea data-ref="setHDesc" class="ad-in" rows="2" placeholder="Короткое описание зоны" style="resize:vertical;line-height:1.45;"></textarea>
+        </div>
+        <div data-ref="setHPhoneWrap">
+          <span class="ad-lab">Телефон (для типа «Телефон»)</span>
+          <input data-ref="setHPhone" class="ad-in" type="text" placeholder="+7 4242 21-80-80">
+        </div>
+        <div>
+          <span class="ad-lab">Попап открывает вид</span>
+          <div style="display:flex;gap:7px;">
+            <button data-hpref="0" class="ad-seg" style="border-radius:var(--r-sm);">Вид A</button>
+            <button data-hpref="1" class="ad-seg" style="border-radius:var(--r-sm);">Вид B</button>
+          </div>
+        </div>
+        <label class="ad-lab" style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--washi-dim);">
+          <input data-ref="setHFade" type="checkbox" style="width:auto;"> прятать на виде B (когда видны столы)
+        </label>
+        <div class="rule" style="margin:2px 0;"></div>
+        <button data-act="hot-delete" class="btn btn--ghost btn--sm" style="color:var(--neon);border-color:var(--neon-line);">Удалить зону</button>
+      </div>
+
+      <div data-ref="setNoteEditor" style="display:none;flex-direction:column;gap:16px;padding:18px;">
+        <div>
+          <span class="ad-lab">Текст заметки</span>
+          <textarea data-ref="setNText" class="ad-in" rows="4" placeholder="Комментарий к заметке…" style="resize:vertical;line-height:1.45;"></textarea>
+        </div>
+        <div>
+          <span class="ad-lab">Фото заметки</span>
+          <div data-ref="setNPhotoWrap" style="position:relative;width:100%;aspect-ratio:16/10;border:1px dashed var(--sumi-400);border-radius:var(--r-sm);overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(8,8,11,.5);cursor:pointer;">
+            <img data-ref="setNPhotoImg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;">
+            <span data-ref="setNPhotoHint" style="font-size:12px;color:var(--washi-faint);letter-spacing:.04em;">＋ Перетащи или нажми, чтобы загрузить</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button data-act="note-photo-pick" class="btn btn--ghost btn--sm" style="flex:1;">Выбрать файл</button>
+            <button data-act="note-photo-clear" class="btn btn--ghost btn--sm" style="flex:1;">Убрать</button>
+          </div>
+          <input data-ref="setNPhotoInput" type="file" accept="image/*" style="display:none;">
+        </div>
+        <div class="rule" style="margin:2px 0;"></div>
+        <button data-act="note-delete" class="btn btn--ghost btn--sm" style="color:var(--neon);border-color:var(--neon-line);">Удалить заметку</button>
+      </div>
+
+      <div data-ref="setEditor" style="display:none;flex-direction:column;gap:16px;padding:18px;">
+
+        <div>
+          <span class="ad-lab">Название / номер</span>
+          <input data-ref="setFLabel" class="ad-in" type="text" placeholder="Стол 11">
+        </div>
+
+        <div>
+          <span class="ad-lab">Статус</span>
+          <div style="display:flex;gap:7px;">
+            <button data-status="free" class="ad-seg" style="border-radius:var(--r-sm);">Свободно</button>
+            <button data-status="busy" class="ad-seg" style="border-radius:var(--r-sm);">Занято</button>
+            <button data-status="live" class="ad-seg" style="border-radius:var(--r-sm);">В эфире</button>
+          </div>
+        </div>
+
+        <div>
+          <span class="ad-lab">Форма кнопки</span>
+          <div style="display:flex;gap:7px;">
+            <button data-shape="rect" class="ad-seg" style="border-radius:var(--r-sm);">Прямоуг.</button>
+            <button data-shape="circle" class="ad-seg" style="border-radius:var(--r-sm);">Круг</button>
+            <button data-shape="poly" class="ad-seg" style="border-radius:var(--r-sm);">Контур</button>
+          </div>
+        </div>
+
+        <div data-ref="setRadiusWrap">
+          <span class="ad-lab">Скругление углов <span data-ref="setRadiusVal" style="color:var(--washi-dim);float:right;">14%</span></span>
+          <input data-ref="setFRadius" class="ad-rng" type="range" min="0" max="50" step="1" value="14">
+        </div>
+
+        <div>
+          <span class="ad-lab">Ширина <span data-ref="setWVal" style="color:var(--washi-dim);float:right;">12.0%</span></span>
+          <div class="ad-row">
+            <input data-ref="setFW" class="ad-rng" type="range" min="2" max="40" step="0.1" value="12">
+            <input data-ref="setFWnum" class="ad-in" type="number" min="2" max="40" step="0.1" style="width:74px;text-align:right;padding:7px 8px;">
+          </div>
+        </div>
+
+        <div>
+          <span class="ad-lab">Высота <span data-ref="setHVal" style="color:var(--washi-dim);float:right;">9.0%</span></span>
+          <div class="ad-row">
+            <input data-ref="setFH" class="ad-rng" type="range" min="2" max="40" step="0.1" value="9">
+            <input data-ref="setFHnum" class="ad-in" type="number" min="2" max="40" step="0.1" style="width:74px;text-align:right;padding:7px 8px;">
+          </div>
+        </div>
+
+        <div>
+          <span class="ad-lab">Описание для попапа</span>
+          <textarea data-ref="setFDesc" class="ad-in" rows="2" placeholder="Lounge · бронирование стола заранее" style="resize:vertical;line-height:1.45;"></textarea>
+        </div>
+
+        <div>
+          <span class="ad-lab">Телефон / ссылка брони</span>
+          <input data-ref="setFPhone" class="ad-in" type="text" placeholder="+74242218080">
+        </div>
+
+        <div>
+          <span class="ad-lab">Фото позиции</span>
+          <div data-ref="setPhotoWrap" style="position:relative;width:100%;aspect-ratio:16/10;border:1px dashed var(--sumi-400);border-radius:var(--r-sm);overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(8,8,11,.5);cursor:pointer;">
+            <img data-ref="setPhotoImg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;">
+            <span data-ref="setPhotoHint" style="font-size:12px;color:var(--washi-faint);letter-spacing:.04em;">＋ Перетащи или нажми, чтобы загрузить</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button data-act="photo-pick" class="btn btn--ghost btn--sm" style="flex:1;">Выбрать файл</button>
+            <button data-act="photo-clear" class="btn btn--ghost btn--sm" style="flex:1;">Убрать</button>
+          </div>
+          <input data-ref="setPhotoInput" type="file" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="rule" style="margin:2px 0;"></div>
+        <button data-act="delete" class="btn btn--ghost btn--sm" style="color:var(--neon);border-color:var(--neon-line);">Удалить позицию</button>
+      </div>
+
+      <div data-ref="setEmpty" style="padding:40px 24px;text-align:center;color:var(--washi-faint);font-size:13px;line-height:1.6;">
+        Выбери позицию в списке<br>или на карте, чтобы<br>редактировать её
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<script>window.__CSRF = "{{ csrf_token() }}";</script>
+<script src="/assets/booking/hall-editor.js?v={{ av }}"></script>
+</body>
+</html>

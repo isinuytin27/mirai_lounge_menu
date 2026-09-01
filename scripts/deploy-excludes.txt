@@ -9,6 +9,7 @@
 /public/assets/img/menu/uploads/
 /public/assets/img/gallery/uploads/
 /public/assets/img/vip/partner_uploads/
+/public/assets/img/hall/uploads/
 /public/assets/img/interior/
 
 # --- Секреты и dev-only ---

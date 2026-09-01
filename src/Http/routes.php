@@ -108,6 +108,10 @@ return static function (App $app): void {
         $g->post('/{id}/status', [BookingAdminController::class, 'setStatus']);
         $g->post('/{id}/delete', [BookingAdminController::class, 'delete']);
         $g->post('/waitlist/{id}/delete', [BookingAdminController::class, 'waitlistDelete']);
+        // Редактор карты зала (столы/зоны/заметки).
+        $g->get('/hall-editor', [BookingAdminController::class, 'hallEditor']);
+        $g->post('/hall', [BookingAdminController::class, 'saveHall']);
+        $g->post('/hall/photo', [BookingAdminController::class, 'uploadHallPhoto']);
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('admin_panel'))
