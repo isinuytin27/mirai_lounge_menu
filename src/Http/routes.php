@@ -11,6 +11,7 @@ use Mirai\Http\Controllers\Admin\TicketAdminController;
 use Mirai\Http\Controllers\Admin\TournamentAdminController;
 use Mirai\Http\Controllers\Admin\UsersAdminController;
 use Mirai\Http\Controllers\Admin\VipAdminController;
+use Mirai\Http\Controllers\Admin\VitrinaAdminController;
 use Mirai\Http\Controllers\TournamentRegisterController;
 use Mirai\Http\Controllers\VipConsumeController;
 use Mirai\Http\Controllers\VipServiceController;
@@ -119,6 +120,22 @@ return static function (App $app): void {
         $g->get('/hall-editor', [BookingAdminController::class, 'hallEditor']);
         $g->post('/hall', [BookingAdminController::class, 'saveHall']);
         $g->post('/hall/photo', [BookingAdminController::class, 'uploadHallPhoto']);
+    })
+        ->add(CsrfMiddleware::class)
+        ->add(new RoleMiddleware('admin_panel'))
+        ->add(AuthMiddleware::class);
+
+    // Витрина кальянов (Postgres): витринные поля кальянов, чаши, напитки.
+    $app->group('/admin/vitrina', function ($g): void {
+        $g->get('', [VitrinaAdminController::class, 'index']);
+        $g->post('/hookah/{id}', [VitrinaAdminController::class, 'saveHookah']);
+        $g->post('/bowl', [VitrinaAdminController::class, 'saveBowl']);
+        $g->post('/bowl/{id}', [VitrinaAdminController::class, 'saveBowl']);
+        $g->post('/bowl/{id}/delete', [VitrinaAdminController::class, 'deleteBowl']);
+        $g->post('/drink', [VitrinaAdminController::class, 'saveDrink']);
+        $g->post('/drink/{id}', [VitrinaAdminController::class, 'saveDrink']);
+        $g->post('/drink/{id}/delete', [VitrinaAdminController::class, 'deleteDrink']);
+        $g->post('/image', [VitrinaAdminController::class, 'uploadImage']);
     })
         ->add(CsrfMiddleware::class)
         ->add(new RoleMiddleware('admin_panel'))
