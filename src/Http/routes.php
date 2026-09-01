@@ -20,6 +20,7 @@ use Mirai\Http\Controllers\HealthController;
 use Mirai\Http\Controllers\AmateurCupController;
 use Mirai\Http\Controllers\BookingApiController;
 use Mirai\Http\Controllers\BookingMapController;
+use Mirai\Http\Controllers\LinksController;
 use Mirai\Http\Controllers\HomeController;
 use Mirai\Http\Controllers\HookahShowcaseController;
 use Mirai\Http\Controllers\MenuApiController;
@@ -91,6 +92,9 @@ return static function (App $app): void {
     // Лендинг регистрации на турнир CS2 (публичный). Форма шлёт в /api/tournament-register.
     $app->get('/amateur_cup[/]', AmateurCupController::class);
     $app->get('/amateur-cup[/]', AmateurCupController::class);
+
+    // Служебная страница ссылок для сотрудников (link-in-bio).
+    $app->get('/links[/]', LinksController::class);
 
     // SEO.
     $app->get('/robots.txt', [SeoController::class, 'robots']);
