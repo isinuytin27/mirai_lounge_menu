@@ -1,13 +1,13 @@
-# CI/CD Mirai Lounge (новый стек: Slim + Postgres + Vite).
+# CI/CD Mirai Lounge (Slim + Postgres + Vite) — self-hosted runner.
 #
-# CI  (push/PR): composer + PHPUnit (unit+integration против сервисного Postgres) + PHPStan + Vite build.
-# CD  (push main): собрать артефакт (vendor --no-dev + dist), rsync на сервер, удалённо
-#     docker compose build/up + миграции. Данные НЕ трогаем (импорт — разовый, вручную).
+# CI  (push/PR): composer + PHPUnit (unit) + PHPStan + Vite build → артефакт dist.
+# CD  (push main): на self-hosted runner НА СЕРВЕРЕ — локальный rsync в DEPLOY_PATH →
+#     docker compose (платформа + стек) → phinx migrate → проверка живости.
 #
-# Secrets репозитория (Settings → Secrets and variables → Actions):
-#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH, DEPLOY_SSH_KEY
-# На сервере в <DEPLOY_PATH>/.env заданы POSTGRES_*, MIRAI_TABLE_SIGNING_KEY (fail-closed!), TG/VAPID.
-
+# Почему self-hosted: сервер за NAT и с парольным SSH — GitHub-hosted раннер туда не
+# ходит. Runner на сервере сам забирает задания исходящим HTTPS: ни SSH, ни секретов,
+# ни проброса. Регистрация раннера — SERVER_SETUP.md, шаг 19 (labels: self-hosted,mirai-prod).
+# Данные НЕ трогаем: импорт справочников — разовый (bin/import-*), не в пайплайне.
 name: CI/CD
 
 on:
@@ -36,66 +36,63 @@ jobs:
           extensions: pdo, pdo_pgsql, fileinfo, zip
           coverage: none
 
-      - name: Composer install
-        run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer install --no-interaction --no-progress --prefer-dist
 
-      # Unit-тесты не требуют БД. Интеграционные (нужен Postgres + сиды данных)
-      # гоняются локально/на сервере, не в CI.
+      # Unit не требует БД. Интеграционные (нужен Postgres + сиды) — локально/на сервере.
       - name: PHPUnit (unit)
         run: php vendor/bin/phpunit --testsuite unit
 
       - name: PHPStan
-        run: php vendor/bin/phpstan analyse src --level=5 --no-progress
+        run: php vendor/bin/phpstan analyse src --level=5 --no-progress --memory-limit=1G
 
-      - name: Node + Vite build
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: |
-          cd frontend
-          npm ci
-          npm run build
-
-  deploy:
-    needs: ci
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # vendor собирается на сервере (docker build). Здесь готовим только Vite-dist.
       - name: Node + Vite build
         uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: cd frontend && npm ci && npm run build
 
-      - name: SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+      # Собранные бандлы отдаём артефактом — на сервере Node не нужен.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: public/dist/
+          retention-days: 3
 
-      - name: Rsync на сервер
+  deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, mirai-prod]
+    env:
+      DEPLOY_PATH: /var/www/mirailounge
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: public/dist/
+
+      # Локальная выкладка: без сети, без SSH, без паролей. Исключения защищают
+      # БД (data/pg), .env, серты, загрузки; png-ассеты возвращаем include'ами.
+      - name: Выкладка в DEPLOY_PATH
         run: |
-          rsync -az --delete \
+          rsync -a --delete \
             --include='/public/assets/booking/***' \
             --include='/public/assets/img/vitrina/***' \
             --exclude-from=scripts/deploy-excludes.txt \
-            -e "ssh -i ~/.ssh/deploy_key" \
-            ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+            ./ "$DEPLOY_PATH/"
 
-      - name: Удалённо — платформа, стек, миграции
+      - name: Платформа, стек, миграции
         run: |
-          ssh -i ~/.ssh/deploy_key "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s <<'REMOTE'
-          set -e
-          cd "${{ secrets.DEPLOY_PATH }}/docker"
-          # 1) общая платформа (Postgres) — поднять, если ещё не поднята
-          docker compose -f platform/docker-compose.yml up -d
-          # 2) стек сайта (пересобрать php при смене зависимостей, поднять)
-          docker compose build php
-          docker compose up -d
-          # 3) миграции БД (идемпотентно). Импорт данных НЕ здесь — он разовый.
+          cd "$DEPLOY_PATH/docker"
+          docker compose -f platform/docker-compose.yml up -d   # общий Postgres (создаёт сеть)
+          docker compose build php                              # vendor собирается в образе
+          docker compose up -d                                  # nginx + php
           docker compose exec -T php php vendor/bin/phinx migrate -c phinx.php
-          REMOTE
+
+      - name: Проверка живости
+        run: |
+          sleep 5
+          curl -fsS -o /dev/null -w 'health: %{http_code}\n' \
+            --resolve mirailounge.ru:443:127.0.0.1 https://mirailounge.ru/ || \
+          curl -fsS -o /dev/null -w 'health(http): %{http_code}\n' http://127.0.0.1/_health
