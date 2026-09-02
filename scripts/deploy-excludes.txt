@@ -15,6 +15,7 @@
 
 # --- Секреты и dev-only ---
 /.env
+/scripts/deploy.env         # локальные доступы к серверу для deploy.sh
 /docker/ssl/                # сертификаты живут на сервере, не в git
 /docker/docker-compose.override.yml   # локальный dev-override
 /docker/nginx/dev/          # dev-vhost

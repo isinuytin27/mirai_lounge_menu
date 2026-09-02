@@ -75,3 +75,6 @@ docker/nginx/conf.d/miraipro.conf
 
 # Локальный vendor для документации (mermaid ~2.5MB, качается заново)
 /assets-doc/
+
+# локальные доступы к серверу для scripts/deploy.sh
+scripts/deploy.env
