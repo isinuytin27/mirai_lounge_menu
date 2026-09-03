@@ -23,6 +23,10 @@ services:
       - ../miraipro_site/data:/var/www/miraipro/data
     depends_on:
       - php
+    networks:
+      # default — к php; platform — чтобы проксировать /postgres на контейнер adminer.
+      - default
+      - platform
     restart: unless-stopped
 
   php:
