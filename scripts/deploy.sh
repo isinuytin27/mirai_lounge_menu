@@ -61,6 +61,9 @@ fi
 # --delete держит сервер в точном соответствии репо; исключения защищают
 # БД (data/pg), .env, серты, загрузки. png-ассеты возвращаем include'ами.
 RSYNC=(-az --delete
+  # uploads/ исключаем ДО широкого include витрины (иначе include перекрыл бы
+  # исключение и --delete снёс бы загруженные фото — их владелец www-data).
+  --exclude='/public/assets/img/vitrina/uploads/'
   --include='/public/assets/booking/***'
   --include='/public/assets/img/vitrina/***'
   --exclude-from=scripts/deploy-excludes.txt
