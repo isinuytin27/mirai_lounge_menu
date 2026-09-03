@@ -18,7 +18,8 @@ services:
       # database/роли отдельно (см. scripts ниже / README платформы).
       POSTGRES_DB: ${POSTGRES_DB:-mirailounge}
       POSTGRES_USER: ${POSTGRES_USER:-mirailounge}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mirailounge_dev}
+      # POSTGRES_PASSWORD НЕ задаём здесь: ${..} интерполируется из cwd, а при запуске
+      # не из корня даёт дефолт и ломает пароль. Берётся из env_file (../../.env) выше.
     ports:
       # Проброс на localhost для миграций/инструментов с хоста.
       - "127.0.0.1:5432:5432"
