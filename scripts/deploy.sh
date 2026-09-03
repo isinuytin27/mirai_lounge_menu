@@ -84,6 +84,12 @@ cd "$REMOTE_PATH/docker"
 docker compose -f platform/docker-compose.yml up -d      # общий Postgres (создаёт сеть)
 docker compose build php                                 # vendor собирается в образе
 docker compose up -d                                     # nginx + php
+# Первый запуск Postgres инициализирует кластер (~10с) — ждём готовности до миграций.
+echo "ждём Postgres…"
+for i in \$(seq 1 40); do
+  docker exec mirai-postgres pg_isready -U mirailounge -d mirailounge >/dev/null 2>&1 && break
+  sleep 1
+done
 docker compose exec -T php php vendor/bin/phinx migrate -c phinx.php
 REMOTE
 
