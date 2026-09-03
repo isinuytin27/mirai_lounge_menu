@@ -83,7 +83,15 @@ set -e
 cd "$REMOTE_PATH/docker"
 docker compose -f platform/docker-compose.yml up -d      # общий Postgres (создаёт сеть)
 docker compose build php                                 # vendor собирается в образе
-docker compose up -d                                     # nginx + php
+# Cache-busting ассетов (?v=): свежая версия на каждый деплой. Меняет .env →
+# compose пересоздаёт php → заодно свежие opcache и скомпилированный кэш Twig.
+STAMP=\$(date +%Y%m%d-%H%M%S)
+if grep -q '^MIRAI_APP_VERSION=' ../.env 2>/dev/null; then
+  sed -i "s|^MIRAI_APP_VERSION=.*|MIRAI_APP_VERSION=\$STAMP|" ../.env
+else
+  echo "MIRAI_APP_VERSION=\$STAMP" >> ../.env
+fi
+docker compose up -d                                     # nginx + php (пересоздаётся из-за .env)
 # Первый запуск Postgres инициализирует кластер (~10с) — ждём готовности до миграций.
 echo "ждём Postgres…"
 for i in \$(seq 1 40); do
@@ -91,6 +99,8 @@ for i in \$(seq 1 40); do
   sleep 1
 done
 docker compose exec -T php php vendor/bin/phinx migrate -c phinx.php
+# Сброс скомпилированного кэша Twig — на случай изменившихся шаблонов.
+docker compose exec -T -u root php sh -c 'rm -rf /var/www/mirailounge/var/cache/twig/* 2>/dev/null || true'
 REMOTE
 
 # ── 4) первый деплой: справочники ────────────────────────────────────────
