@@ -101,6 +101,8 @@ done
 docker compose exec -T php php vendor/bin/phinx migrate -c phinx.php
 # Сброс скомпилированного кэша Twig — на случай изменившихся шаблонов.
 docker compose exec -T -u root php sh -c 'rm -rf /var/www/mirailounge/var/cache/twig/* 2>/dev/null || true'
+# Каталоги загрузок из админок должны писаться php-fpm (www-data), иначе 500 при аплоаде.
+docker compose exec -T -u root php sh -c 'for d in menu/uploads gallery/uploads vip/partner_uploads hall/uploads vitrina/uploads; do p=/var/www/mirailounge/public/assets/img/\$d; mkdir -p "\$p"; chown -R www-data:www-data "\$p"; done' 2>/dev/null || true
 REMOTE
 
 # ── 4) первый деплой: справочники ────────────────────────────────────────

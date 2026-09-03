@@ -16,6 +16,8 @@ services:
       - ../public/assets/img/menu/uploads:/var/www/mirailounge/public/assets/img/menu/uploads
       - ../public/assets/img/gallery/uploads:/var/www/mirailounge/public/assets/img/gallery/uploads
       - ../public/assets/img/vip/partner_uploads:/var/www/mirailounge/public/assets/img/vip/partner_uploads
+      - ../public/assets/img/hall/uploads:/var/www/mirailounge/public/assets/img/hall/uploads
+      - ../public/assets/img/vitrina/uploads:/var/www/mirailounge/public/assets/img/vitrina/uploads
       # Mirai Pro (miraipro.ru) — код сюда кладёт mirai_pro\deploy\install-into-stack.bat. Код ro, data rw.
       - ../miraipro_site:/var/www/miraipro:ro
       - ../miraipro_site/data:/var/www/miraipro/data
@@ -46,6 +48,8 @@ services:
       - ../public/assets/img/menu/uploads:/var/www/mirailounge/public/assets/img/menu/uploads
       - ../public/assets/img/gallery/uploads:/var/www/mirailounge/public/assets/img/gallery/uploads
       - ../public/assets/img/vip/partner_uploads:/var/www/mirailounge/public/assets/img/vip/partner_uploads
+      - ../public/assets/img/hall/uploads:/var/www/mirailounge/public/assets/img/hall/uploads
+      - ../public/assets/img/vitrina/uploads:/var/www/mirailounge/public/assets/img/vitrina/uploads
       # Mirai Pro (miraipro.ru) — код сюда кладёт mirai_pro\deploy\install-into-stack.bat. Код ro, data rw.
       - ../miraipro_site:/var/www/miraipro:ro
       - ../miraipro_site/data:/var/www/miraipro/data
