@@ -16,14 +16,6 @@ use Mirai\Domain\Menu\Recommender;
  */
 final class GuestMenuView
 {
-    /** Порядок «колеса» бара (UX-раскладка; данные подтягиваются по slug категории). */
-    private const BAR_STRUCTURE = [
-        'author_cocktails', 'classic', 'tinctures', 'sours', 'tropical',
-        'item_522b0eac', 'item', 'item_258c0a14', 'item_dcbc0045', 'item_b87d8ae4',
-        'item_e06230e4', 'item_2a99d782', 'item_eb623cf2', 'item_695f114b', 'item_4f0f7740',
-        'na_cocktails', 'tea_leaf', 'item_2f338739', 'item_5a485d13',
-    ];
-
     /**
      * Собрать view-model напрямую из репозитория (загружает меню, группы, гастропары).
      *
@@ -112,15 +104,20 @@ final class GuestMenuView
             ];
         }
 
-        // Колесо бара.
+        // Колесо бара — из РЕАЛЬНЫХ категорий группы «Бар» (в порядке sort_order),
+        // а не из хардкода. Так названия и клики всегда соответствуют БД/админке.
         $barWheel = [];
-        foreach (self::BAR_STRUCTURE as $slug) {
+        foreach ($sections as $sec) {
+            if ($sec['group'] !== 'bar') {
+                continue;
+            }
+            $slug = $sec['id'];
             $barWheel[] = [
                 'id' => $slug,
-                'title' => $allTitles[$slug] ?? $slug,
+                'title' => $sec['title'],
                 'cats' => $slug,
                 'preview' => $preview[$slug] ?? '',
-                'empty' => !isset($preview[$slug]) && !isset($allTitles[$slug]),
+                'empty' => $sec['items'] === [],
             ];
         }
 

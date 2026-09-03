@@ -7,6 +7,14 @@
   .mcat h2{margin:0;font-size:16px}
   .mcat .g{font-size:10px;color:var(--dim);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
   .mcat .line{font-size:10px;color:var(--accent2)}
+  .mcat .cat-edit{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .mcat .cat-title{background:#170f1e;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 9px;font-size:15px;font-weight:600;min-width:170px}
+  .mcat .cat-group{background:#170f1e;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 8px;font-size:12px}
+  .mcat .cat-on{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:4px;cursor:pointer}
+  .mcat .cat-save{background:var(--accent);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+  .mcat .cat-move{display:flex;flex-direction:column;gap:2px}
+  .mcat .cat-move button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:6px;padding:0 7px;font-size:11px;cursor:pointer;line-height:1.4}
+  .mcat .cat-move button:hover{border-color:var(--accent2);color:var(--ink)}
   .prow{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);
     border-radius:12px;background:var(--panel);margin-bottom:7px}
   .prow .nm{font-weight:600;font-size:14px}
@@ -33,11 +41,21 @@
 {% if flash %}<div class="flash">✓ {{ flash }}</div>{% endif %}
 
 {% for c in categories %}
-    <div class="mcat">
-        <h2>{{ c.title }}</h2>
-        {% if c.group_slug %}<span class="g">{{ c.group_slug }}</span>{% endif %}
-        <span class="line">выдача: {{ c.line }}</span>
-        <span style="margin-left:auto;color:var(--dim);font-size:12px">{{ c.products|length }} товаров</span>
+    <div class="mcat {{ c.active ? '' : 'off' }}">
+        <div class="cat-move">
+            <form class="inline" method="post" action="/admin/menu/category/{{ c.id }}/move/up"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button title="Выше">▲</button></form>
+            <form class="inline" method="post" action="/admin/menu/category/{{ c.id }}/move/down"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button title="Ниже">▼</button></form>
+        </div>
+        <form class="cat-edit" method="post" action="/admin/menu/category/{{ c.id }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <input class="cat-title" name="title" value="{{ c.title }}" aria-label="Название категории">
+            <select class="cat-group" name="group_id" aria-label="Группа">
+                {% for g in groups %}<option value="{{ g.id }}" {{ g.id == c.group_id ? 'selected' }}>{{ g.title }}</option>{% endfor %}
+            </select>
+            <label class="cat-on"><input type="checkbox" name="active" {{ c.active ? 'checked' }}> вкл</label>
+            <button class="cat-save" type="submit">Сохранить</button>
+        </form>
+        <span style="margin-left:auto;color:var(--dim);font-size:12px">{{ c.products|length }} товаров · выдача {{ c.line }}</span>
     </div>
     {% for p in c.products %}
         <div class="prow">

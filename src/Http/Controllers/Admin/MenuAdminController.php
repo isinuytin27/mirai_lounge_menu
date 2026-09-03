@@ -27,8 +27,32 @@ final class MenuAdminController
     {
         return Twig::fromRequest($request)->render($response, 'admin/menu/index.twig', [
             'categories' => $this->repo->categoriesWithProducts(),
+            'groups' => $this->repo->allGroups(),
             'flash' => $request->getQueryParams()['ok'] ?? null,
         ]);
+    }
+
+    /** POST /admin/menu/category/{id} — переименовать / сменить группу / вкл-выкл. */
+    public function saveCategory(Request $request, Response $response, array $args): Response
+    {
+        $body = (array) $request->getParsedBody();
+        $title = trim((string) ($body['title'] ?? ''));
+        $groupId = ($body['group_id'] ?? '') !== '' ? (int) $body['group_id'] : null;
+        $active = !empty($body['active']);
+        if ($title !== '') {
+            $this->repo->updateCategory((int) $args['id'], $title, $groupId, $active);
+        }
+
+        return $response->withStatus(302)->withHeader('Location', '/admin/menu?ok=Категория сохранена');
+    }
+
+    /** POST /admin/menu/category/{id}/move/{dir} — порядок категории. */
+    public function moveCategory(Request $request, Response $response, array $args): Response
+    {
+        $dir = $args['dir'] === 'up' ? 'up' : 'down';
+        $this->repo->moveCategory((int) $args['id'], $dir);
+
+        return $response->withStatus(302)->withHeader('Location', '/admin/menu');
     }
 
     public function editProduct(Request $request, Response $response, array $args): Response
