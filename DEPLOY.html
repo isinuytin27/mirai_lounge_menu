@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Деплой Mirai Lounge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  /* ── токены: светлая тема по умолчанию ── */
+  :root{
+    --bg:#f2f0ee; --panel:#ffffff; --panel-2:#f7f5f3; --line:#e3ded9;
+    --ink:#1a1b1f; --dim:#6b6770; --faint:#98939d;
+    --accent:#d6006e; --accent-soft:rgba(214,0,110,.10); --accent-line:rgba(214,0,110,.28);
+    --cyan:#0b8f93; --jade:#1f9d57; --amber:#b5760f;
+    --term-bg:#15161b; --term-ink:#e8e4ec; --term-dim:#8b8794;
+    --shadow:0 1px 2px rgba(20,18,24,.05),0 8px 30px rgba(20,18,24,.06);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e0f13; --panel:#16171d; --panel-2:#1b1c23; --line:#282a33;
+      --ink:#f4f1ea; --dim:#9c98a6; --faint:#6f6b78;
+      --accent:#f5007d; --accent-soft:rgba(245,0,125,.14); --accent-line:rgba(245,0,125,.34);
+      --cyan:#2de2e6; --jade:#3ddc84; --amber:#e0a33a;
+      --term-bg:#0a0b0e; --term-ink:#e8e4ec; --term-dim:#7c7889;
+      --shadow:0 1px 0 rgba(255,255,255,.02),0 18px 50px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e0f13; --panel:#16171d; --panel-2:#1b1c23; --line:#282a33;
+    --ink:#f4f1ea; --dim:#9c98a6; --faint:#6f6b78;
+    --accent:#f5007d; --accent-soft:rgba(245,0,125,.14); --accent-line:rgba(245,0,125,.34);
+    --cyan:#2de2e6; --jade:#3ddc84; --amber:#e0a33a;
+    --term-bg:#0a0b0e; --term-ink:#e8e4ec; --term-dim:#7c7889;
+    --shadow:0 1px 0 rgba(255,255,255,.02),0 18px 50px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:15.5px; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px; margin:0 auto; padding:0 22px 96px}
+
+  /* ── шапка ── */
+  header.top{
+    position:sticky; top:0; z-index:20; backdrop-filter:blur(10px);
+    background:color-mix(in srgb, var(--bg) 82%, transparent);
+    border-bottom:1px solid var(--line);
+  }
+  .top-in{max-width:860px; margin:0 auto; padding:13px 22px; display:flex; align-items:center; gap:14px}
+  .brand{font-family:"Chakra Petch",sans-serif; font-weight:700; letter-spacing:.16em; font-size:14px}
+  .brand b{color:var(--accent)}
+  .brand span{color:var(--faint); font-weight:500}
+  .top-spacer{flex:1}
+  .theme-btn{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; color:var(--dim);
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:6px 11px; cursor:pointer; transition:color .15s,border-color .15s;
+  }
+  .theme-btn:hover{color:var(--ink); border-color:var(--accent-line)}
+  .theme-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* ── hero ── */
+  .hero{padding:64px 0 40px; border-bottom:1px solid var(--line)}
+  .eyebrow{
+    font-family:"Chakra Petch",sans-serif; font-weight:600; text-transform:uppercase;
+    letter-spacing:.28em; font-size:12px; color:var(--accent); margin:0 0 18px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:""; width:26px; height:2px; background:var(--accent); display:inline-block}
+  h1{
+    font-family:"Chakra Petch",sans-serif; font-weight:700; font-size:clamp(38px,7vw,62px);
+    line-height:1.0; letter-spacing:-.01em; margin:0 0 20px; text-wrap:balance;
+  }
+  h1 em{font-style:normal; color:var(--accent)}
+  .lede{font-size:17px; color:var(--dim); max-width:60ch; margin:0}
+  .lede code{color:var(--ink)}
+
+  /* ── мета-полоска ── */
+  .meta{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden; margin:34px 0 0;
+  }
+  .meta div{background:var(--panel); padding:15px 17px}
+  .meta dt{font-family:"Chakra Petch",sans-serif; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0 0 6px}
+  .meta dd{margin:0; font-size:13.5px; color:var(--ink)}
+  .meta dd b{color:var(--accent); font-weight:600}
+
+  /* ── секции ── */
+  section{padding:52px 0 0}
+  h2{
+    font-family:"Chakra Petch",sans-serif; font-weight:700; font-size:25px; letter-spacing:-.005em;
+    margin:0 0 6px; display:flex; align-items:baseline; gap:13px; text-wrap:balance;
+  }
+  h2 .n{
+    font-size:13px; color:var(--accent); font-weight:600; font-variant-numeric:tabular-nums;
+    border:1px solid var(--accent-line); border-radius:7px; padding:2px 9px; line-height:1;
+  }
+  .sub{color:var(--dim); margin:0 0 22px; max-width:64ch}
+  h3{font-family:"Chakra Petch",sans-serif; font-weight:600; font-size:16px; letter-spacing:.01em; margin:26px 0 12px; color:var(--ink)}
+  p{max-width:66ch}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-line)}
+  a:hover{border-bottom-color:var(--accent)}
+  code{font-family:"IBM Plex Mono",monospace; font-size:.9em; background:var(--accent-soft); color:var(--accent); padding:.1em .4em; border-radius:5px}
+
+  /* ── два пути (карточки) ── */
+  .paths{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:8px}
+  .path{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow)}
+  .path.primary{border-color:var(--accent-line)}
+  .path .tag{font-family:"Chakra Petch",sans-serif; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:0 0 4px}
+  .path.primary .tag{color:var(--accent)}
+  .path h4{font-family:"Chakra Petch",sans-serif; font-weight:600; font-size:18px; margin:0 0 9px}
+  .path p{margin:0; font-size:14px; color:var(--dim)}
+
+  /* ── терминальные блоки ── */
+  .term{background:var(--term-bg); border:1px solid var(--line); border-radius:12px; margin:16px 0; overflow:hidden; box-shadow:var(--shadow)}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.06)}
+  .term-bar i{width:11px; height:11px; border-radius:50%; background:#3a3a44; display:inline-block}
+  .term-bar i:nth-child(1){background:#ff5f57} .term-bar i:nth-child(2){background:#febc2e} .term-bar i:nth-child(3){background:#28c840}
+  .term-bar .lbl{margin-left:8px; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.05em; color:var(--term-dim)}
+  .term-bar .copy{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--term-dim); background:none; border:1px solid rgba(255,255,255,.12); border-radius:6px; padding:3px 9px; cursor:pointer; transition:color .15s,border-color .15s}
+  .term-bar .copy:hover{color:var(--term-ink); border-color:rgba(255,255,255,.3)}
+  .term-bar .copy:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .term pre{margin:0; padding:15px 16px; overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:13px; line-height:1.7; color:var(--term-ink)}
+  .term pre .c{color:var(--term-dim)}         /* комментарий */
+  .term pre .p{color:var(--accent)}            /* prompt/акцент */
+  .term pre .k{color:var(--cyan)}              /* команда/ключ */
+
+  /* ── callout ── */
+  .note{display:flex; gap:13px; background:var(--panel-2); border:1px solid var(--line); border-left:3px solid var(--amber); border-radius:10px; padding:15px 17px; margin:18px 0; font-size:14px}
+  .note.warn{border-left-color:var(--accent)}
+  .note .ic{flex:0 0 auto; font-family:"Chakra Petch",sans-serif; font-weight:700; color:var(--amber)}
+  .note.warn .ic{color:var(--accent)}
+  .note p{margin:0; color:var(--dim); max-width:none}
+  .note b{color:var(--ink); font-weight:600}
+
+  /* ── таблица ── */
+  .tbl-wrap{overflow-x:auto; margin:16px 0; border:1px solid var(--line); border-radius:12px}
+  table{border-collapse:collapse; width:100%; font-size:14px; min-width:520px}
+  th,td{text-align:left; padding:12px 15px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-family:"Chakra Petch",sans-serif; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); font-weight:600}
+  tr:last-child td{border-bottom:0}
+  td:first-child{color:var(--ink); font-weight:500; white-space:nowrap}
+  td code{font-size:12.5px}
+
+  /* ── чипы экранов ── */
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+  .chip{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim); background:var(--panel-2); border:1px solid var(--line); border-radius:20px; padding:5px 12px}
+  .chip b{color:var(--accent); font-weight:500}
+
+  footer{margin-top:60px; padding-top:24px; border-top:1px solid var(--line); color:var(--faint); font-size:13px; display:flex; gap:8px; flex-wrap:wrap}
+  footer a{border:none; color:var(--dim)}
+  ::selection{background:var(--accent); color:#fff}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><b>未来</b> MIRAI <span>· деплой</span></div>
+    <div class="top-spacer"></div>
+    <button class="theme-btn" id="themeBtn" aria-label="Переключить тему">◐ тема</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="hero">
+    <p class="eyebrow">Runbook · Slim + Postgres</p>
+    <h1>Деплой <em>Mirai&nbsp;Lounge</em></h1>
+    <p class="lede">Пуш в <code>main</code> — и сайт обновился сам. Ниже: разовая настройка сервера, первый деплой и повседневный цикл. Глубокий референс по ОС и сети — в <a href="SERVER_SETUP.html">SERVER_SETUP</a>.</p>
+
+    <dl class="meta">
+      <div><dt>Стек</dt><dd>Slim 4 · Postgres 16 · Vite · Docker</dd></div>
+      <div><dt>Хост</dt><dd>Ubuntu, за NAT, вход по паролю</dd></div>
+      <div><dt>Деплой</dt><dd><b>self-hosted runner</b> + ручной фолбэк</dd></div>
+      <div><dt>Данные</dt><dd>Postgres в томе — <code>--delete</code> не трогает</dd></div>
+    </dl>
+  </div>
+
+  <section>
+    <h2>Два пути деплоя</h2>
+    <p class="sub">Основной — автоматический через GitHub Actions. Ручной — на случай, когда GitHub недоступен.</p>
+    <div class="paths">
+      <div class="path primary">
+        <p class="tag">Основной</p>
+        <h4>GitHub Actions</h4>
+        <p>Push в <code>main</code> → CI на GitHub (тесты, сборка) → CD на self-hosted runner прямо на сервере: локальный rsync + docker compose + миграции. Ни SSH, ни секретов, ни проброса — runner сам ходит исходящим HTTPS.</p>
+      </div>
+      <div class="path">
+        <p class="tag">Фолбэк</p>
+        <h4>scripts/deploy.sh</h4>
+        <p>Прямой rsync + ssh с рабочей машины одной командой. Настройка — в <a href="scripts/README.md">scripts/README</a>. Пригодится, когда GitHub лежит или нужно выкатить срочно мимо пайплайна.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">1×</span> Разовая настройка</h2>
+    <p class="sub">Делается один раз на свежем сервере. Четыре шага сверху вниз.</p>
+
+    <h3>1 · Сервер (ОС, сеть, доступ)</h3>
+    <p>Если сервер «сырой» — netplan, статический адрес, проброс 80/443, SSH на нестандартном порту, <code>ufw</code>, <code>fail2ban</code>: см. <a href="SERVER_SETUP.html">SERVER_SETUP</a>, Часть I. Нужен пользователь <code>deploy</code> в группе <code>sudo</code>.</p>
+
+    <h3>2 · Подготовка под приложение — одной командой</h3>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">рабочая машина → сервер</span><button class="copy">копировать</button></div>
+<pre><span class="c"># ставит Docker, создаёт каталог и .env со сгенерированными ключами</span>
+scp -P &lt;ssh-порт&gt; scripts/server-bootstrap.sh deploy@&lt;сервер&gt;:/tmp/
+ssh -p &lt;ssh-порт&gt; deploy@&lt;сервер&gt; <span class="p">"sudo bash /tmp/server-bootstrap.sh"</span></pre>
+    </div>
+    <div class="note"><span class="ic">i</span><p><code>server-bootstrap.sh</code> генерирует <b>случайные</b> <code>MIRAI_TABLE_SIGNING_KEY</code> и пароль Postgres. Без ключа prod не поднимется (fail-closed) — это защита, не баг.</p></div>
+
+    <h3>3 · TLS-сертификаты (Reg.ru, без Let's Encrypt)</h3>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">на сервере · rsync их не несёт</span><button class="copy">копировать</button></div>
+<pre>/var/www/mirailounge/docker/ssl/mirailounge.ru/fullchain.pem   <span class="c"># сертификат + цепочка CA</span>
+/var/www/mirailounge/docker/ssl/mirailounge.ru/privkey.pem     <span class="c"># приватный ключ, chmod 600</span></pre>
+    </div>
+
+    <h3>4 · Self-hosted runner (для авто-деплоя)</h3>
+    <p>Токен — в <b>Settings → Actions → Runners → New self-hosted runner</b>. На сервере под <code>deploy</code>:</p>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">deploy@сервер · ~/actions-runner</span><button class="copy">копировать</button></div>
+<pre><span class="c"># скачать актуальный runner с GitHub, распаковать, затем:</span>
+./config.sh --url https://github.com/isinuytin27/mirai_lounge_menu \
+  --token &lt;токен&gt; --labels <span class="k">self-hosted,mirai-prod</span> --unattended
+sudo ./svc.sh install deploy &amp;&amp; sudo ./svc.sh start   <span class="c"># автозапуск</span></pre>
+    </div>
+    <div class="note"><span class="ic">i</span><p>После этого runner горит <b>Idle</b> в Settings → Actions → Runners. Секреты <code>DEPLOY_*</code> больше не нужны — можно удалить.</p></div>
+  </section>
+
+  <section>
+    <h2><span class="n">2×</span> Первый деплой</h2>
+    <p class="sub">Мёрдж в <code>main</code> запускает пайплайн. Затем — разовое наполнение справочников.</p>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">рабочая машина</span><button class="copy">копировать</button></div>
+<pre>git checkout main &amp;&amp; git merge rebuild/foundation &amp;&amp; git push</pre>
+    </div>
+    <p>Когда стек поднялся — <b>разово</b> наполнить справочники на сервере:</p>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">на сервере · /var/www/mirailounge/docker</span><button class="copy">копировать</button></div>
+<pre>docker compose exec -T php php bin/import-recommender   <span class="c"># граф гастропар</span>
+docker compose exec -T php php bin/import-vitrina       <span class="c"># витрина кальянов</span>
+<span class="c"># если есть старые данные — положить data/*.json и ОДИН раз:</span>
+docker compose exec -T php php bin/import-json
+<span class="c"># первый администратор:</span>
+docker compose exec php php bin/create-admin &lt;логин&gt; &lt;пароль&gt; owner</pre>
+    </div>
+    <div class="note warn"><span class="ic">!</span><p>Миграции применяет сам пайплайн на каждый деплой. Импорт данных в пайплайн <b>не входит</b> — он разовый: повтор <code>import-json</code> затрёт правки из админки старым снимком JSON.</p></div>
+  </section>
+
+  <section>
+    <h2><span class="n">∞</span> Обычный деплой</h2>
+    <p class="sub">Дальше — просто пуш. Или вручную, если нужно.</p>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">каждый релиз</span><button class="copy">копировать</button></div>
+<pre>git push                         <span class="c"># в main → GitHub Actions выложит сам</span>
+
+<span class="c"># или вручную (фолбэк, с рабочей машины):</span>
+./scripts/deploy.sh              <span class="c"># собрать → залить → поднять → миграции</span>
+./scripts/deploy.sh --dry-run    <span class="c"># посмотреть, что зальётся, ничего не меняя</span></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Проверка</h2>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">smoke</span><button class="copy">копировать</button></div>
+<pre>curl -I https://mirailounge.ru/            <span class="c"># 200 / 301</span>
+curl -s https://mirailounge.ru/_health     <span class="c"># {"status":"ok"}</span></pre>
+    </div>
+    <p>Руками пройти по экранам:</p>
+    <div class="chips">
+      <span class="chip"><b>/</b> витрина + меню</span>
+      <span class="chip"><b>/vitrina</b> карусель кальянов</span>
+      <span class="chip"><b>/booking/map</b> 3D-зал</span>
+      <span class="chip"><b>/orders</b> панель заказов</span>
+      <span class="chip"><b>/admin</b> вход</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Эксплуатация</h2>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">на сервере · /var/www/mirailounge/docker</span><button class="copy">копировать</button></div>
+<pre>docker compose ps
+docker compose logs -f php
+docker compose restart php nginx
+docker compose exec -T php php vendor/bin/phinx rollback -c phinx.php   <span class="c"># откат миграции</span>
+docker exec -it mirai-postgres psql -U mirailounge -d mirailounge       <span class="c"># psql</span>
+
+<span class="c"># бэкап БД (по cron)</span>
+docker exec mirai-postgres pg_dumpall -U mirailounge | gzip &gt; ~/backups/pg-$(date +%F).sql.gz</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Частые проблемы</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Симптом</th><th>Причина / лечение</th></tr></thead>
+        <tbody>
+          <tr><td>500 на всех страницах</td><td>Пустой <code>MIRAI_TABLE_SIGNING_KEY</code> при <code>APP_ENV=prod</code> (fail-closed). Проверь <code>.env</code></td></tr>
+          <tr><td>host name "postgres" не резолвится</td><td>Платформа не поднята: <code>docker compose -f platform/docker-compose.yml up -d</code></td></tr>
+          <tr><td>password authentication failed</td><td><code>POSTGRES_PASSWORD</code> менялся после инициализации тома — чинить <code>ALTER ROLE</code></td></tr>
+          <tr><td>Страницы без стилей</td><td>Нет <code>public/dist/</code> — сборка Vite / артефакт не доехали</td></tr>
+          <tr><td>Витрина пустая</td><td>Не запускали <code>bin/import-vitrina</code></td></tr>
+          <tr><td>Job висит в очереди</td><td>Runner offline: <code>sudo ~/actions-runner/svc.sh status</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note"><span class="ic">i</span><p>Деплой <b>не перезаписывает</b>: том Postgres (<code>data/pg</code>), <code>.env</code>, серты (<code>docker/ssl/</code>), загрузки из админок (<code>*/uploads/</code>), локальный <code>scripts/deploy.env</code>. png-ассеты меню/карты/витрины возвращаются в выкладку явными <code>--include</code>. Список — <code>scripts/deploy-excludes.txt</code>.</p></div>
+  </section>
+
+  <footer>
+    <span>Mirai Lounge · внутренний runbook</span><span>·</span>
+    <a href="DEPLOY.md">DEPLOY.md</a><span>·</span>
+    <a href="SERVER_SETUP.html">SERVER_SETUP</a><span>·</span>
+    <a href="scripts/README.md">scripts/README</a>
+  </footer>
+</div>
+
+<script>
+  // тумблер темы (свет ↔ тьма), запоминаем выбор
+  (function(){
+    var root=document.documentElement, btn=document.getElementById('themeBtn');
+    try{ var s=localStorage.getItem('mirai-deploy-theme'); if(s) root.setAttribute('data-theme',s); }catch(e){}
+    btn.addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme');
+      var next = cur==='dark' ? 'light' : (cur==='light' ? 'dark'
+        : (matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark'));
+      root.setAttribute('data-theme',next);
+      try{ localStorage.setItem('mirai-deploy-theme',next); }catch(e){}
+    });
+  })();
+  // копирование команд
+  document.querySelectorAll('.term').forEach(function(t){
+    var btn=t.querySelector('.copy'), pre=t.querySelector('pre'); if(!btn||!pre) return;
+    btn.addEventListener('click',function(){
+      navigator.clipboard&&navigator.clipboard.writeText(pre.innerText).then(function(){
+        var o=btn.textContent; btn.textContent='скопировано ✓';
+        setTimeout(function(){btn.textContent=o;},1400);
+      });
+    });
+  });
+</script>
+</body>
+</html>
