@@ -213,7 +213,7 @@
       <div class="term-bar"><i></i><i></i><i></i><span class="lbl">рабочая машина → сервер</span><button class="copy">копировать</button></div>
 <pre><span class="c"># ставит Docker, создаёт каталог и .env со сгенерированными ключами</span>
 scp -P &lt;ssh-порт&gt; scripts/server-bootstrap.sh deploy@&lt;сервер&gt;:/tmp/
-ssh -p &lt;ssh-порт&gt; deploy@&lt;сервер&gt; <span class="p">"sudo bash /tmp/server-bootstrap.sh"</span></pre>
+ssh <span class="k">-t</span> -p &lt;ssh-порт&gt; deploy@&lt;сервер&gt; <span class="p">"sudo bash /tmp/server-bootstrap.sh"</span>  <span class="c"># -t: sudo нужен TTY</span></pre>
     </div>
     <div class="note"><span class="ic">i</span><p><code>server-bootstrap.sh</code> генерирует <b>случайные</b> <code>MIRAI_TABLE_SIGNING_KEY</code> и пароль Postgres. Без ключа prod не поднимется (fail-closed) — это защита, не баг.</p></div>
 

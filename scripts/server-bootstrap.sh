@@ -6,7 +6,9 @@
 #
 # Запуск НА СЕРВЕРЕ (с рабочей машины один раз):
 #   scp -P <порт> scripts/server-bootstrap.sh deploy@<сервер>:/tmp/
-#   ssh -p <порт> deploy@<сервер> "sudo bash /tmp/server-bootstrap.sh"
+#   ssh -t -p <порт> deploy@<сервер> "sudo bash /tmp/server-bootstrap.sh"
+# Флаг -t обязателен: без TTY sudo не сможет спросить пароль
+# ("sudo: a terminal is required to authenticate").
 #
 # Полный контекст (сеть, SSH, firewall, TLS) — в SERVER_SETUP.md. Здесь только то,
 # что скриптуется безопасно и повторяется.

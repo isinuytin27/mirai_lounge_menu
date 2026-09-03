@@ -34,7 +34,7 @@
 ```bash
 # с рабочей машины (обе — Ubuntu)
 scp -P <ssh-порт> scripts/server-bootstrap.sh deploy@<сервер>:/tmp/
-ssh -p <ssh-порт> deploy@<сервер> "sudo bash /tmp/server-bootstrap.sh"
+ssh -t -p <ssh-порт> deploy@<сервер> "sudo bash /tmp/server-bootstrap.sh"   # -t: sudo нужен TTY
 ```
 Скрипт ставит Docker + лимиты логов, создаёт `/var/www/mirailounge` и генерирует
 `.env` со **случайными** `MIRAI_TABLE_SIGNING_KEY` и паролём Postgres (fail-closed:

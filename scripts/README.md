@@ -11,7 +11,7 @@ nano scripts/deploy.env          # SSH_TARGET / SSH_PORT / REMOTE_PATH
 
 # 2) подготовить сервер (Docker + каталог + .env со сгенерированными ключами)
 scp -P <порт> scripts/server-bootstrap.sh deploy@<сервер>:/tmp/
-ssh -p <порт> deploy@<сервер> "sudo bash /tmp/server-bootstrap.sh"
+ssh -t -p <порт> deploy@<сервер> "sudo bash /tmp/server-bootstrap.sh"   # -t обязателен для sudo
 
 # 3) положить TLS-серты на сервер (rsync их не несёт — живут только там):
 #    /var/www/mirailounge/docker/ssl/mirailounge.ru/{fullchain,privkey}.pem
