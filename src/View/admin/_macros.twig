@@ -1,6 +1,9 @@
-{# Ярлычок ассета: фактическое расширение файла + размер. Красный, если не webp или >2 МБ.
-   Использование: {% import 'admin/_macros.twig' as a %} → обернуть <img> в .asset-thumb и {{ a.img_badge(path) }} #}
+{# Ярлычок ассета: фактическое расширение файла + размер, и он же — кнопка «скачать».
+   Красный, если не webp или >2 МБ. Использование:
+   {% import 'admin/_macros.twig' as a %} → обернуть <img> в .asset-thumb и {{ a.img_badge(path) }} #}
 {% macro img_badge(path) %}
 {%- set m = asset_meta(path) -%}
-<span class="asset-badge{{ m.bad ? ' bad' }}" title="{{ m.ext|upper }} · {{ m.size }}">{{ m.ext|upper }} · {{ m.size }}</span>
+{%- if path -%}
+<a class="asset-badge{{ m.bad ? ' bad' }}" href="/{{ path|trim('/') }}" download title="Скачать ассет · {{ m.ext|upper }} · {{ m.size }}">{{ m.ext|upper }} · {{ m.size }} ↓</a>
+{%- endif -%}
 {%- endmacro %}

@@ -66,6 +66,15 @@ final class MenuAdminRepository extends Repository
         ], $this->fetchAll('SELECT id, slug, title FROM menu_groups ORDER BY sort_order, title'));
     }
 
+    /** Заменить картинку товара (путь от public, напр. assets/img/menu/uploads/x.webp). */
+    public function updateProductImage(string $slug, string $image): void
+    {
+        $this->execute(
+            'UPDATE products SET image = :image, updated_at = now() WHERE slug = :slug',
+            ['image' => $image, 'slug' => $slug]
+        );
+    }
+
     /** Обновить категорию: название, группа, вкл/выкл. */
     public function updateCategory(int $id, string $title, ?int $groupId, bool $active): void
     {

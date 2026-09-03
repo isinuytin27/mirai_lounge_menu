@@ -7,8 +7,12 @@ namespace Mirai\Http\Controllers\Admin;
 use Mirai\Domain\Menu\MenuAdminRepository;
 use Mirai\Domain\Menu\MenuRepository;
 use Mirai\Domain\Menu\Recommender;
+use Mirai\Infrastructure\Config\Config;
+use Mirai\Infrastructure\Upload\FileUploader;
+use Mirai\Infrastructure\Upload\UploadException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\UploadedFileInterface;
 use Slim\Views\Twig;
 
 /**
@@ -17,11 +21,40 @@ use Slim\Views\Twig;
  */
 final class MenuAdminController
 {
+    private const PHOTO_SUBDIR = 'assets/img/menu/uploads';
+
     public function __construct(
         private readonly MenuAdminRepository $repo,
         private readonly MenuRepository $menu,
         private readonly Recommender $recommender,
+        private readonly FileUploader $uploader,
+        private readonly Config $config,
     ) {}
+
+    /** POST /admin/menu/product/{slug}/image — загрузить/заменить фото товара. */
+    public function uploadProductImage(Request $request, Response $response, array $args): Response
+    {
+        $file = $request->getUploadedFiles()['image'] ?? null;
+        if (!$file instanceof UploadedFileInterface) {
+            return $this->json($response, 422, ['ok' => false, 'error' => 'no_file']);
+        }
+        try {
+            $name = $this->uploader->save($file, $this->config->uploadDir(self::PHOTO_SUBDIR));
+        } catch (UploadException $e) {
+            return $this->json($response, 422, ['ok' => false, 'error' => $e->getMessage()]);
+        }
+        $path = self::PHOTO_SUBDIR . '/' . $name;
+        $this->repo->updateProductImage((string) $args['slug'], $path);
+
+        return $this->json($response, 200, ['ok' => true, 'path' => '/' . $path]);
+    }
+
+    private function json(Response $response, int $status, array $data): Response
+    {
+        $response->getBody()->write((string) json_encode($data, JSON_UNESCAPED_UNICODE));
+
+        return $response->withStatus($status)->withHeader('Content-Type', 'application/json; charset=utf-8');
+    }
 
     public function index(Request $request, Response $response): Response
     {

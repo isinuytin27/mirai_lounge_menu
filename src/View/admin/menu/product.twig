@@ -17,14 +17,43 @@
   .del:hover{border-color:var(--accent);color:#ffb3d6}
   h3{font-size:15px;margin:24px 0 10px;display:flex;align-items:center;gap:8px}
   .muted{color:var(--dim);font-size:12px}
+  .imgcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .imgcard .asset-thumb{flex:0 0 auto}
+  .imgcard img.prev{width:140px;height:105px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#0d0d10;display:block}
+  .imgcard .noimg{width:140px;height:105px;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:12px}
+  .imgcard .acts{display:flex;flex-direction:column;gap:8px}
+  .up-lbl{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:9px;color:var(--ink);cursor:pointer;font-size:13px}
+  .up-lbl:hover{border-color:var(--accent2)}
+  .dl-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--line);border-radius:9px;color:var(--accent2);text-decoration:none;font-size:13px}
+  .dl-btn:hover{border-color:var(--accent2);filter:brightness(1.1)}
+  .up-msg{font-size:12px;color:var(--dim)}
 </style>
 {% endblock %}
 
 {% block content %}
+{% import 'admin/_macros.twig' as a %}
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
     <a href="/admin/menu" style="color:var(--dim)">← Меню</a>
     <h1 style="margin:0;font-size:21px">{{ p.name }}</h1>
     <code style="margin-left:auto;color:var(--dim);font-size:12px">{{ p.slug }}</code>
+</div>
+
+<div class="card" style="margin-bottom:12px">
+    <h3 style="margin-top:0">Фото товара</h3>
+    <div class="imgcard" data-img-block data-slug="{{ p.slug }}">
+        {% if p.image %}
+        <div class="asset-thumb"><img class="prev" data-img-prev src="/{{ p.image|trim('/') }}" alt="" onerror="this.style.opacity=.25">{{ a.img_badge(p.image) }}</div>
+        {% else %}
+        <div class="noimg" data-img-prev-empty>нет фото</div>
+        {% endif %}
+        <div class="acts">
+            <label class="up-lbl">⬆ Загрузить / заменить
+                <input type="file" accept="image/*" data-img-up hidden>
+            </label>
+            <a class="dl-btn" data-img-dl href="{% if p.image %}/{{ p.image|trim('/') }}{% else %}#{% endif %}" download {% if not p.image %}style="display:none"{% endif %}>⬇ Скачать ассет</a>
+            <span class="up-msg" data-img-msg></span>
+        </div>
+    </div>
 </div>
 
 <form class="card" method="post" action="/admin/menu/product/{{ p.slug }}">
@@ -68,4 +97,40 @@
     <p class="muted">Движок не нашёл сильных пар (score ниже порога). Проверьте категорию/теги товара.</p>
 {% endfor %}
 <p class="muted" style="margin-top:8px">Связки не заводятся руками: задайте товару правильные теги — рекомендации подстроятся.</p>
+
+<script>
+// Загрузка/замена фото товара: файл -> POST -> обновляем превью и ссылку скачивания.
+(function () {
+    var block = document.querySelector('[data-img-block]');
+    if (!block) return;
+    var input = block.querySelector('[data-img-up]');
+    var msg = block.querySelector('[data-img-msg]');
+    var slug = block.getAttribute('data-slug');
+    input && input.addEventListener('change', function () {
+        var f = input.files && input.files[0];
+        if (!f) return;
+        var fd = new FormData();
+        fd.append('image', f);
+        fd.append('_csrf', '{{ csrf_token() }}');
+        msg.textContent = 'Загрузка…';
+        fetch('/admin/menu/product/' + encodeURIComponent(slug) + '/image', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (!j || !j.ok) { msg.textContent = 'Ошибка: ' + ((j && j.error) || 'не удалось'); return; }
+                var v = '?v=' + Date.now();
+                var prev = block.querySelector('[data-img-prev]');
+                var empty = block.querySelector('[data-img-prev-empty]');
+                if (empty) { // заменить заглушку на картинку
+                    var wrap = document.createElement('div'); wrap.className = 'asset-thumb';
+                    wrap.innerHTML = '<img class="prev" data-img-prev src="' + j.path + v + '" alt="">';
+                    empty.replaceWith(wrap);
+                } else if (prev) { prev.src = j.path + v; prev.style.opacity = 1; }
+                var dl = block.querySelector('[data-img-dl]');
+                if (dl) { dl.href = j.path; dl.style.display = ''; }
+                msg.textContent = 'Готово ✓ (обновите страницу, чтобы увидеть новый размер/формат)';
+            })
+            .catch(function () { msg.textContent = 'Сеть недоступна'; });
+    });
+})();
+</script>
 {% endblock %}

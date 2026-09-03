@@ -125,6 +125,7 @@ return static function (App $app): void {
         $g->get('', [MenuAdminController::class, 'index']);
         $g->get('/product/{slug}', [MenuAdminController::class, 'editProduct']);
         $g->post('/product/{slug}', [MenuAdminController::class, 'saveProduct']);
+        $g->post('/product/{slug}/image', [MenuAdminController::class, 'uploadProductImage']);
         $g->post('/toggle/{slug}/{field}', [MenuAdminController::class, 'toggle']);
         $g->post('/category/{id}', [MenuAdminController::class, 'saveCategory']);
         $g->post('/category/{id}/move/{dir}', [MenuAdminController::class, 'moveCategory']);
