@@ -33,4 +33,9 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
 
 COPY scripts/generate-vapid.php ./scripts/generate-vapid.php
 
+# Кэш Twig (prod пишет в var/cache/twig). Базовый каталог root-овый, а php-fpm бежит
+# под www-data — создаём var/ заранее и отдаём его www-data, иначе Twig падает
+# «Unable to create the cache directory».
+RUN mkdir -p var/cache/twig && chown -R www-data:www-data var
+
 # Остальной код монтируется volume’ами; vendor и scripts/generate-vapid.php — в образе.
