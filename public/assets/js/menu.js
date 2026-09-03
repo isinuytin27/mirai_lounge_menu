@@ -836,6 +836,12 @@
                                 const idx = Number(it.getAttribute("data-index"));
                                 if (idx === activeIdx) {
                                     openBarCategory(it.getAttribute("data-cats"), it.getAttribute("data-title"));
+                                    // Тач после pointerup шлёт «призрачный» click по тому же месту —
+                                    // а там теперь карточка товара из открывшегося списка → откроется
+                                    // товар. Глушим ровно один такой click.
+                                    const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+                                    document.addEventListener("click", swallow, { capture: true, once: true });
+                                    setTimeout(() => document.removeEventListener("click", swallow, { capture: true }), 600);
                                 } else {
                                     animateTo(idx, 0);
                                 }
