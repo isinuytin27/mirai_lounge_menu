@@ -218,10 +218,22 @@ ssh <span class="k">-t</span> -p &lt;ssh-порт&gt; deploy@&lt;сервер&gt
     <div class="note"><span class="ic">i</span><p><code>server-bootstrap.sh</code> генерирует <b>случайные</b> <code>MIRAI_TABLE_SIGNING_KEY</code> и пароль Postgres. Без ключа prod не поднимется (fail-closed) — это защита, не баг.</p></div>
 
     <h3>3 · TLS-сертификаты (Reg.ru, без Let's Encrypt)</h3>
+    <p>Скопировать с рабочей машины (пример — macOS, серты на рабочем столе <code>~/Desktop</code>). Каталог создал bootstrap, владелец <code>deploy</code> — <b>sudo не нужен</b>:</p>
     <div class="term">
-      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">на сервере · rsync их не несёт</span><button class="copy">копировать</button></div>
-<pre>/var/www/mirailounge/docker/ssl/mirailounge.ru/fullchain.pem   <span class="c"># сертификат + цепочка CA</span>
-/var/www/mirailounge/docker/ssl/mirailounge.ru/privkey.pem     <span class="c"># приватный ключ, chmod 600</span></pre>
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">рабочая машина → сервер</span><button class="copy">копировать</button></div>
+<pre>scp -P &lt;ssh-порт&gt; ~/Desktop/fullchain.pem ~/Desktop/privkey.pem \
+    deploy@&lt;сервер&gt;:/var/www/mirailounge/docker/ssl/mirailounge.ru/
+ssh -p &lt;ssh-порт&gt; deploy@&lt;сервер&gt; \
+    <span class="p">"chmod 600 /var/www/mirailounge/docker/ssl/mirailounge.ru/privkey.pem"</span></pre>
+    </div>
+    <div class="note"><span class="ic">i</span><p><code>fullchain.pem</code> = <b>сертификат + цепочка CA</b>. Если от Reg.ru отдельные файлы — собрать перед копированием: <code>cat certificate.crt certificate_ca.crt &gt; ~/Desktop/fullchain.pem</code>. Серты живут только на сервере — rsync их не несёт.</p></div>
+    <p>Проверить, что ключ подходит к сертификату (хеши должны совпасть):</p>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span class="lbl">проверка пары</span><button class="copy">копировать</button></div>
+<pre>ssh -p &lt;ssh-порт&gt; deploy@&lt;сервер&gt; <span class="p">'</span>
+<span class="p">  d=/var/www/mirailounge/docker/ssl/mirailounge.ru</span>
+<span class="p">  echo cert: $(openssl x509 -noout -modulus -in $d/fullchain.pem | openssl md5)</span>
+<span class="p">  echo key:  $(openssl rsa  -noout -modulus -in $d/privkey.pem  | openssl md5)'</span></pre>
     </div>
 
     <h3>4 · Self-hosted runner (для авто-деплоя)</h3>

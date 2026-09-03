@@ -41,11 +41,24 @@ ssh -t -p <ssh-порт> deploy@<сервер> "sudo bash /tmp/server-bootstrap.
 без ключа prod не поднимется).
 
 ### 3. TLS-сертификаты (Reg.ru, без Let's Encrypt)
+Скопировать с рабочей машины (пример — macOS, серты на рабочем столе `~/Desktop`).
+Каталог создал bootstrap, владелец `deploy` — **sudo не нужен**:
 ```bash
-# положить на сервер (rsync их НЕ несёт — живут только там):
-/var/www/mirailounge/docker/ssl/mirailounge.ru/fullchain.pem   # сертификат + цепочка CA
-/var/www/mirailounge/docker/ssl/mirailounge.ru/privkey.pem     # приватный ключ (chmod 600)
+scp -P <ssh-порт> ~/Desktop/fullchain.pem ~/Desktop/privkey.pem \
+    deploy@<сервер>:/var/www/mirailounge/docker/ssl/mirailounge.ru/
+ssh -p <ssh-порт> deploy@<сервер> \
+    "chmod 600 /var/www/mirailounge/docker/ssl/mirailounge.ru/privkey.pem"
 ```
+- `fullchain.pem` = **сертификат + цепочка CA**. Если от Reg.ru отдельные файлы:
+  `cat certificate.crt certificate_ca.crt > ~/Desktop/fullchain.pem` (перед копированием).
+- Проверить, что пара совпадает (хеши должны быть одинаковыми):
+```bash
+ssh -p <ssh-порт> deploy@<сервер> '
+  d=/var/www/mirailounge/docker/ssl/mirailounge.ru
+  echo cert: $(openssl x509 -noout -modulus -in $d/fullchain.pem | openssl md5)
+  echo key:  $(openssl rsa  -noout -modulus -in $d/privkey.pem  | openssl md5)'
+```
+> Серты живут только на сервере — rsync их НЕ несёт (в `deploy-excludes.txt`).
 
 ### 4. Self-hosted runner (для авто-деплоя)
 На сервере под `deploy` (**Settings → Actions → Runners → New self-hosted runner** даст токен):
