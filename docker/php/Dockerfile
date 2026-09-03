@@ -23,9 +23,13 @@ RUN { \
 WORKDIR /var/www/mirailounge
 
 COPY composer.json composer.lock ./
-RUN apk add --no-cache --virtual .composer-deps composer \
+# Composer ставим через БАЗОВЫЙ php:8.2 (в нём есть pdo_pgsql/fileinfo), а не из apk —
+# apk-пакет composer тянет отдельный php8.5 без наших расширений и падает на platform-req.
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && rm composer-setup.php \
     && composer install --no-dev --no-interaction --optimize-autoloader \
-    && apk del .composer-deps
+    && rm /usr/local/bin/composer
 
 COPY scripts/generate-vapid.php ./scripts/generate-vapid.php
 
