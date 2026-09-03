@@ -37,6 +37,18 @@ if [ -z "$SSH_TARGET" ]; then
 fi
 SSH=(ssh -p "$SSH_PORT" "$SSH_TARGET")
 
+# macOS ставит openrsync — он давится нашими --exclude-from/--include и битыми
+# симлинками. Берём настоящий rsync (Homebrew), если он есть.
+RSYNC_BIN="rsync"
+for c in /opt/homebrew/bin/rsync /usr/local/bin/rsync; do
+  [ -x "$c" ] && RSYNC_BIN="$c" && break
+done
+if "$RSYNC_BIN" --version 2>&1 | grep -qi openrsync; then
+  echo "✗ Найден только openrsync (macOS), он не тянет наш деплой." >&2
+  echo "  Поставь настоящий rsync:  brew install rsync   — и запусти скрипт снова." >&2
+  exit 1
+fi
+
 step(){ printf '\n\033[1;35m▶ %s\033[0m\n' "$*"; }
 
 # ── 1) сборка фронта (Vite → public/dist) ────────────────────────────────
@@ -48,7 +60,7 @@ fi
 # ── 2) rsync на сервер ───────────────────────────────────────────────────
 # --delete держит сервер в точном соответствии репо; исключения защищают
 # БД (data/pg), .env, серты, загрузки. png-ассеты возвращаем include'ами.
-RSYNC=(rsync -az --delete
+RSYNC=(-az --delete
   --include='/public/assets/booking/***'
   --include='/public/assets/img/vitrina/***'
   --exclude-from=scripts/deploy-excludes.txt
@@ -56,13 +68,13 @@ RSYNC=(rsync -az --delete
 
 if [ "$DRY" = 1 ]; then
   step "rsync --dry-run (ничего не меняем)"
-  rsync -n "${RSYNC[@]}" ./ "$SSH_TARGET:$REMOTE_PATH/"
+  "$RSYNC_BIN" -n "${RSYNC[@]}" ./ "$SSH_TARGET:$REMOTE_PATH/"
   echo "✓ Это список того, что зальётся. Убери --dry-run для реального деплоя."
   exit 0
 fi
 
 step "rsync → $SSH_TARGET:$REMOTE_PATH"
-rsync "${RSYNC[@]}" ./ "$SSH_TARGET:$REMOTE_PATH/"
+"$RSYNC_BIN" "${RSYNC[@]}" ./ "$SSH_TARGET:$REMOTE_PATH/"
 
 # ── 3) удалённо: платформа + стек + миграции ─────────────────────────────
 step "Удалённо: платформа Postgres + стек + миграции"
