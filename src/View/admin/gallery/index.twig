@@ -1,5 +1,4 @@
 {% extends 'admin/layout.twig' %}
-{% import 'admin/_macros.twig' as a %}
 {% block title %}Галерея{% endblock %}
 
 {% block head %}
@@ -19,6 +18,7 @@
 {% endblock %}
 
 {% block content %}
+{% import 'admin/_macros.twig' as a %}
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
     <a href="/admin" style="color:var(--dim)">← Обзор</a>
     <h1 style="margin:0;font-size:22px">Галерея</h1>
