@@ -55,8 +55,15 @@ final class FileUploader
         $ext = $this->extensionFor($mime);
         $name = bin2hex(random_bytes(16)) . '.' . $ext;
 
-        $this->ensureDir($targetDir);
-        $file->moveTo(rtrim($targetDir, '/') . '/' . $name);
+        try {
+            $this->ensureDir($targetDir);
+            $file->moveTo(rtrim($targetDir, '/') . '/' . $name);
+        } catch (UploadException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            // moveTo/mkdir кидают RuntimeException при :ro-маунте или правах не на www-data.
+            throw new UploadException('Не удалось сохранить файл — проверьте права на каталог загрузок (' . basename($targetDir) . ').');
+        }
 
         return $name;
     }
