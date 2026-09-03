@@ -1,9 +1,13 @@
 # rsync --exclude-from (пути от корня репозитория). С --delete эти пути на сервере
 # НЕ удаляются и НЕ перезаписываются. ВНИМАНИЕ: без правильных исключений --delete
 # может стереть БД/секреты/чужие сайты.
+#
+# ВАЖНО: комментарии — ТОЛЬКО на отдельной строке (с #). Инлайн-комментарий после
+# паттерна rsync считает частью пути — исключение перестаёт работать.
 
 # --- ДАННЫЕ И БД (никогда не трогать) ---
-/data/                      # runtime + том Postgres (data/pg) — КРИТИЧНО
+# /data/ = runtime + том Postgres (data/pg) — КРИТИЧНО
+/data/
 
 # --- Загрузки из админок ---
 /public/assets/img/menu/uploads/
@@ -15,17 +19,22 @@
 
 # --- Секреты и dev-only ---
 /.env
-/scripts/deploy.env         # локальные доступы к серверу для deploy.sh
-/docker/ssl/                # сертификаты живут на сервере, не в git
-/docker/docker-compose.override.yml   # локальный dev-override
-/docker/nginx/dev/          # dev-vhost
+# локальные доступы к серверу для deploy.sh
+/scripts/deploy.env
+# сертификаты живут на сервере, не в git
+/docker/ssl/
+# локальный dev-override (переводит стек в dev-режим — на прод нельзя)
+/docker/docker-compose.override.yml
+# dev-vhost
+/docker/nginx/dev/
 /docker/php/Dockerfile.dev
 
 # --- Соседний арендатор (вне этого репо) ---
 /miraipro_site/
 
 # --- Мусор сборки / локальное ---
-/vendor/                    # собирается на сервере в образе php (Dockerfile composer install)
+# vendor собирается на сервере в образе php (Dockerfile composer install)
+/vendor/
 /.git/
 /.github/
 /node_modules/
@@ -36,7 +45,5 @@
 /.claude/
 /var/
 /composer.phar
-# ВНИМАНИЕ: *.png исключает и реальные ассеты. Фон карты зала брони возвращаем
-# явным --include в deploy.yml (rsync). Новые важные png — добавляй include там же.
 *.png
 .DS_Store
