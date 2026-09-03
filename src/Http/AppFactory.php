@@ -55,6 +55,27 @@ final class AppFactory
             ['is_safe' => ['html']],
         ));
 
+        // asset_meta('assets/img/...') -> {ext, size, bad} для ярлычков в админке.
+        // «Плохой» ассет = не webp ИЛИ больше 2 МБ (сигнал переоптимизировать).
+        $twig->getEnvironment()->addFunction(new TwigFunction(
+            'asset_meta',
+            static function (?string $path) use ($projectRoot): array {
+                $rel = ltrim((string) $path, '/');
+                $abs = $projectRoot . '/public/' . $rel;
+                $ext = strtolower(pathinfo($rel, PATHINFO_EXTENSION));
+                $bytes = $rel !== '' && is_file($abs) ? (int) filesize($abs) : 0;
+                $bad = ($ext !== '' && $ext !== 'webp') || $bytes > 2 * 1024 * 1024;
+                if ($bytes >= 1048576) {
+                    $size = number_format($bytes / 1048576, 1) . ' МБ';
+                } elseif ($bytes >= 1024) {
+                    $size = (int) round($bytes / 1024) . ' КБ';
+                } else {
+                    $size = $bytes . ' Б';
+                }
+                return ['ext' => $ext ?: '—', 'size' => $bytes ? $size : '—', 'bad' => $bad, 'bytes' => $bytes];
+            },
+        ));
+
         $app->add(TwigMiddleware::create($app, $twig));
         $app->addRoutingMiddleware();
         $app->addBodyParsingMiddleware();

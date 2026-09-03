@@ -1,4 +1,5 @@
 {% extends 'admin/layout.twig' %}
+{% import 'admin/_macros.twig' as a %}
 {% block title %}Галерея{% endblock %}
 
 {% block head %}
@@ -38,7 +39,7 @@
 <div class="gal">
     {% for it in items %}
         <div class="gi">
-            <img src="/{{ it.image }}" alt="{{ it.caption }}" loading="lazy">
+            <div class="asset-thumb"><img src="/{{ it.image }}" alt="{{ it.caption }}" loading="lazy">{{ a.img_badge(it.image) }}</div>
             <div class="cap">
                 <form method="post" action="/admin/gallery/{{ it.id }}/caption">
                     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">

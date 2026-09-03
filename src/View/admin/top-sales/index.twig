@@ -1,4 +1,5 @@
 {% extends 'admin/layout.twig' %}
+{% import 'admin/_macros.twig' as a %}
 {% block title %}Хиты продаж{% endblock %}
 
 {% block head %}
@@ -53,7 +54,7 @@
         <form class="inline" method="post" action="/admin/top-sales/{{ h.id }}/move/up"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button title="Выше">▲</button></form>
         <form class="inline" method="post" action="/admin/top-sales/{{ h.id }}/move/down"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button title="Ниже">▼</button></form>
     </div>
-    <img src="/{{ h.image|default('')|trim('/') }}" alt="" onerror="this.style.opacity=.2">
+    <div class="asset-thumb">{% if h.image %}{{ a.img_badge(h.image) }}{% endif %}<img src="/{{ h.image|default('')|trim('/') }}" alt="" onerror="this.style.opacity=.2"></div>
     <div class="grow">
         <div class="nm">{{ h.name }}</div>
         <div class="pr">{{ h.price }} ₽</div>

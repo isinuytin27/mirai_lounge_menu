@@ -1,4 +1,5 @@
 {% extends 'admin/layout.twig' %}
+{% import 'admin/_macros.twig' as a %}
 {% block title %}Витрина кальянов{% endblock %}
 
 {% block head %}
@@ -34,7 +35,7 @@
 <form class="vg" method="post" action="/admin/vitrina/hookah/{{ h.id }}">
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <div class="rowline">
-        <img class="thumb" src="{{ h.image }}" alt="" onerror="this.style.opacity=.2">
+        <div class="asset-thumb">{% if h.image %}{{ a.img_badge(h.image) }}{% endif %}<img class="thumb" src="{{ h.image }}" alt="" onerror="this.style.opacity=.2"></div>
         <div class="fld grow"><label>{{ h.name }} · {{ h.price }} ₽ — картинка (путь)</label>
             <div style="display:flex;gap:6px"><input class="input grow img-path" name="image" value="{{ h.image }}"><input type="file" accept="image/*" class="img-up" style="max-width:120px;font-size:11px"></div></div>
         <div class="fld"><label>Модель</label><input class="input w120" name="model" value="{{ h.model ?? '' }}"></div>
@@ -52,7 +53,7 @@
 <form class="vg" method="post" action="/admin/vitrina/bowl/{{ b.id }}">
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <div class="rowline">
-        <img class="thumb" src="{{ b.image }}" alt="" onerror="this.style.opacity=.2">
+        <div class="asset-thumb">{% if b.image %}{{ a.img_badge(b.image) }}{% endif %}<img class="thumb" src="{{ b.image }}" alt="" onerror="this.style.opacity=.2"></div>
         <div class="fld"><label>Название</label><input class="input w120" name="name" value="{{ b.name }}"></div>
         <div class="fld grow"><label>Картинка</label><div style="display:flex;gap:6px"><input class="input grow img-path" name="image" value="{{ b.image }}"><input type="file" accept="image/*" class="img-up" style="max-width:120px;font-size:11px"></div></div>
         <div class="fld"><label>img_w</label><input class="input w70" name="img_w" type="number" value="{{ b.img_w }}"></div>
@@ -88,7 +89,7 @@
 <form class="vg" method="post" action="/admin/vitrina/drink/{{ d.id }}">
     <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
     <div class="rowline">
-        <img class="thumb" src="{{ d.image }}" alt="" onerror="this.style.opacity=.2">
+        <div class="asset-thumb">{% if d.image %}{{ a.img_badge(d.image) }}{% endif %}<img class="thumb" src="{{ d.image }}" alt="" onerror="this.style.opacity=.2"></div>
         <div class="fld"><label>Название</label><input class="input w120" name="name" value="{{ d.name }}"></div>
         <div class="fld grow"><label>Картинка</label><div style="display:flex;gap:6px"><input class="input grow img-path" name="image" value="{{ d.image }}"><input type="file" accept="image/*" class="img-up" style="max-width:120px;font-size:11px"></div></div>
         <label class="check"><input type="checkbox" name="active" {{ d.active ? 'checked' }}> вкл</label>
