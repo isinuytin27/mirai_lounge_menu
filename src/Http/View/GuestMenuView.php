@@ -75,6 +75,11 @@ final class GuestMenuView
                     'weight' => $p->portionLabel() ?? $p->prepTime,
                     'image' => $p->image,
                     'available' => $p->available,
+                    'kcal' => $p->kcal,
+                    'protein' => $p->protein,
+                    'fat' => $p->fat,
+                    'carbs' => $p->carbs,
+                    'allergens' => $p->allergens,
                     'pairings' => array_map(static fn (PairedProduct $pp): array => [
                         'slug' => $pp->slug,
                         'name' => $pp->name,

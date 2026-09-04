@@ -40,6 +40,7 @@ final class MenuRepository extends Repository implements ProductFinder
             "SELECT p.id, p.slug, p.name, p.price, p.description, p.description_short,
                     p.composition, p.portion_value, p.portion_unit, p.prep_time, p.image,
                     p.visible, p.available, p.sort_order, p.rec_tags,
+                    p.kcal, p.protein, p.fat, p.carbs, p.allergens,
                     c.id AS c_id, c.slug AS category_slug, c.title AS c_title,
                     c.line AS c_line, c.sort_order AS c_sort, c.rec_category, g.slug AS group_slug
              FROM products p

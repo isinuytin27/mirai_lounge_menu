@@ -218,6 +218,7 @@ final class MenuAdminRepository extends Repository
                 name = :name, price = :price,
                 description = :description, description_short = :description_short, composition = :composition,
                 portion_value = :portion_value, portion_unit = :portion_unit, prep_time = :prep_time,
+                kcal = :kcal, protein = :protein, fat = :fat, carbs = :carbs, allergens = :allergens,
                 visible = :visible, available = :available, rec_tags = CAST(:rec_tags AS jsonb), updated_at = :now
              WHERE slug = :slug',
             [
@@ -229,6 +230,11 @@ final class MenuAdminRepository extends Repository
                 'portion_value' => $data['portion_value'] !== '' ? $data['portion_value'] : null,
                 'portion_unit' => $data['portion_unit'] ?: null,
                 'prep_time' => $data['prep_time'] ?: null,
+                'kcal' => ($data['kcal'] ?? '') !== '' ? (int) $data['kcal'] : null,
+                'protein' => ($data['protein'] ?? '') !== '' ? $data['protein'] : null,
+                'fat' => ($data['fat'] ?? '') !== '' ? $data['fat'] : null,
+                'carbs' => ($data['carbs'] ?? '') !== '' ? $data['carbs'] : null,
+                'allergens' => $data['allergens'] ?: null,
                 'visible' => !empty($data['visible']) ? 'true' : 'false',
                 'available' => !empty($data['available']) ? 'true' : 'false',
                 // пусто => null (наследует теги категории); иначе — переопределение

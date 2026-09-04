@@ -33,7 +33,18 @@ final class Product
         public readonly int $sortOrder = 0,
         public readonly ?string $recCategory = null,
         public readonly array $recTags = [],
+        public readonly ?int $kcal = null,
+        public readonly ?string $protein = null,
+        public readonly ?string $fat = null,
+        public readonly ?string $carbs = null,
+        public readonly ?string $allergens = null,
     ) {}
+
+    /** КБЖУ заполнено хотя бы частично? */
+    public function hasNutrition(): bool
+    {
+        return $this->kcal !== null || $this->protein !== null || $this->fat !== null || $this->carbs !== null;
+    }
 
     /**
      * @param array<string,mixed> $row
@@ -60,6 +71,11 @@ final class Product
             (int) ($row['sort_order'] ?? 0),
             self::nullableStr($row['rec_category'] ?? null),
             self::tagList($row['rec_tags'] ?? null),
+            isset($row['kcal']) && $row['kcal'] !== '' ? (int) $row['kcal'] : null,
+            self::nullableStr($row['protein'] ?? null),
+            self::nullableStr($row['fat'] ?? null),
+            self::nullableStr($row['carbs'] ?? null),
+            self::nullableStr($row['allergens'] ?? null),
         );
     }
 

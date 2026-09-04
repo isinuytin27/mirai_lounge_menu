@@ -72,6 +72,15 @@
     <div class="field"><label>Короткое описание (для карточки)</label><input class="input" name="description_short" value="{{ p.description_short ?? '' }}"></div>
     <div class="field"><label>Полное описание</label><textarea class="input" name="description">{{ p.description ?? '' }}</textarea></div>
     <div class="field"><label>Состав</label><textarea class="input" name="composition">{{ p.composition ?? '' }}</textarea></div>
+    <div class="field"><label>КБЖУ <span class="muted">(на порцию)</span></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="input" name="kcal" type="number" min="0" value="{{ p.kcal ?? '' }}" placeholder="ккал" style="width:100px">
+            <input class="input" name="protein" value="{{ p.protein ?? '' }}" placeholder="белки, г" style="width:110px">
+            <input class="input" name="fat" value="{{ p.fat ?? '' }}" placeholder="жиры, г" style="width:110px">
+            <input class="input" name="carbs" value="{{ p.carbs ?? '' }}" placeholder="углеводы, г" style="width:120px">
+        </div>
+    </div>
+    <div class="field"><label>Аллергены <span class="muted">(через запятую)</span></label><input class="input" name="allergens" value="{{ p.allergens ?? '' }}" placeholder="глютен, лактоза, орехи"></div>
     <div class="field">
         <label>Теги рекомендатора <span class="muted">— переопределяют теги категории; пусто = наследуются</span></label>
         <input class="input" name="rec_tags" value="{{ rec_tags|join(' ') }}" placeholder="anchor smoky chill">
