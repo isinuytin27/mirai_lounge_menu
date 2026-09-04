@@ -15,6 +15,17 @@
   .mcat .cat-move{display:flex;flex-direction:column;gap:2px}
   .mcat .cat-move button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:6px;padding:0 7px;font-size:11px;cursor:pointer;line-height:1.4}
   .mcat .cat-move button:hover{border-color:var(--accent2);color:var(--ink)}
+  .mcat .cat-del{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+  .mcat .cat-del:hover{border-color:var(--accent);color:#ffb3d6}
+  .addcat{margin:8px 0 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 14px}
+  .addcat summary{cursor:pointer;font-weight:700;font-size:13px;padding:12px 0;color:var(--accent2)}
+  .addcat-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 0 14px}
+  .addcat-form .cat-title{min-width:200px}
+  .addprod{display:flex;gap:8px;align-items:center;margin:6px 0 18px;flex-wrap:wrap}
+  .addprod .ap-name{flex:1;min-width:200px;background:#170f1e;border:1px dashed var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:13px}
+  .addprod .ap-price{width:90px;background:#170f1e;border:1px dashed var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:13px}
+  .addprod .ap-btn{background:var(--accent2);border:none;color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer}
+  .tgl.del:hover{border-color:var(--accent);color:#ffb3d6}
   .prow{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);
     border-radius:12px;background:var(--panel);margin-bottom:7px}
   .prow .nm{font-weight:600;font-size:14px}
@@ -40,6 +51,16 @@
 </div>
 {% if flash %}<div class="flash">✓ {{ flash }}</div>{% endif %}
 
+<details class="addcat">
+    <summary>+ Новая категория</summary>
+    <form class="addcat-form" method="post" action="/admin/menu/category">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input class="cat-title" name="title" placeholder="Название категории" required>
+        <select class="cat-group" name="group_id" aria-label="Группа">{% for g in groups %}<option value="{{ g.id }}">{{ g.title }}</option>{% endfor %}</select>
+        <button class="cat-save" type="submit">Добавить</button>
+    </form>
+</details>
+
 {% for c in categories %}
     <div class="mcat {{ c.active ? '' : 'off' }}">
         <div class="cat-move">
@@ -54,6 +75,10 @@
             </select>
             <label class="cat-on"><input type="checkbox" name="active" {{ c.active ? 'checked' }}> вкл</label>
             <button class="cat-save" type="submit">Сохранить</button>
+        </form>
+        <form class="inline" method="post" action="/admin/menu/category/{{ c.id }}/delete" onsubmit="return confirm('Удалить категорию «{{ c.title }}» вместе с {{ c.products|length }} товарами? Это необратимо.')">
+            <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+            <button class="cat-del" title="Удалить категорию">🗑</button>
         </form>
         <span style="margin-left:auto;color:var(--dim);font-size:12px">{{ c.products|length }} товаров · выдача {{ c.line }}</span>
     </div>
@@ -74,8 +99,19 @@
                     <button class="tgl" title="В наличии (стоп-лист)">{{ p.available ? '✅ в наличии' : '⛔ стоп' }}</button>
                 </form>
                 <a class="edit" href="/admin/menu/product/{{ p.slug }}">Редактировать →</a>
+                <form class="inline" method="post" action="/admin/menu/product/{{ p.slug }}/delete" onsubmit="return confirm('Удалить товар «{{ p.name }}»?')">
+                    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+                    <button class="tgl del" title="Удалить товар">🗑</button>
+                </form>
             </div>
         </div>
     {% endfor %}
+    <form class="addprod" method="post" action="/admin/menu/product">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="category_id" value="{{ c.id }}">
+        <input class="ap-name" name="name" placeholder="+ Новый товар в «{{ c.title }}» — название" required>
+        <input class="ap-price" name="price" type="number" min="0" placeholder="₽" required>
+        <button class="ap-btn" type="submit">Добавить</button>
+    </form>
 {% endfor %}
 {% endblock %}

@@ -88,6 +88,66 @@ final class MenuAdminController
         return $response->withStatus(302)->withHeader('Location', '/admin/menu');
     }
 
+    /** POST /admin/menu/product — создать товар в категории → на страницу редактирования. */
+    public function addProduct(Request $request, Response $response): Response
+    {
+        $b = (array) $request->getParsedBody();
+        $catId = (int) ($b['category_id'] ?? 0);
+        $name = trim((string) ($b['name'] ?? ''));
+        $price = (int) ($b['price'] ?? 0);
+        if ($catId <= 0 || $name === '') {
+            return $response->withStatus(302)->withHeader('Location', '/admin/menu?ok=Укажите+название+и+категорию');
+        }
+        $slug = $this->repo->createProduct($catId, $name, $price);
+
+        return $response->withStatus(302)->withHeader('Location', '/admin/menu/product/' . rawurlencode($slug));
+    }
+
+    /** POST /admin/menu/product/{slug}/delete — удалить товар. */
+    public function deleteProduct(Request $request, Response $response, array $args): Response
+    {
+        $this->repo->deleteProduct((string) $args['slug']);
+
+        return $response->withStatus(302)->withHeader('Location', '/admin/menu?ok=Товар+удалён');
+    }
+
+    /** POST /admin/menu/category — создать категорию в группе. */
+    public function addCategory(Request $request, Response $response): Response
+    {
+        $b = (array) $request->getParsedBody();
+        $groupId = (int) ($b['group_id'] ?? 0);
+        $title = trim((string) ($b['title'] ?? ''));
+        if ($groupId > 0 && $title !== '') {
+            $this->repo->createCategory($groupId, $title, $this->lineForGroup($groupId));
+        }
+
+        return $response->withStatus(302)->withHeader('Location', '/admin/menu?ok=Категория+добавлена');
+    }
+
+    /** POST /admin/menu/category/{id}/delete — удалить категорию (с товарами). */
+    public function deleteCategory(Request $request, Response $response, array $args): Response
+    {
+        $this->repo->deleteCategory((int) $args['id']);
+
+        return $response->withStatus(302)->withHeader('Location', '/admin/menu?ok=Категория+удалена');
+    }
+
+    /** Линия выдачи по группе: кальян→hookah, бар→bar, остальное→kitchen. */
+    private function lineForGroup(int $groupId): string
+    {
+        foreach ($this->repo->allGroups() as $g) {
+            if ($g['id'] === $groupId) {
+                return match ($g['slug']) {
+                    'hookah' => 'hookah',
+                    'bar' => 'bar',
+                    default => 'kitchen',
+                };
+            }
+        }
+
+        return 'kitchen';
+    }
+
     public function editProduct(Request $request, Response $response, array $args): Response
     {
         $slug = (string) $args['slug'];

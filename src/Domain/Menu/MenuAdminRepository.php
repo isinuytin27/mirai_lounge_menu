@@ -66,6 +66,83 @@ final class MenuAdminRepository extends Repository
         ], $this->fetchAll('SELECT id, slug, title FROM menu_groups ORDER BY sort_order, title'));
     }
 
+    /** Создать товар в категории (минимум: название+цена). Возвращает slug. */
+    public function createProduct(int $categoryId, string $name, int $price): string
+    {
+        $slug = $this->uniqueSlug('products', self::slugify($name));
+        $next = (int) ($this->fetchOne(
+            'SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM products WHERE category_id = :c',
+            ['c' => $categoryId]
+        )['n'] ?? 1);
+        $this->execute(
+            'INSERT INTO products (slug, category_id, name, price, visible, available, sort_order)
+             VALUES (:slug, :c, :name, :price, TRUE, TRUE, :sort)',
+            ['slug' => $slug, 'c' => $categoryId, 'name' => $name, 'price' => $price, 'sort' => $next]
+        );
+
+        return $slug;
+    }
+
+    /** Удалить товар. */
+    public function deleteProduct(string $slug): void
+    {
+        $this->execute('DELETE FROM products WHERE slug = :slug', ['slug' => $slug]);
+    }
+
+    /** Создать категорию в группе (line берётся из группы). Возвращает id. */
+    public function createCategory(int $groupId, string $title, string $line): int
+    {
+        $slug = $this->uniqueSlug('menu_categories', self::slugify($title));
+        $next = (int) ($this->fetchOne(
+            'SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM menu_categories WHERE group_id = :g',
+            ['g' => $groupId]
+        )['n'] ?? 1);
+        $row = $this->fetchOne(
+            'INSERT INTO menu_categories (slug, group_id, title, line, sort_order, active)
+             VALUES (:slug, :g, :title, :line, :sort, TRUE) RETURNING id',
+            ['slug' => $slug, 'g' => $groupId, 'title' => $title, 'line' => $line, 'sort' => $next]
+        );
+
+        return (int) ($row['id'] ?? 0);
+    }
+
+    /** Удалить категорию (вместе с товарами). */
+    public function deleteCategory(int $id): void
+    {
+        $this->db->transactional(function () use ($id): void {
+            $this->execute('DELETE FROM products WHERE category_id = :id', ['id' => $id]);
+            $this->execute('DELETE FROM menu_categories WHERE id = :id', ['id' => $id]);
+        });
+    }
+
+    /** Кол-во товаров в категории (для подтверждения удаления). */
+    public function categoryProductCount(int $id): int
+    {
+        return (int) ($this->fetchOne('SELECT count(*) AS n FROM products WHERE category_id = :id', ['id' => $id])['n'] ?? 0);
+    }
+
+    /** slug из названия (RU→lat), с гарантией уникальности в таблице. */
+    private function uniqueSlug(string $table, string $base): string
+    {
+        $slug = $base;
+        $i = 1;
+        while ($this->fetchOne("SELECT 1 FROM {$table} WHERE slug = :s", ['s' => $slug]) !== null) {
+            $slug = $base . '_' . (++$i);
+        }
+
+        return $slug;
+    }
+
+    private static function slugify(string $s): string
+    {
+        $map = ['а' => 'a','б' => 'b','в' => 'v','г' => 'g','д' => 'd','е' => 'e','ё' => 'e','ж' => 'zh','з' => 'z','и' => 'i','й' => 'y','к' => 'k','л' => 'l','м' => 'm','н' => 'n','о' => 'o','п' => 'p','р' => 'r','с' => 's','т' => 't','у' => 'u','ф' => 'f','х' => 'h','ц' => 'c','ч' => 'ch','ш' => 'sh','щ' => 'sch','ъ' => '','ы' => 'y','ь' => '','э' => 'e','ю' => 'yu','я' => 'ya'];
+        $s = strtr(mb_strtolower(trim($s)), $map);
+        $s = preg_replace('/[^a-z0-9]+/', '_', $s) ?? '';
+        $s = trim($s, '_');
+
+        return $s !== '' ? $s : 'item';
+    }
+
     /** Заменить картинку товара (путь от public, напр. assets/img/menu/uploads/x.webp). */
     public function updateProductImage(string $slug, string $image): void
     {
