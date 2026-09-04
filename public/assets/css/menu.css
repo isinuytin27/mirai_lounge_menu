@@ -1300,21 +1300,163 @@
   font-size: 12px;
 }
 
-/* ============================================================
-   КОРЗИНА ВРЕМЕННО СКРЫТА (будет переработана).
-   Прячем весь заказной UI. JS-логика не тронута — чтобы вернуть,
-   удалить этот блок. Меню работает как «витрина»: только просмотр.
-   ============================================================ */
+/* Корзина возвращена: старый таб убран (заменён плавающей кнопкой FAB), заказной
+   UI активен. Полноэкранная карточка товара убрана — прячем её остатки в разметке. */
 .menu-cart-tab,
-.menu-cart-sheet,
-.menu-cart-backdrop,
-.menu-cart-clear,
-.menu-add,
-.menu-qty,
-.menu-item-viewer-foot .menu-add,
-.menu-item-viewer-foot .menu-qty {
+.menu-item-viewer,
+.menu-item-viewer-backdrop {
   display: none !important;
 }
+
+/* ============================================================
+   Плавающая кнопка-корзина (FAB) — правый нижний угол, над всем.
+   ============================================================ */
+.menu-cart-fab {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #f5007d, #c9407a);
+  color: #fff;
+  box-shadow: 0 10px 26px rgba(245, 0, 125, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+}
+.menu-cart-fab:active { transform: scale(0.92); }
+.menu-cart-fab-ic { width: 26px; height: 26px; }
+.menu-cart-fab-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 12px;
+  background: #fff;
+  color: #f5007d;
+  font: 700 12px/22px Helvetica, Arial, sans-serif;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.menu-cart-fab[data-cart-empty] { opacity: 0.55; }
+.menu-cart-fab[data-cart-empty] .menu-cart-fab-count { display: none; }
+
+/* ============================================================
+   КУХНЯ — все категории видны сразу, каждая = горизонтальная карусель.
+   Карточка блюда: фото без фона + инфо-рамка (название/цена/объём/КБЖУ/аллергены/+).
+   ============================================================ */
+[data-menu-group="kitchen"] .menu-cats { display: none !important; }
+[data-menu-group="kitchen"] .menu-content { padding-bottom: 90px; }
+[data-menu-group="kitchen"] .menu-section { margin: 0 0 22px; }
+[data-menu-group="kitchen"] .menu-section-title {
+  display: block;
+  padding: 0 16px;
+  margin: 6px 0 4px;
+  font-size: 15px;
+  opacity: 0.9;
+}
+/* Карусель: горизонтальная прокрутка со снапом. Большой «радиус» имитируем
+   перспективой + масштабом центральной карточки (добавляет JS: data-carousel). */
+[data-menu-group="kitchen"] .menu-grid {
+  display: flex;
+  grid-template-columns: none;
+  gap: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 24px calc(50% - 130px) 10px;
+  perspective: 1600px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+[data-menu-group="kitchen"] .menu-grid::-webkit-scrollbar { display: none; }
+[data-menu-group="kitchen"] .menu-card.menu-mini {
+  flex: 0 0 260px;
+  height: auto;
+  scroll-snap-align: center;
+  background: none;
+  border: none;
+  padding: 0 8px;
+  gap: 0;
+  align-items: center;
+  text-align: center;
+  transform: scale(0.82);
+  opacity: 0.55;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+[data-menu-group="kitchen"] .menu-card.menu-mini[data-centered] {
+  transform: scale(1);
+  opacity: 1;
+}
+/* Фото без фона — полноценное, крупное */
+[data-menu-group="kitchen"] .menu-card.menu-mini > .menu-photo {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: contain;
+  background: none;
+  border: none;
+  border-radius: 0;
+  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.6));
+  margin-bottom: -18px;
+  position: relative;
+  z-index: 2;
+}
+/* Инфо-рамка под фото */
+[data-menu-group="kitchen"] .menu-card.menu-mini > .menu-info {
+  width: 100%;
+  background: rgba(20, 16, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 26px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  backdrop-filter: blur(6px);
+}
+[data-menu-group="kitchen"] .menu-item-name {
+  min-height: 0;
+  -webkit-line-clamp: 2;
+  font-size: 15px;
+  text-align: center;
+}
+[data-menu-group="kitchen"] .menu-item-desc { display: none; }
+[data-menu-group="kitchen"] .menu-price-row { justify-content: center; }
+[data-menu-group="kitchen"] .menu-actions { align-items: stretch; gap: 8px; }
+[data-menu-group="kitchen"] .menu-add { width: 100%; }
+
+/* КБЖУ и аллергены (видны на карточке кухни) */
+.menu-nutri { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.menu-nutri .nutri {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 3px 8px;
+  letter-spacing: 0.02em;
+}
+.menu-nutri .nutri b { color: rgba(255, 255, 255, 0.95); font-weight: 700; margin-right: 2px; }
+.menu-allerg {
+  font-size: 10.5px;
+  color: #ffcf87;
+  text-align: center;
+  min-height: 0;
+}
+.menu-allerg:empty { display: none; }
+/* На остальных группах (бар/кальян) КБЖУ/аллергены не показываем — компактный вид. */
+[data-menu-group="bar"] .menu-nutri,
+[data-menu-group="bar"] .menu-allerg,
+[data-menu-group="hookah"] .menu-nutri,
+[data-menu-group="hookah"] .menu-allerg { display: none; }
 
 /* === Reduced motion (a11y, Emil): убираем движение, оставляем opacity/цвет === */
 @media (prefers-reduced-motion: reduce) {

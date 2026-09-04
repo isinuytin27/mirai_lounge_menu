@@ -93,6 +93,15 @@
                                                 {% if descMini %}
                                                 <p class="menu-item-desc">{{ descMini }}</p>
                                                 {% endif %}
+                                                {% if item.kcal or item.protein or item.fat or item.carbs %}
+                                                <div class="menu-nutri" aria-label="КБЖУ">
+                                                    {% if item.kcal %}<span class="nutri"><b>{{ item.kcal }}</b>ккал</span>{% endif %}
+                                                    {% if item.protein %}<span class="nutri"><b>{{ item.protein }}</b>б</span>{% endif %}
+                                                    {% if item.fat %}<span class="nutri"><b>{{ item.fat }}</b>ж</span>{% endif %}
+                                                    {% if item.carbs %}<span class="nutri"><b>{{ item.carbs }}</b>у</span>{% endif %}
+                                                </div>
+                                                {% endif %}
+                                                <div class="menu-allerg" data-allerg>{% if item.allergens %}⚠ {{ item.allergens }}{% endif %}</div>
                                                 <div class="menu-actions">
                                                     <div class="menu-price-row">
                                                         <span class="menu-price">{{ item.price }} ₽</span>
@@ -131,6 +140,11 @@
                     <text class="menu-cart-badge-text" x="28" y="13" text-anchor="middle" dominant-baseline="central" data-cart-count>0</text>
                 </svg>
             </div>
+        </button>
+
+        <button class="menu-cart-fab" type="button" data-cart-toggle aria-label="Корзина" data-cart-empty>
+            <svg class="menu-cart-fab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span class="menu-cart-fab-count" data-cart-count>0</span>
         </button>
 
         <div class="menu-item-viewer-backdrop" data-item-viewer-backdrop hidden></div>

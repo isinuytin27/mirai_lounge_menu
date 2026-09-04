@@ -40,14 +40,18 @@
             }
 
             function updateCartBadge() {
-                const countEl = root.querySelector("[data-cart-count]");
-                const badgeSvg = root.querySelector(".menu-cart-badge");
-                if (!countEl || !badgeSvg) return;
                 const cart = loadCart();
                 const count = cartCount(cart);
-                countEl.textContent = String(count);
-                badgeSvg.classList.toggle("menu-cart-badge--empty", count <= 0);
-                badgeSvg.setAttribute("aria-label", count <= 0 ? "В корзине нет позиций" : "Позиций в корзине: " + count);
+                // Все счётчики (старый бейдж + плавающая корзина).
+                root.querySelectorAll("[data-cart-count]").forEach((el) => { el.textContent = String(count); });
+                const badgeSvg = root.querySelector(".menu-cart-badge");
+                if (badgeSvg) {
+                    badgeSvg.classList.toggle("menu-cart-badge--empty", count <= 0);
+                    badgeSvg.setAttribute("aria-label", count <= 0 ? "В корзине нет позиций" : "Позиций в корзине: " + count);
+                }
+                // Плавающая корзина: прячем счётчик и приглушаем, когда пусто.
+                const fab = root.querySelector(".menu-cart-fab");
+                if (fab) fab.toggleAttribute("data-cart-empty", count <= 0);
                 const clearBtn = root.querySelector("[data-clear-cart]");
                 if (clearBtn) clearBtn.hidden = count <= 0;
                 syncOrderUi();
@@ -339,30 +343,9 @@
                 syncBrandOverlay();
             }
 
-            root.addEventListener("click", (e) => {
-                const card = e.target.closest("[data-item]");
-                if (!card) return;
-                const addBtn = e.target.closest("[data-add]");
-                const plusBtn = e.target.closest("[data-plus]");
-                const minusBtn = e.target.closest("[data-minus]");
-                if (!addBtn && !plusBtn && !minusBtn) {
-                    e.preventDefault();
-                    openItemViewer(card);
-                    return;
-                }
-            });
-
-            root.addEventListener("keydown", (e) => {
-                const card = e.target.closest("[data-item]");
-                if (!card || e.key !== "Enter") return;
-                const addBtn = e.target.closest("[data-add]");
-                const plusBtn = e.target.closest("[data-plus]");
-                const minusBtn = e.target.closest("[data-minus]");
-                if (!addBtn && !plusBtn && !minusBtn) {
-                    e.preventDefault();
-                    openItemViewer(card);
-                }
-            });
+            // Полноэкранная карточка товара убрана: вся информация теперь на самой
+            // карточке. Клик по телу карточки ничего не открывает — работают только
+            // кнопки Добавить/±.
 
             root.addEventListener("click", (e) => {
                 const card = e.target.closest("[data-item]");
@@ -597,6 +580,30 @@
                 }
 
                 // Обычная группа (Кальян/Кухня/Ночное): сразу список блюд + пилюли
+                // Кухня-карусель: подсветка/увеличение карточки в центре (эффект колеса).
+                function centerKitchenCard(grid) {
+                    var cx = grid.getBoundingClientRect().left + grid.clientWidth / 2;
+                    var cards = grid.querySelectorAll("[data-item]");
+                    var best = null, bestD = Infinity;
+                    cards.forEach(function (c) {
+                        var r = c.getBoundingClientRect();
+                        var d = Math.abs(r.left + r.width / 2 - cx);
+                        if (d < bestD) { bestD = d; best = c; }
+                    });
+                    cards.forEach(function (c) {
+                        if (c === best) c.setAttribute("data-centered", ""); else c.removeAttribute("data-centered");
+                    });
+                }
+                function initKitchenCarousels() {
+                    root.querySelectorAll('[data-cat-section][data-group="kitchen"] .menu-grid').forEach(function (grid) {
+                        if (!grid.__carousel) {
+                            grid.__carousel = true;
+                            grid.addEventListener("scroll", function () { centerKitchenCard(grid); }, { passive: true });
+                        }
+                        centerKitchenCard(grid);
+                    });
+                }
+
                 function openPlainGroup(groupId, label) {
                     let firstId = null;
                     let count = 0;
@@ -623,6 +630,10 @@
                     content.scrollTop = 0;
                     subview = null;
                     root.setAttribute("data-menu-level", "2");
+                    // Кухня: инициализировать карусели (после раскладки).
+                    if (groupId === "kitchen") {
+                        requestAnimationFrame(function () { requestAnimationFrame(initKitchenCarousels); });
+                    }
                 }
 
                 // «Бар»: колесо категорий + превью
